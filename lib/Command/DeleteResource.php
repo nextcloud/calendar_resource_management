@@ -57,7 +57,7 @@ class DeleteResource extends Command {
 	 * @return void
 	 */
 	protected function configure() {
-		$this->setName('crm:resource:delete');
+		$this->setName('calendar-resource:resource:delete');
 		$this->setDescription('Delete a Resource (Types: building, story, room, vehicle, resource, restriction) with a cascading delete.');
 		$this->addArgument(self::TYPE, InputArgument::REQUIRED);
 		$this->addArgument(self::ID, InputArgument::REQUIRED);

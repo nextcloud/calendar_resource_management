@@ -56,7 +56,7 @@ class CreateStory extends Command {
 	 * @return void
 	 */
 	protected function configure() {
-		$this->setName('crm:story:create');
+		$this->setName('calendar-resource:story:create');
 		$this->setDescription('Create a Story Resource');
 		$this->addArgument(self::DISPLAY_NAME, InputArgument::REQUIRED);
 		$this->addArgument(self::BUILDING_ID, InputArgument::REQUIRED);

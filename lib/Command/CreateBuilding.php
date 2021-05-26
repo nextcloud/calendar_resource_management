@@ -58,7 +58,7 @@ class CreateBuilding extends Command {
 	 * @return void
 	 */
 	protected function configure() {
-		$this->setName('crm:building:create');
+		$this->setName('calendar-resource:building:create');
 		$this->setDescription('Create a Building Resource');
 		$this->addArgument(self::DISPLAY_NAME, InputArgument::REQUIRED);
 		$this->addArgument(self::DESCRIPTION, InputArgument::OPTIONAL);

@@ -61,7 +61,7 @@ class CreateResource extends Command {
 	 * @return void
 	 */
 	protected function configure() {
-		$this->setName('crm:resource:create');
+		$this->setName('calendar-resource:resource:create');
 		$this->setDescription('Create a general Resource');
 		$this->addArgument(self::UID, InputArgument::REQUIRED);
 		$this->addArgument(self::BUILDING_ID, InputArgument::REQUIRED);

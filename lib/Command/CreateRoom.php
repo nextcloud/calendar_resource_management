@@ -67,7 +67,7 @@ class CreateRoom extends Command {
 	 * @return void
 	 */
 	protected function configure() {
-		$this->setName('crm:room:create');
+		$this->setName('calendar-resource:room:create');
 		$this->setDescription('Create a Room Resource');
 		$this->addArgument(self::STORY_ID, InputArgument::REQUIRED);
 		$this->addArgument(self::UID, InputArgument::REQUIRED);

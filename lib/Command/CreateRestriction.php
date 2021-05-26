@@ -58,7 +58,7 @@ class CreateRestriction extends Command {
 	 * @return void
 	 */
 	protected function configure() {
-		$this->setName('crm:restriction:create');
+		$this->setName('calendar-resource:restriction:create');
 		$this->setDescription('Create a Restriction on a Resource');
 		$this->addArgument(self::ENTITY_TYPE, InputArgument::REQUIRED);
 		$this->addArgument(self::ENTITY_ID, InputArgument::REQUIRED);

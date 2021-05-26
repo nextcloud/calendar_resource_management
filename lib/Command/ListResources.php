@@ -81,7 +81,7 @@ class ListResources extends Command {
 	 * @return void
 	 */
 	protected function configure() {
-		$this->setName('crm:resources:list');
+		$this->setName('calendar-resource:resources:list');
 		$this->setDescription('List all Resources');
 	}
 

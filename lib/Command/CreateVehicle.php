@@ -63,7 +63,7 @@ class CreateVehicle extends Command {
 	 * @return void
 	 */
 	protected function configure() {
-		$this->setName('crm:vehicle:create');
+		$this->setName('calendar-resource:vehicle:create');
 		$this->setDescription('Create a Vehicle Resource');
 		$this->addArgument(self::UID, InputArgument::REQUIRED);
 		$this->addArgument(self::BUILDING_ID, InputArgument::REQUIRED);
