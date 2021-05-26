@@ -1,0 +1,122 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @copyright 2021 Anna Larch <anna.larch@nextcloud.com>
+ *
+ * @author 2021 Anna Larch <anna.larch@nextcloud.com>
+ *
+ * @license GNU AGPL version 3 or any later version
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+namespace OCA\CalendarResourceManagement\Command;
+
+use OCA\CalendarResourceManagement\Db\VehicleMapper;
+use OCA\CalendarResourceManagement\Db\VehicleModel;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+
+class CreateVehicle extends Command {
+	// which arguments do we need?
+	private const UID = 'uid';
+	private const BUILDING_ID = 'building_id';
+	private const DISPLAY_NAME = 'display_name';
+	private const EMAIL = 'email';
+	private const CONTACT = 'contact_person_user_id';
+	private const VEHICLE_TYPE = 'vehicle_type';
+	private const VEHICLE_MAKE = 'vehicle_make';
+	private const VEHICLE_MODEL = 'vehicle_model';
+	private const IS_ELECTRIC = 'is_electric';
+	private const RANGE = 'range';
+	private const SEATING_CAPACITY = 'seating_capacity';
+
+	/** @var LoggerInterface */
+	private $logger;
+
+	/** @var VehicleMapper */
+	private $vehicleMapper;
+
+	public function __construct(LoggerInterface $logger, VehicleMapper $vehicleMapper) {
+		parent::__construct();
+		$this->logger = $logger;
+		$this->vehicleMapper = $vehicleMapper;
+	}
+
+	/**
+	 * @return void
+	 */
+	protected function configure() {
+		$this->setName('crm:vehicle:create');
+		$this->setDescription('Create a Vehicle Resource');
+		$this->addArgument(self::UID, InputArgument::REQUIRED);
+		$this->addArgument(self::BUILDING_ID, InputArgument::REQUIRED);
+		$this->addArgument(self::DISPLAY_NAME, InputArgument::REQUIRED);
+		$this->addArgument(self::EMAIL, InputArgument::REQUIRED);
+		$this->addArgument(self::VEHICLE_TYPE, InputArgument::REQUIRED);
+		$this->addArgument(self::VEHICLE_MAKE, InputArgument::REQUIRED);
+		$this->addArgument(self::VEHICLE_MODEL, InputArgument::REQUIRED);
+		$this->addArgument(self::CONTACT, InputArgument::OPTIONAL);
+		$this->addArgument(self::IS_ELECTRIC, InputArgument::OPTIONAL);
+		$this->addArgument(self::RANGE, InputArgument::OPTIONAL);
+		$this->addArgument(self::SEATING_CAPACITY, InputArgument::OPTIONAL);
+	}
+
+	/**
+	 * @return int
+	 */
+	protected function execute(InputInterface $input, OutputInterface $output): int {
+		$uid = (string)$input->getArgument(self::UID);
+		$buildingId = (int)$input->getArgument(self::BUILDING_ID);
+		$displayName = (string)$input->getArgument(self::DISPLAY_NAME);
+		$email = (string)$input->getArgument(self::EMAIL);
+		$contact = (string)$input->getArgument(self::CONTACT);
+		$vehicleType = (string)$input->getArgument(self::VEHICLE_TYPE);
+		$vehicleMake = (string)$input->getArgument(self::VEHICLE_MAKE);
+		$model = (string)$input->getArgument(self::VEHICLE_MODEL);
+		$isElectric = (bool)$input->getArgument(self::IS_ELECTRIC);
+		$range = (int)$input->getArgument(self::RANGE);
+		$seating = (int)$input->getArgument(self::SEATING_CAPACITY);
+
+		$vehicleModel = new VehicleModel();
+		$vehicleModel->setBuildingId($buildingId);
+		$vehicleModel->setUid($uid);
+		$vehicleModel->setDisplayName($displayName);
+		$vehicleModel->setEmail($email);
+		$vehicleModel->setContactPersonUserId($contact);
+		$vehicleModel->setVehicleType($vehicleType);
+		$vehicleModel->setVehicleMake($vehicleMake);
+		$vehicleModel->setVehicleModel($model);
+		$vehicleModel->setIsElectric($isElectric);
+		$vehicleModel->setRange($range);
+		$vehicleModel->setSeatingCapacity($seating);
+
+		try {
+			$inserted = $this->vehicleMapper->insert($vehicleModel);
+			$output->writeln('<info>Created new Vehicle with ID:</info>');
+			$output->writeln("<info>" . $inserted->getId() . "</info>");
+		} catch (\Exception $e) {
+			$this->logger->error($e->getMessage(), ['exception' => $e]);
+			$output->writeln('<error>Could not create entry.</error>');
+			return 1;
+		}
+
+		return 0;
+	}
+}
