@@ -1,0 +1,17 @@
+/build
+/composer.*
+/CONTRIBUTING.md
+.git
+.gitattributes
+.github
+.gitignore
+/krankerl.toml
+/l10n/no-php
+/.tx
+/.nextcloudignore
+/.php_cs.dist
+/phpunit*xml
+/psalm.xml
+/tests
+/vendor/bin
+/vendor-bin
