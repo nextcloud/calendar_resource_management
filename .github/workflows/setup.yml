@@ -1,0 +1,89 @@
+name: PHP Composer
+
+on:
+  push:
+    branches: master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-versions: [7.3, 7.4]
+        nextcloud-versions: ['master']
+        db: ['mysql']
+        include:
+          - php: 8.0
+            nextcloud-version: master
+          - php: 8.0
+            nextcloud-version: stable21
+    name: Nextcloud ${{ matrix.nextcloud-versions }} php${{ matrix.php-versions }} ${{ matrix.db }} setup testing
+    services:
+      mail-service:
+        image: christophwurst/imap-devel
+        env:
+          MAILNAME: mail.domain.tld
+          MAIL_ADDRESS: user@domain.tld
+          MAIL_PASS: mypassword
+        ports:
+          - 25:25
+          - 143:143
+          - 993:993
+          - 4190:4190
+      mysql-service:
+        image: mariadb:10
+        env:
+          MYSQL_ROOT_PASSWORD: my-secret-pw
+          MYSQL_DATABASE: nextcloud
+          MYSQL_USER: nextcloud
+          MYSQL_PASSWORD: nextcloud
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+      postgres-service:
+        image: postgres
+        env:
+          POSTGRES_USER: nextcloud
+          POSTGRES_DB: nextcloud
+          POSTGRES_PASSWORD: nextcloud
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Set up php${{ matrix.php-versions }}
+        uses: shivammathur/setup-php@master
+        with:
+          php-version: ${{ matrix.php-versions }}
+          tools: composer:v1
+          extensions: ctype,curl,dom,gd,iconv,intl,json,mbstring,openssl,posix,sqlite,xml,zip,gmp
+          coverage: xdebug
+      - name: Checkout Nextcloud
+        run: git clone https://github.com/nextcloud/server.git --recursive --depth 1 -b ${{ matrix.nextcloud-versions }} nextcloud
+      - name: Install Nextcloud
+        run: php -f nextcloud/occ maintenance:install --database-host 127.0.0.1 --database-name nextcloud --database-user nextcloud --database-pass nextcloud --admin-user admin --admin-pass admin --database ${{ matrix.db }}
+      - name: Checkout Calendar Resource Management
+        uses: actions/checkout@master
+        with:
+          path: nextcloud/apps/calendar_resource_management
+      - name: Install dependencies
+        working-directory: nextcloud/apps/calendar_resource_management
+        run: composer i
+      - name: Enable the app
+        run: php -f nextcloud/occ app:enable calendar_resource_management
+      - name: Create Resources
+        run: |
+          php -f nextcloud/occ calendar-resource:building:create 'Arkham Asylum' 'Elizabeth Arkham Asylum for the Criminally Insane' 'Amadeus Way, Gotham NG11 0AS' false
+          php -f nextcloud/occ calendar-resource:story:create '1st floor' 1
+          php -f nextcloud/occ calendar-resource:story:create '2nd floor' 1
+          php -f nextcloud/occ calendar-resource:room:create 1 arkham_meeting_1 'The Joker' joker@arkham-asylum.com 'Meeting Room' amadeus 10 404 '+1 555 777 123' true false false false false
+          php -f nextcloud/occ calendar-resource:room:create 2 arkham_meeting_2 'Bane' bane@arkham-asylum.com 'Torture Chamber'
+
