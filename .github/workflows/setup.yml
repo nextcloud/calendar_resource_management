@@ -12,7 +12,7 @@ jobs:
       matrix:
         php-versions: [7.3, 7.4]
         nextcloud-versions: ['master']
-        db: ['mysql']
+        db: ['mysql', 'sqlite', 'pgsql']
         include:
           - php: 8.0
             nextcloud-version: master
