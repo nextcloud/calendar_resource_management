@@ -112,7 +112,7 @@ class CreateVehicle extends Command {
 			$output->writeln("<info>" . $inserted->getId() . "</info>");
 		} catch (\Exception $e) {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
-			$output->writeln('<error>Could not create entry.</error>');
+			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');
 			return 1;
 		}
 

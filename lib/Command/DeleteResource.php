@@ -97,7 +97,7 @@ class DeleteResource extends Command {
 			$output->writeln('<info>Deleted resource type ' . $type . ' with ID ' . $id . ' and all associated entries.</info>');
 		} catch (Exception $e) {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
-			$output->writeln('<error>Could not delete resource type ' . $type . ' with ID ' . $id . '</error>');
+			$output->writeln('<error>Could not delete resource type ' . $type . ' with ID ' . $id . ': ' . $e->getMessage() . '</error>');
 			return 1;
 		}
 
