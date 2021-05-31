@@ -245,7 +245,7 @@ class Version1000Date20200805220319 extends SimpleMigrationStep {
 			$table->setPrimaryKey(['id']);
 			$table->addIndex(['story_id'], 'calresources_rooms_sid');
 			$table->addUniqueIndex(['uid'], 'calresources_rooms_uid');
-			$table->addUniqueIndex(['email'], 'calresources_resources_eml');
+			$table->addUniqueIndex(['email'], 'calresources_rooms_eml');
 		}
 
 		/**
@@ -311,7 +311,7 @@ class Version1000Date20200805220319 extends SimpleMigrationStep {
 			$table->setPrimaryKey(['id']);
 			$table->addIndex(['building_id'], 'calresources_vehicles_bid');
 			$table->addUniqueIndex(['uid'], 'calresources_vehicles_uid');
-			$table->addUniqueIndex(['email'], 'calresources_resources_eml');
+			$table->addUniqueIndex(['email'], 'calresources_vehicles_eml');
 		}
 
 		$buildings = $schema->getTable('calresources_buildings');
