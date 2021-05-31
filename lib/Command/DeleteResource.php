@@ -37,7 +37,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class DeleteResource extends Command {
-	// which arguments do we need?
 	private const TYPE = 'type';
 	private const ID = 'resource_id';
 
@@ -58,9 +57,17 @@ class DeleteResource extends Command {
 	 */
 	protected function configure() {
 		$this->setName('calendar-resource:resource:delete');
-		$this->setDescription('Delete a Resource (Types: building, story, room, vehicle, resource, restriction) with a cascading delete.');
-		$this->addArgument(self::TYPE, InputArgument::REQUIRED);
-		$this->addArgument(self::ID, InputArgument::REQUIRED);
+		$this->setDescription('Delete a resource and anything that belongs to them');
+		$this->addArgument(
+			self::TYPE,
+			InputArgument::REQUIRED,
+			"Type of resource (building, story, room, vehicle, resource, restriction)"
+		);
+		$this->addArgument(
+			self::ID,
+			InputArgument::REQUIRED,
+			"ID of the resource to delete, e.g. 42"
+		);
 	}
 
 	/**

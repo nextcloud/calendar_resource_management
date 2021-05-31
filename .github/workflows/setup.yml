@@ -81,7 +81,7 @@ jobs:
         run: php -f nextcloud/occ app:enable calendar_resource_management
       - name: Create Resources
         run: |
-          php -f nextcloud/occ calendar-resource:building:create 'Arkham Asylum' 'Elizabeth Arkham Asylum for the Criminally Insane' 'Amadeus Way, Gotham NG11 0AS' false
+          php -f nextcloud/occ calendar-resource:building:create 'Arkham Asylum' 'Amadeus Way, Gotham NG11 0AS' 'Elizabeth Arkham Asylum for the Criminally Insane' false
           php -f nextcloud/occ calendar-resource:story:create '1st floor' 1
           php -f nextcloud/occ calendar-resource:story:create '2nd floor' 1
           php -f nextcloud/occ calendar-resource:room:create 1 arkham_meeting_1 'The Joker' joker@arkham-asylum.com 'Meeting Room' amadeus 10 404 '+1 555 777 123' true false false false false

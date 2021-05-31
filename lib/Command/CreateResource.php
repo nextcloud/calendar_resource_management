@@ -35,8 +35,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class CreateResource extends Command {
-	// which arguments do we need?
-
 	private const UID = 'uid';
 	private const BUILDING_ID = 'building_id';
 	private const DISPLAY_NAME = 'display_name';
@@ -62,7 +60,7 @@ class CreateResource extends Command {
 	 */
 	protected function configure() {
 		$this->setName('calendar-resource:resource:create');
-		$this->setDescription('Create a general Resource');
+		$this->setDescription('Create a general resource');
 		$this->addArgument(self::UID, InputArgument::REQUIRED);
 		$this->addArgument(self::BUILDING_ID, InputArgument::REQUIRED);
 		$this->addArgument(self::DISPLAY_NAME, InputArgument::REQUIRED);

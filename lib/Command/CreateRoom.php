@@ -35,7 +35,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class CreateRoom extends Command {
-	// which arguments do we need?
 	private const STORY_ID = 'story_id';
 	private const UID = 'uid';
 	private const DISPLAY_NAME = 'display_name';
@@ -44,12 +43,12 @@ class CreateRoom extends Command {
 	private const CONTACT = 'contact_person_user_id';
 	private const CAPACITY = 'capacity';
 	private const ROOM_NR = 'room_number';
-	private const PHONE = 'has_phone';
-	private const VIDEO = 'has_video_conferencing';
-	private const TV = 'has_tv';
-	private const PROJECTOR = 'has_projector';
-	private const WHITEBOARD = 'has_whiteboard';
-	private const WHEELCHAIR = 'wheelchair_accessible';
+	private const HAS_PHONE = 'has_phone';
+	private const HAS_VIDEO = 'has_video_conferencing';
+	private const HAS_TV = 'has_tv';
+	private const HAS_PROJECTOR = 'has_projector';
+	private const HAS_WHITEBOARD = 'has_whiteboard';
+	private const IS_WHEELCHAIR_ACCESSIBLE = 'wheelchair_accessible';
 
 	/** @var LoggerInterface */
 	private $logger;
@@ -68,21 +67,83 @@ class CreateRoom extends Command {
 	 */
 	protected function configure() {
 		$this->setName('calendar-resource:room:create');
-		$this->setDescription('Create a Room Resource');
-		$this->addArgument(self::STORY_ID, InputArgument::REQUIRED);
-		$this->addArgument(self::UID, InputArgument::REQUIRED);
-		$this->addArgument(self::DISPLAY_NAME, InputArgument::REQUIRED);
-		$this->addArgument(self::EMAIL, InputArgument::REQUIRED);
-		$this->addArgument(self::TYPE, InputArgument::REQUIRED);
-		$this->addArgument(self::CONTACT, InputArgument::OPTIONAL);
-		$this->addArgument(self::CAPACITY, InputArgument::OPTIONAL);
-		$this->addArgument(self::ROOM_NR, InputArgument::OPTIONAL);
-		$this->addArgument(self::PHONE, InputArgument::OPTIONAL, 'Does this room have a phone', false);
-		$this->addArgument(self::VIDEO, InputArgument::OPTIONAL, 'Does this room have video conferencing equipment', false);
-		$this->addArgument(self::TV, InputArgument::OPTIONAL, 'Does this room have a TV', false);
-		$this->addArgument(self::PROJECTOR, InputArgument::OPTIONAL, 'Does this room a projector', false);
-		$this->addArgument(self::WHITEBOARD,  InputArgument::OPTIONAL, 'Does this room have a whiteboard', false);
-		$this->addArgument(self::WHEELCHAIR,  InputArgument::OPTIONAL, 'Is this room wheelchair accessible', false);
+		$this->setDescription('Create a room resource');
+		$this->addArgument(
+			self::STORY_ID,
+			InputArgument::REQUIRED,
+			"ID of the story this room is located on, e.g. 17"
+		);
+		$this->addArgument(
+			self::UID,
+			InputArgument::REQUIRED,
+			"Unique ID of this resource, e.g. \"Berlin-office-meeting-1\""
+		);
+		$this->addArgument(
+			self::DISPLAY_NAME,
+			InputArgument::REQUIRED,
+			"Short room description, e.g. \"Big meeting room\""
+		);
+		$this->addArgument(
+			self::EMAIL,
+			InputArgument::REQUIRED,
+			"" // TODO: is this the email of the person responsible?
+		);
+		$this->addArgument(
+			self::TYPE,
+			InputArgument::REQUIRED,
+			"Type of room, e.g. \"Meeting room\" or \"Phone booth\"",
+		);
+		$this->addArgument(
+			self::CONTACT,
+			InputArgument::OPTIONAL,
+			"Optional information about the person who manages the room. This could be an email address or a phone number."
+		);
+		$this->addArgument(
+			self::CAPACITY,
+			InputArgument::OPTIONAL,
+			"Optional maximal number of people for this room, e.g. 8"
+		);
+		$this->addArgument(
+			self::ROOM_NR,
+			InputArgument::OPTIONAL,
+			"Optional room number, e.g. 102A"
+		);
+		$this->addArgument(
+			self::HAS_PHONE,
+			InputArgument::OPTIONAL,
+			'Does this room have a phone? 0 (no) or 1 (yes)',
+			false
+		);
+		$this->addArgument(
+			self::HAS_VIDEO,
+			InputArgument::OPTIONAL,
+			'Does this room have video conferencing equipment? 0 (no) or 1 (yes)',
+			false
+		);
+		$this->addArgument(
+			self::HAS_TV,
+			InputArgument::OPTIONAL,
+			'Does this room have a TV? 0 (no) or 1 (yes)',
+			false
+		);
+		$this->addArgument(
+			self::HAS_PROJECTOR,
+			InputArgument::OPTIONAL,
+			'Does this room a projector? 0 (no) or 1 (yes)',
+			false
+		);
+		$this->addArgument(
+			self::HAS_WHITEBOARD,
+			InputArgument::OPTIONAL,
+			'Does this room have a whiteboard? 0 (no) or 1 (yes)',
+			false
+		);
+		$this->addArgument(
+			self::IS_WHEELCHAIR_ACCESSIBLE,
+			InputArgument::OPTIONAL,
+			'Is this room wheelchair accessible? 0 (no) or 1 (yes)',
+			false
+		);
 	}
 
 	/**
@@ -97,12 +158,12 @@ class CreateRoom extends Command {
 		$contact = (string)$input->getArgument(self::CONTACT);
 		$capacity = (int)$input->getArgument(self::CAPACITY);
 		$roomNr = (int)$input->getArgument(self::ROOM_NR);
-		$phone = (bool)$input->getArgument(self::PHONE);
-		$video = (bool)$input->getArgument(self::VIDEO);
-		$tv = (bool)$input->getArgument(self::TV);
-		$projector = (bool)$input->getArgument(self::PROJECTOR);
-		$whiteboard = (bool)$input->getArgument(self::WHITEBOARD);
-		$wheelchair = (bool)$input->getArgument(self::WHEELCHAIR);
+		$phone = (bool)$input->getArgument(self::HAS_PHONE);
+		$video = (bool)$input->getArgument(self::HAS_VIDEO);
+		$tv = (bool)$input->getArgument(self::HAS_TV);
+		$projector = (bool)$input->getArgument(self::HAS_PROJECTOR);
+		$whiteboard = (bool)$input->getArgument(self::HAS_WHITEBOARD);
+		$wheelchair = (bool)$input->getArgument(self::IS_WHEELCHAIR_ACCESSIBLE);
 
 		$roomModel = new RoomModel();
 		$roomModel->setStoryId($storyId);
