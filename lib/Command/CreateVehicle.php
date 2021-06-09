@@ -34,7 +34,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class CreateVehicle extends Command {
-	// which arguments do we need?
 	private const UID = 'uid';
 	private const BUILDING_ID = 'building_id';
 	private const DISPLAY_NAME = 'display_name';
@@ -64,7 +63,7 @@ class CreateVehicle extends Command {
 	 */
 	protected function configure() {
 		$this->setName('calendar-resource:vehicle:create');
-		$this->setDescription('Create a Vehicle Resource');
+		$this->setDescription('Create a vehicle resource');
 		$this->addArgument(self::UID, InputArgument::REQUIRED);
 		$this->addArgument(self::BUILDING_ID, InputArgument::REQUIRED);
 		$this->addArgument(self::DISPLAY_NAME, InputArgument::REQUIRED);
@@ -113,7 +112,7 @@ class CreateVehicle extends Command {
 			$output->writeln("<info>" . $inserted->getId() . "</info>");
 		} catch (\Exception $e) {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
-			$output->writeln('<error>Could not create entry.</error>');
+			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');
 			return 1;
 		}
 

@@ -82,7 +82,7 @@ class ListResources extends Command {
 	 */
 	protected function configure() {
 		$this->setName('calendar-resource:resources:list');
-		$this->setDescription('List all Resources');
+		$this->setDescription('List all resources');
 	}
 
 	/** @return int */

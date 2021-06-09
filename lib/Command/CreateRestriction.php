@@ -35,11 +35,9 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class CreateRestriction extends Command {
-	// which arguments do we need?
-
 	private const ENTITY_TYPE = 'entity_type';
 	private const ENTITY_ID = 'entity_id';
-	private const GROUP_ID = 'grooup_id';
+	private const GROUP_ID = 'group_id';
 
 	/** @var LoggerInterface */
 	private $logger;
@@ -59,7 +57,7 @@ class CreateRestriction extends Command {
 	 */
 	protected function configure() {
 		$this->setName('calendar-resource:restriction:create');
-		$this->setDescription('Create a Restriction on a Resource');
+		$this->setDescription('Create a restriction on a resource');
 		$this->addArgument(self::ENTITY_TYPE, InputArgument::REQUIRED);
 		$this->addArgument(self::ENTITY_ID, InputArgument::REQUIRED);
 		$this->addArgument(self::GROUP_ID, InputArgument::REQUIRED);
@@ -84,7 +82,7 @@ class CreateRestriction extends Command {
 			$output->writeln("<info>" . $inserted->getId() . "</info>");
 		} catch (Exception $e) {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
-			$output->writeln('<error>Could not create entry.</error>');
+			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');
 			return 1;
 		}
 

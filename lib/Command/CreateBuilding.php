@@ -35,8 +35,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class CreateBuilding extends Command {
-	// which arguments do we need?
-
 	private const DISPLAY_NAME = 'display_name';
 	private const DESCRIPTION = 'description';
 	private const ADDRESS = 'address';
@@ -59,11 +57,29 @@ class CreateBuilding extends Command {
 	 */
 	protected function configure() {
 		$this->setName('calendar-resource:building:create');
-		$this->setDescription('Create a Building Resource');
-		$this->addArgument(self::DISPLAY_NAME, InputArgument::REQUIRED);
-		$this->addArgument(self::DESCRIPTION, InputArgument::OPTIONAL);
-		$this->addArgument(self::ADDRESS, InputArgument::OPTIONAL);
-		$this->addArgument(self::WHEELCHAIR, InputArgument::OPTIONAL);
+		$this->setDescription('Create a building resource');
+		$this->addArgument(
+			self::DISPLAY_NAME,
+			InputArgument::REQUIRED,
+			"The name of this building, e.g. Berlin HQ"
+		);
+		$this->addArgument(
+			self::ADDRESS,
+			InputArgument::OPTIONAL,
+			"The address of the building, e.g. \"Gerichtstraße 23, 13347 Berlin, Germany\""
+		);
+		$this->addArgument(
+			self::DESCRIPTION,
+			InputArgument::OPTIONAL,
+			"An optional description of the building",
+			""
+		);
+		$this->addArgument(
+			self::WHEELCHAIR,
+			InputArgument::OPTIONAL,
+			"Whether or not the building is wheelchair accessible (0 or 1)",
+			"0" // Defaults to 0 to not wrongly advertise a building with barriers with default arguments
+		);
 	}
 
 	/**
@@ -87,7 +103,7 @@ class CreateBuilding extends Command {
 			$output->writeln("<info>" . $inserted->getId() . "</info>");
 		} catch (Exception $e) {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
-			$output->writeln('<error>Could not create entry.</error>');
+			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');
 			return 1;
 		}
 

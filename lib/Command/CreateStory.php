@@ -35,8 +35,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class CreateStory extends Command {
-	// which arguments do we need?
-
 	private const DISPLAY_NAME = 'display_name';
 	private const BUILDING_ID = 'building_id';
 
@@ -57,9 +55,17 @@ class CreateStory extends Command {
 	 */
 	protected function configure() {
 		$this->setName('calendar-resource:story:create');
-		$this->setDescription('Create a Story Resource');
-		$this->addArgument(self::DISPLAY_NAME, InputArgument::REQUIRED);
-		$this->addArgument(self::BUILDING_ID, InputArgument::REQUIRED);
+		$this->setDescription('Create a story resource');
+		$this->addArgument(
+			self::BUILDING_ID,
+			InputArgument::REQUIRED,
+			"ID of the building, e.g. 17"
+		);
+		$this->addArgument(
+			self::DISPLAY_NAME,
+			InputArgument::REQUIRED,
+			"Name of the floor, e.g. \"2\""
+		);
 	}
 
 	/**
@@ -79,7 +85,7 @@ class CreateStory extends Command {
 			$output->writeln("<info>" . $inserted->getId() . "</info>");
 		} catch (Exception $e) {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
-			$output->writeln('<error>Could not create entry.</error>');
+			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');
 			return 1;
 		}
 
