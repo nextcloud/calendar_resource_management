@@ -84,6 +84,6 @@ jobs:
           php -f nextcloud/occ calendar-resource:building:create 'Arkham Asylum' 'Amadeus Way, Gotham NG11 0AS' 'Elizabeth Arkham Asylum for the Criminally Insane' false
           php -f nextcloud/occ calendar-resource:story:create 1 '1st floor'
           php -f nextcloud/occ calendar-resource:story:create 1 '2nd floor'
-          php -f nextcloud/occ calendar-resource:room:create 1 arkham_meeting_1 'The Joker' joker@arkham-asylum.com 'Meeting Room' amadeus 10 404 '+1 555 777 123' true false false false false
-          php -f nextcloud/occ calendar-resource:room:create 2 arkham_meeting_2 'Bane' bane@arkham-asylum.com 'Torture Chamber'
+          php -f nextcloud/occ calendar-resource:room:create 1 arkham_meeting_1 'The Joker' joker@arkham-asylum.com 'meeting-room' amadeus 10 404 '+1 555 777 123' true false false false false
+          php -f nextcloud/occ calendar-resource:room:create 2 arkham_meeting_2 'Bane' bane@arkham-asylum.com 'other'
 
