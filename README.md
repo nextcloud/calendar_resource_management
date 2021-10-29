@@ -1,7 +1,16 @@
 # Calendar Resource Management
-Place this app in **nextcloud/apps/**
-
 This app enables the 🗓️ [Calendar](https://github.com/nextcloud/calendar) App to work with resources and rooms
+
+## Installation
+
+### Place this app in **nextcloud/apps/**
+You can use git for development:
+```
+git clone https://github.com/nextcloud/calendar_resource_management.git
+```
+### Activate it within the apps menu
+
+## Configuration
 
 `*` denotes a required argument  
 All boolean fields default to null if not specified
@@ -16,6 +25,14 @@ All boolean fields default to null if not specified
 | calendar-resource:vehicle:create | Create a vehicle resource | `uid`* `building_id`* `display_name`* `email`* `contact_person_user_id`* `vehicle_type`* `vehicle_make`* `vehicle_model`* `is_electric` `range` `seating_capacity` | `calresources_vehicles` | Needs an associated building id |
 | calendar-resource:resources:list | List all resources | | | |
 | calendar-resource:resource:delete | Delete a resource and anything that belongs to them | `resource_type`* `id`* | | |
+
+### Example for creating a room inspired by the [post from jos](https://help.nextcloud.com/t/22-beta-5-is-here-help-test/118560):
+
+```
+php occ calendar-resource:building:create "Nextcloud office Berlin" "Gerichtstraße 23, 13347 Berlin, Germany" ""
+php occ calendar-resource:story:create 1 "2nd floor"
+php occ calendar-resource:room:create 1 "berlin_main_office" "Shared office" "room.berlin.main@nextcloud.com" 0 "demouser" 25 201
+```
 
 The resources will be added to the calendar app via cron.
 
