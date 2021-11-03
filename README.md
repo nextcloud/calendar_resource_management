@@ -29,9 +29,9 @@ All boolean fields default to null if not specified
 ### Example for creating a room inspired by the [post from jos](https://help.nextcloud.com/t/22-beta-5-is-here-help-test/118560):
 
 ```
-php occ calendar-resource:building:create "Nextcloud office Berlin" "Gerichtstraße 23, 13347 Berlin, Germany" ""
+php occ calendar-resource:building:create "SpaceZ office Berlin" "Testweg 23, 12345 Berlin, Germany" ""
 php occ calendar-resource:story:create 1 "2nd floor"
-php occ calendar-resource:room:create 1 "berlin_main_office" "Shared office" "room.berlin.main@nextcloud.com" 0 "demouser" 25 201
+php occ calendar-resource:room:create 1 "berlin_main_office" "Shared office" "room.berlin.main@spacexyz.com" 0 "demouser" 25 201
 ```
 
 The resources will be added to the calendar app via cron.
