@@ -26,7 +26,7 @@ All boolean fields default to null if not specified
 | calendar-resource:resources:list | List all resources | | | |
 | calendar-resource:resource:delete | Delete a resource and anything that belongs to them | `resource_type`* `id`* | | |
 
-### Example for creating a room inspired by the [post from jos](https://help.nextcloud.com/t/22-beta-5-is-here-help-test/118560):
+### Example for creating a room
 
 ```
 php occ calendar-resource:building:create "SpaceZ office Berlin" "Testweg 23, 12345 Berlin, Germany" ""
