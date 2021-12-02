@@ -68,12 +68,12 @@ class CreateRestriction extends Command {
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$entityType = (string)$input->getArgument(self::ENTITY_TYPE);
-		$entityId = (string)$input->getArgument(self::ENTITY_ID);
+		$entityId = (int)$input->getArgument(self::ENTITY_ID);
 		$groupId = (string)$input->getArgument(self::GROUP_ID);
 
 		$restrictionModel = new RestrictionModel();
 		$restrictionModel->setEntityType($entityType);
-		$restrictionModel->setEntityType($entityId);
+		$restrictionModel->setEntityId($entityId);
 		$restrictionModel->setGroupId($groupId);
 
 		try {
