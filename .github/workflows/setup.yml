@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         php-versions: [7.3, 7.4]
-        nextcloud-versions: ['master']
+        nextcloud-versions: ['stable23']
         db: ['mysql', 'sqlite', 'pgsql']
         include:
           - php: 8.0
