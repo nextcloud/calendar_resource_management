@@ -157,7 +157,7 @@ class CreateRoom extends Command {
 		$type = (string)$input->getArgument(self::TYPE);
 		$contact = (string)$input->getArgument(self::CONTACT);
 		$capacity = (int)$input->getArgument(self::CAPACITY);
-		$roomNr = (int)$input->getArgument(self::ROOM_NR);
+		$roomNr = (string)$input->getArgument(self::ROOM_NR);
 		$phone = (bool)$input->getArgument(self::HAS_PHONE);
 		$video = (bool)$input->getArgument(self::HAS_VIDEO);
 		$tv = (bool)$input->getArgument(self::HAS_TV);
