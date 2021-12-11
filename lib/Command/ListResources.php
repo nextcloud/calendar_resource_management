@@ -33,6 +33,7 @@ use OCA\CalendarResourceManagement\Db\RestrictionModel;
 use OCA\CalendarResourceManagement\Db\RoomMapper;
 use OCA\CalendarResourceManagement\Db\RoomModel;
 use OCA\CalendarResourceManagement\Db\StoryMapper;
+use OCA\CalendarResourceManagement\Db\StoryModel;
 use OCA\CalendarResourceManagement\Db\VehicleMapper;
 use OCA\CalendarResourceManagement\Db\VehicleModel;
 use Psr\Log\LoggerInterface;
@@ -87,6 +88,7 @@ class ListResources extends Command {
 
 	/** @return int */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
+		// Buildings
 		$table = new Table($output);
 		$output->writeln('<info><options=bold>Buildings:</></info>');
 		$table->setHeaders(
@@ -111,6 +113,32 @@ class ListResources extends Command {
 				]
 			);
 			$row++;
+		}
+		$table->render();
+
+		// Stories
+		$table = new Table($output);
+		$output->writeln('<info><options=bold>Stories:</></info>');
+		$table->setHeaders(
+			[
+				'ID',
+				'Located in',
+				'Display Name'
+			]
+		);
+		foreach ($buildings as $building) {
+			$stories = $this->storyMapper->findAllByBuilding($building->getId());
+			/** @var StoryModel $story */
+			foreach ($stories as $story) {
+				$table->setRow($row,
+					[
+						$story->getId(),
+						$building->$building->getDisplayName(),
+						$story->getDisplayName(),
+					]
+				);
+				$row++;
+			}
 		}
 		$table->render();
 
