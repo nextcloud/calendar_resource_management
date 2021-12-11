@@ -173,7 +173,7 @@ class CreateRoom extends Command {
 		$roomModel->setRoomType($type);
 		$roomModel->setContactPersonUserId($contact);
 		$roomModel->setCapacity($capacity);
-		$roomModel->setCapacity($roomNr);
+		$roomModel->setRoomNumber($roomNr);
 		$roomModel->setHasPhone($phone);
 		$roomModel->setHasVideoConferencing($video);
 		$roomModel->setHasTv($tv);
