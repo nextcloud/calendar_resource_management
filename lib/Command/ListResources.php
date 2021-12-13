@@ -133,7 +133,7 @@ class ListResources extends Command {
 				$table->setRow($row,
 					[
 						$story->getId(),
-						$building->$building->getDisplayName(),
+						$building->getDisplayName(),
 						$story->getDisplayName(),
 					]
 				);
