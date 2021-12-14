@@ -3,11 +3,12 @@ This app enables the 🗓️ [Calendar](https://github.com/nextcloud/calendar) A
 
 ## Installation
 
-### Place this app in **nextcloud/apps/**
-You can use git for development:
-```
-git clone https://github.com/nextcloud/calendar_resource_management.git
-```
+### Obtain the latest pre-release build
+
+Builds are available at https://github.com/nextcloud-releases/calendar_resource_management/releases.
+
+Download and extract `calendar_resource_management.tar.gz` into `nextcloud/apps/`.
+
 ### Activate it within the apps menu
 
 ## Configuration
