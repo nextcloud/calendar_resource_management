@@ -7,7 +7,8 @@
     <description><![CDATA[Management for calendar resources and rooms]]></description>
     <version>0.1.1-alpha.1</version>
     <licence>agpl</licence>
-	<author mail="anna.larch@nextcloud.com">Anna Larch</author>
+	<author>Richard Steinmetz</author>
+	<author homepage="https://github.com/nextcloud/groupware">Nextcloud Groupware Team</author>
 	<namespace>CalendarResourceManagement</namespace>
 	<types>
 		<prevent_group_restriction/>
