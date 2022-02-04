@@ -32,8 +32,6 @@ use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\Group\Events\GroupDeletedEvent;
 use OCP\User\Events\UserDeletedEvent;
-use OCP\Calendar\Resource\IManager as IResourceManager;
-use OCP\Calendar\Room\IManager as IRoomManager;
 use OCA\CalendarResourceManagement\Connector;
 
 class Application extends App implements IBootstrap {
@@ -56,6 +54,8 @@ class Application extends App implements IBootstrap {
 	 * @inheritDoc
 	 */
 	public function register(IRegistrationContext $context): void {
+		$context->registerCalendarResourceBackend(Connector\Resource\Backend::class);
+		$context->registerCalendarRoomBackend(Connector\Room\Backend::class);
 		$context->registerEventListener(GroupDeletedEvent::class, GroupDeletedListener::class);
 		$context->registerEventListener(UserDeletedEvent::class, UserDeletedListener::class);
 	}
@@ -64,14 +64,5 @@ class Application extends App implements IBootstrap {
 	 * @inheritDoc
 	 */
 	public function boot(IBootContext $context): void {
-		$serverContainer = $context->getServerContainer();
-
-		/** @var IResourceManager $resourceManager */
-		/** @var IRoomManager $roomManager */
-		$resourceManager = $serverContainer->get(IResourceManager::class);
-		$roomManager = $serverContainer->get(IRoomManager::class);
-
-		$resourceManager->registerBackend(Connector\Resource\Backend::class);
-		$roomManager->registerBackend(Connector\Room\Backend::class);
 	}
 }
