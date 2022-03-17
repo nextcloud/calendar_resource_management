@@ -10,14 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-versions: [7.3, 7.4]
+        php-versions: ['7.4']
         nextcloud-versions: ['master']
         db: ['mysql', 'sqlite', 'pgsql']
         include:
-          - php: 8.0
-            nextcloud-version: master
-          - php: 8.0
-            nextcloud-version: stable21
+          - php-versions: '7.3'
+            db: 'mysql'
+            nextcloud-versions: stable22
+          - php-versions: '8.0'
+            db: 'mysql'
+            nextcloud-versions: stable23
+          - php-versions: '8.1'
+            db: 'pgsql'
+            nextcloud-versions: master
     name: Nextcloud ${{ matrix.nextcloud-versions }} php${{ matrix.php-versions }} ${{ matrix.db }} setup testing
     services:
       mail-service:
@@ -63,7 +68,6 @@ jobs:
         uses: shivammathur/setup-php@master
         with:
           php-version: ${{ matrix.php-versions }}
-          tools: composer:v1
           extensions: ctype,curl,dom,gd,iconv,intl,json,mbstring,openssl,posix,sqlite,xml,zip,gmp
           coverage: xdebug
       - name: Checkout Nextcloud
