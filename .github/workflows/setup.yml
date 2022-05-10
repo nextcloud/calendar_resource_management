@@ -21,6 +21,9 @@ jobs:
             db: 'mysql'
             nextcloud-versions: stable23
           - php-versions: '8.1'
+            db: 'mysql'
+            nextcloud-versions: stable24
+          - php-versions: '8.1'
             db: 'pgsql'
             nextcloud-versions: master
     name: Nextcloud ${{ matrix.nextcloud-versions }} php${{ matrix.php-versions }} ${{ matrix.db }} setup testing
