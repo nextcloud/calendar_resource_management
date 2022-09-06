@@ -16,7 +16,7 @@ jobs:
         include:
           - php-versions: '7.3'
             db: 'mysql'
-            nextcloud-versions: stable22
+            nextcloud-versions: stable23
           - php-versions: '8.0'
             db: 'mysql'
             nextcloud-versions: stable23
