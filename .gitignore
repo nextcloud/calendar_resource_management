@@ -94,6 +94,7 @@ RCS/*
 
 /.project
 .php_cs.cache
+.php-cs-fixer.cache
 
 coverage/
 
