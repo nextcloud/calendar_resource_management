@@ -318,7 +318,7 @@ class Version1000Date20200805220319 extends SimpleMigrationStep {
 
 		// add building FK to resources
 		$resources = $schema->getTable('calresources_resources');
-		$resources->addForeignKeyConstraint($buildings, ['building_id'], ['id'],  ['onDelete' => 'CASCADE']);
+		$resources->addForeignKeyConstraint($buildings, ['building_id'], ['id'], ['onDelete' => 'CASCADE']);
 
 		// add building FK to vehicles
 		$vehicles = $schema->getTable('calresources_vehicles');
