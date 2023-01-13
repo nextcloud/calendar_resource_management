@@ -16,7 +16,7 @@ jobs:
       - name: Set up php
         uses: shivammathur/setup-php@master
         with:
-          php-version: '7.4'
+          php-version: '8.1'
           extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,json,mbstring,openssl,pdo_sqlite,posix,sqlite,xml,zip
           coverage: none
           tools: cs2pr
