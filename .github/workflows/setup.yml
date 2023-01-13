@@ -1,28 +1,21 @@
-name: PHP Composer
-
-on:
-  push:
-    branches: main
-  pull_request:
+name: Setup
+on: pull_request
 
 jobs:
-  build:
+  setup:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-versions: ['7.4']
+        php-versions: ['8.0']
         nextcloud-versions: ['master']
         db: ['mysql', 'sqlite', 'pgsql']
         include:
-          - php-versions: '7.3'
-            db: 'mysql'
-            nextcloud-versions: stable23
           - php-versions: '8.0'
             db: 'mysql'
-            nextcloud-versions: stable23
+            nextcloud-versions: stable24
           - php-versions: '8.1'
             db: 'mysql'
-            nextcloud-versions: stable24
+            nextcloud-versions: stable25
           - php-versions: '8.1'
             db: 'pgsql'
             nextcloud-versions: master
@@ -93,4 +86,12 @@ jobs:
           php -f nextcloud/occ calendar-resource:story:create 1 '2nd floor'
           php -f nextcloud/occ calendar-resource:room:create 1 arkham_meeting_1 'The Joker' joker@arkham-asylum.com 'meeting-room' amadeus 10 404 '+1 555 777 123' true false false false false
           php -f nextcloud/occ calendar-resource:room:create 2 arkham_meeting_2 'Bane' bane@arkham-asylum.com 'other'
-
+  summary:
+    runs-on: ubuntu-latest
+    needs:
+      - setup
+    if: always()
+    name: Setup summary
+    steps:
+      - name: Setup test status
+        run: if ${{ needs.setup.result != 'success' && needs.setup.result != 'skipped' }}; then exit 1; fi
