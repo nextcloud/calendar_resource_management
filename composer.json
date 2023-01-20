@@ -2,6 +2,15 @@
 	"config": {
 		"platform": {
 			"php": "7.4"
+		},
+		"sort-packages": true,
+		"optimize-autoloader": true,
+		"classmap-authoritative": true,
+		"autoloader-suffix": "CalendarResourceManagement"
+	},
+	"autoload": {
+		"psr-4": {
+			"OCA\\CalendarResourceManagement\\": "lib/"
 		}
 	},
 	"require": {
