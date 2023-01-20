@@ -19,6 +19,9 @@ jobs:
           - php-versions: '8.1'
             db: 'pgsql'
             nextcloud-versions: master
+          - php-versions: '8.2'
+            db: 'sqlite'
+            nextcloud-versions: master
     name: Nextcloud ${{ matrix.nextcloud-versions }} php${{ matrix.php-versions }} ${{ matrix.db }} setup testing
     services:
       mail-service:
@@ -68,6 +71,9 @@ jobs:
           coverage: xdebug
       - name: Checkout Nextcloud
         run: git clone https://github.com/nextcloud/server.git --recursive --depth 1 -b ${{ matrix.nextcloud-versions }} nextcloud
+      - name: Patch version check for nightly PHP
+        if: ${{ matrix.php-versions == '8.2' }}
+        run: echo "<?php" > nextcloud/lib/versioncheck.php
       - name: Install Nextcloud
         run: php -f nextcloud/occ maintenance:install --database-host 127.0.0.1 --database-name nextcloud --database-user nextcloud --database-pass nextcloud --admin-user admin --admin-pass admin --database ${{ matrix.db }}
       - name: Checkout Calendar Resource Management
