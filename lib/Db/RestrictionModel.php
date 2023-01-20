@@ -39,7 +39,6 @@ use OCP\AppFramework\Db\Entity;
  * @method void setGroupId(string $groupId)
  */
 class RestrictionModel extends Entity {
-
 	/** @var string */
 	protected $entityType;
 

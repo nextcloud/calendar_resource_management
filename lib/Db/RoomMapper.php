@@ -33,7 +33,6 @@ use OCP\IDBConnection;
  * @package OCA\CalendarResourceManagement\Db
  */
 class RoomMapper extends AMapper {
-
 	/**
 	 * RoomMapper constructor.
 	 *

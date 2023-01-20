@@ -37,7 +37,6 @@ use OCP\User\Events\UserDeletedEvent;
  * @package OCA\CalendarResourceManagement\Listener
  */
 class UserDeletedListener implements IEventListener {
-
 	/** @var ResourceMapper */
 	private $resourceMapper;
 

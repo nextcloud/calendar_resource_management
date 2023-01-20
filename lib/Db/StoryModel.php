@@ -37,7 +37,6 @@ use OCP\AppFramework\Db\Entity;
  * @method void setDisplayName(string $displayName)
  */
 class StoryModel extends Entity {
-
 	/** @var integer */
 	protected $buildingId;
 

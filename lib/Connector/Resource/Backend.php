@@ -37,7 +37,6 @@ use OCP\ILogger;
  * @package OCA\CalendarResourceManagement\Connector\Resource
  */
 class Backend implements IBackend {
-
 	/** @var string */
 	private $appName;
 

@@ -28,7 +28,6 @@ use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Db\RoomMapper;
 
 class RoomService {
-
 	/** @var RoomMapper */
 	private $roomMapper;
 

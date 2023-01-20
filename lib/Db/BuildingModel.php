@@ -41,7 +41,6 @@ use OCP\AppFramework\Db\Entity;
  * @method void setIsWheelchairAccessible(bool $IsWheelchairAccessible)
  */
 class BuildingModel extends Entity {
-
 	/** @var string */
 	public $displayName;
 

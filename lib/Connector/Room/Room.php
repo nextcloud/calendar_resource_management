@@ -36,7 +36,6 @@ use OCP\Calendar\Room\IRoomMetadata;
  * @package OCA\CalendarResourceManagement\Connector\Room
  */
 class Room implements IRoom, IMetadataProvider {
-
 	/** @var Db\RoomModel */
 	protected $entity;
 

@@ -32,7 +32,6 @@ use OCP\DB\Exception;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
 abstract class AMapper extends QBMapper {
-
 	/**
 	 * @param int $id
 	 * @return Entity

@@ -28,7 +28,6 @@ use OCA\CalendarResourceManagement\Db\ResourceMapper;
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 
 class ResourceService {
-
 	/** @var ResourceMapper */
 	private $resourceMapper;
 

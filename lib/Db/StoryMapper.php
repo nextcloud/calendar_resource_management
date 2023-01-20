@@ -36,7 +36,6 @@ use OCP\IDBConnection;
  * @package OCA\CalendarResourceManagement\Db
  */
 class StoryMapper extends QBMapper {
-
 	/**
 	 * StoryMapper constructor.
 	 *

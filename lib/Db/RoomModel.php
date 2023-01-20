@@ -61,7 +61,6 @@ use OCP\AppFramework\Db\Entity;
  * @method void setIsWheelchairAccessible(bool $isWheelchairAccessible)
  */
 class RoomModel extends Entity {
-
 	/** @var integer */
 	protected $storyId;
 

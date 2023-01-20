@@ -35,7 +35,6 @@ use OCP\Group\Events\GroupDeletedEvent;
  * @package OCA\CalendarResourceManagement\Listener
  */
 class GroupDeletedListener implements IEventListener {
-
 	/** @var RestrictionMapper */
 	private $mapper;
 

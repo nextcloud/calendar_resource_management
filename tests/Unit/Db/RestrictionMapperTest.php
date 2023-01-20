@@ -30,7 +30,6 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use Test\TestCase;
 
 class RestrictionMapperTest extends TestCase {
-
 	/** @var RestrictionMapper */
 	private $mapper;
 
