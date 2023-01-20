@@ -30,7 +30,6 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use Test\TestCase;
 
 class VehicleMapperTest extends TestCase {
-
 	/** @var VehicleMapper */
 	private $mapper;
 

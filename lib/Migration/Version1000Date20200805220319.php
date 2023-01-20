@@ -36,7 +36,6 @@ use OCP\Migration\IOutput;
  * @package OCA\CalendarResourceManagement\Migration
  */
 class Version1000Date20200805220319 extends SimpleMigrationStep {
-
 	/**
 	 * @param IOutput $output
 	 * @param Closure $schemaClosure The `\Closure` returns a `ISchemaWrapper`

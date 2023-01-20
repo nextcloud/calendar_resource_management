@@ -35,7 +35,6 @@ use OCP\User\Events\UserDeletedEvent;
 use OCA\CalendarResourceManagement\Connector;
 
 class Application extends App implements IBootstrap {
-
 	/**
 	 * @var string
 	 */

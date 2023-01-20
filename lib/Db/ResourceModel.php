@@ -47,7 +47,6 @@ use OCP\AppFramework\Db\Entity;
  * @method void setContactPersonUserId(string $contactPersonUserId)
  */
 class ResourceModel extends Entity {
-
 	/** @var string */
 	protected $uid;
 

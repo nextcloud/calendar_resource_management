@@ -43,7 +43,6 @@ namespace OCA\CalendarResourceManagement\Db;
  * @method void setSeatingCapacity(int $seatingCapacity)
  */
 class VehicleModel extends ResourceModel {
-
 	/** @var string */
 	protected $vehicleType;
 

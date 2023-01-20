@@ -33,7 +33,6 @@ use OCP\IDBConnection;
  * @package OCA\CalendarResourceManagement\Db
  */
 class ResourceMapper extends AMapper {
-
 	/**
 	 * ResourceMapper constructor.
 	 *

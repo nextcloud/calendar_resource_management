@@ -40,7 +40,6 @@ use OCP\Calendar\Resource\IResourceMetadata;
  * @package OCA\CalendarResourceManagement\Connector\Resource
  */
 class ResourceObject implements IResource, IMetadataProvider {
-
 	/** @var Db\ResourceModel */
 	protected $entity;
 

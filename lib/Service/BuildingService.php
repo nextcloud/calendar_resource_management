@@ -28,7 +28,6 @@ use OCA\CalendarResourceManagement\Db\BuildingMapper;
 use OCA\CalendarResourceManagement\Db\StoryMapper;
 
 class BuildingService {
-
 	/** @var BuildingMapper */
 	private $buildingMapper;
 

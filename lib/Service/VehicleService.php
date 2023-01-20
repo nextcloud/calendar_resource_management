@@ -28,7 +28,6 @@ use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Db\VehicleMapper;
 
 class VehicleService {
-
 	/** @var VehicleMapper */
 	private $vehicleMapper;
 

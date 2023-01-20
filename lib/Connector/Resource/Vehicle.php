@@ -33,7 +33,6 @@ use OCP\Calendar\Resource\IResourceMetadata;
  * @property \OCA\CalendarResourceManagement\Db\VehicleModel $entity
  */
 class Vehicle extends ResourceObject {
-
 	/**
 	 * @return array
 	 */

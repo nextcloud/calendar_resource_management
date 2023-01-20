@@ -30,7 +30,6 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use Test\TestCase;
 
 class RoomMapperTest extends TestCase {
-
 	/** @var RoomMapper */
 	private $mapper;
 
