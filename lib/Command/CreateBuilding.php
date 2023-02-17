@@ -32,13 +32,14 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class CreateBuilding extends Command {
 	private const DISPLAY_NAME = 'display_name';
 	private const DESCRIPTION = 'description';
 	private const ADDRESS = 'address';
-	private const WHEELCHAIR = 'wheelchair_accessible';
+	private const WHEELCHAIR = 'wheelchair-accessible';
 
 	/** @var LoggerInterface */
 	private $logger;
@@ -61,24 +62,26 @@ class CreateBuilding extends Command {
 		$this->addArgument(
 			self::DISPLAY_NAME,
 			InputArgument::REQUIRED,
-			"The name of this building, e.g. Berlin HQ"
+			'The name of this building, e.g. Berlin HQ'
 		);
-		$this->addArgument(
+		$this->addOption(
 			self::ADDRESS,
-			InputArgument::OPTIONAL,
-			"The address of the building, e.g. \"Gerichtstraße 23, 13347 Berlin, Germany\""
+			null,
+			InputOption::VALUE_REQUIRED,
+			'The address of the building, e.g. "Gerichtstraße 23, 13347 Berlin, Germany"'
 		);
-		$this->addArgument(
+		$this->addOption(
 			self::DESCRIPTION,
-			InputArgument::OPTIONAL,
-			"An optional description of the building",
-			""
+			null,
+			InputOption::VALUE_REQUIRED,
+			'An optional description of the building'
 		);
-		$this->addArgument(
+		$this->addOption(
 			self::WHEELCHAIR,
-			InputArgument::OPTIONAL,
-			"Whether or not the building is wheelchair accessible (0 or 1)",
-			"0" // Defaults to 0 to not wrongly advertise a building with barriers with default arguments
+			null,
+			InputOption::VALUE_REQUIRED,
+			'Is this building wheelchair accessible? 0 (no) or 1 (yes)',
+			'0' // Defaults to 0 to not wrongly advertise a building with barriers with default arguments
 		);
 	}
 
@@ -87,9 +90,9 @@ class CreateBuilding extends Command {
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$displayName = (string)$input->getArgument(self::DISPLAY_NAME);
-		$description = (string)$input->getArgument(self::DESCRIPTION);
-		$address = (string)$input->getArgument(self::ADDRESS);
-		$wheelchair = (bool)$input->getArgument(self::WHEELCHAIR);
+		$description = (string)$input->getOption(self::DESCRIPTION);
+		$address = (string)$input->getOption(self::ADDRESS);
+		$wheelchair = (bool)$input->getOption(self::WHEELCHAIR);
 
 		$buildingModel = new BuildingModel();
 		$buildingModel->setDisplayName($displayName);
