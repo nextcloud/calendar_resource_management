@@ -59,12 +59,12 @@ class CreateStory extends Command {
 		$this->addArgument(
 			self::BUILDING_ID,
 			InputArgument::REQUIRED,
-			"ID of the building, e.g. 17"
+			'ID of the building, e.g. 17'
 		);
 		$this->addArgument(
 			self::DISPLAY_NAME,
 			InputArgument::REQUIRED,
-			"Name of the floor, e.g. \"2\""
+			'Name of the floor, e.g. "2"'
 		);
 	}
 

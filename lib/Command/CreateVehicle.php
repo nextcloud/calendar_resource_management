@@ -31,6 +31,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class CreateVehicle extends Command {
@@ -38,13 +39,13 @@ class CreateVehicle extends Command {
 	private const BUILDING_ID = 'building_id';
 	private const DISPLAY_NAME = 'display_name';
 	private const EMAIL = 'email';
-	private const CONTACT = 'contact_person_user_id';
+	private const CONTACT = 'contact-person-user-id';
 	private const VEHICLE_TYPE = 'vehicle_type';
 	private const VEHICLE_MAKE = 'vehicle_make';
 	private const VEHICLE_MODEL = 'vehicle_model';
-	private const IS_ELECTRIC = 'is_electric';
+	private const IS_ELECTRIC = 'is-electric';
 	private const RANGE = 'range';
-	private const SEATING_CAPACITY = 'seating_capacity';
+	private const SEATING_CAPACITY = 'seating-capacity';
 
 	/** @var LoggerInterface */
 	private $logger;
@@ -71,10 +72,10 @@ class CreateVehicle extends Command {
 		$this->addArgument(self::VEHICLE_TYPE, InputArgument::REQUIRED);
 		$this->addArgument(self::VEHICLE_MAKE, InputArgument::REQUIRED);
 		$this->addArgument(self::VEHICLE_MODEL, InputArgument::REQUIRED);
-		$this->addArgument(self::CONTACT, InputArgument::OPTIONAL);
-		$this->addArgument(self::IS_ELECTRIC, InputArgument::OPTIONAL);
-		$this->addArgument(self::RANGE, InputArgument::OPTIONAL);
-		$this->addArgument(self::SEATING_CAPACITY, InputArgument::OPTIONAL);
+		$this->addOption(self::CONTACT, null, InputOption::VALUE_REQUIRED);
+		$this->addOption(self::IS_ELECTRIC, null, InputOption::VALUE_REQUIRED);
+		$this->addOption(self::RANGE, null, InputOption::VALUE_REQUIRED);
+		$this->addOption(self::SEATING_CAPACITY, null, InputOption::VALUE_REQUIRED);
 	}
 
 	/**
@@ -85,13 +86,13 @@ class CreateVehicle extends Command {
 		$buildingId = (int)$input->getArgument(self::BUILDING_ID);
 		$displayName = (string)$input->getArgument(self::DISPLAY_NAME);
 		$email = (string)$input->getArgument(self::EMAIL);
-		$contact = (string)$input->getArgument(self::CONTACT);
+		$contact = (string)$input->getOption(self::CONTACT);
 		$vehicleType = (string)$input->getArgument(self::VEHICLE_TYPE);
 		$vehicleMake = (string)$input->getArgument(self::VEHICLE_MAKE);
 		$model = (string)$input->getArgument(self::VEHICLE_MODEL);
-		$isElectric = (bool)$input->getArgument(self::IS_ELECTRIC);
-		$range = (int)$input->getArgument(self::RANGE);
-		$seating = (int)$input->getArgument(self::SEATING_CAPACITY);
+		$isElectric = (bool)$input->getOption(self::IS_ELECTRIC);
+		$range = (int)$input->getOption(self::RANGE);
+		$seating = (int)$input->getOption(self::SEATING_CAPACITY);
 
 		$vehicleModel = new VehicleModel();
 		$vehicleModel->setBuildingId($buildingId);

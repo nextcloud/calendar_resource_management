@@ -32,6 +32,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class CreateResource extends Command {
@@ -40,7 +41,7 @@ class CreateResource extends Command {
 	private const DISPLAY_NAME = 'display_name';
 	private const EMAIL = 'email';
 	private const TYPE = 'resource_type';
-	private const CONTACT = 'contact_person_user_id';
+	private const CONTACT = 'contact-person-user-id';
 
 	/** @var LoggerInterface */
 	private $logger;
@@ -66,7 +67,7 @@ class CreateResource extends Command {
 		$this->addArgument(self::DISPLAY_NAME, InputArgument::REQUIRED);
 		$this->addArgument(self::EMAIL, InputArgument::REQUIRED);
 		$this->addArgument(self::TYPE, InputArgument::REQUIRED);
-		$this->addArgument(self::CONTACT, InputArgument::OPTIONAL);
+		$this->addOption(self::CONTACT, null, InputOption::VALUE_REQUIRED);
 	}
 
 	/**
@@ -78,7 +79,7 @@ class CreateResource extends Command {
 		$displayName = (string)$input->getArgument(self::DISPLAY_NAME);
 		$email = (string)$input->getArgument(self::EMAIL);
 		$type = (string)$input->getArgument(self::TYPE);
-		$contact = (string)$input->getArgument(self::CONTACT);
+		$contact = (string)$input->getOption(self::CONTACT);
 
 
 		$resourceModel = new ResourceModel();
