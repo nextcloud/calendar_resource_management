@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.5.0 - 2023-05-17
+### Added
+- Support for Nextcloud 27
+- Support for PHP 7.4
+### Removed
+- Support for Nextcloud 24
+### Changed
+- Command to create resources now uses optional parameters
+
 ## 0.4.0 - 2023-02-01
 ### Added
 - Support for Nextcloud 26
