@@ -6,17 +6,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-versions: ['8.0']
+        php-versions: ['8.1']
         nextcloud-versions: ['master']
         db: ['mysql', 'sqlite', 'pgsql']
         include:
-          - php-versions: '8.0'
-            db: 'mysql'
-            nextcloud-versions: stable24
-          - php-versions: '8.1'
+          - php-versions: '7.4'
             db: 'mysql'
             nextcloud-versions: stable25
-          - php-versions: '8.1'
+          - php-versions: '8.0'
             db: 'pgsql'
             nextcloud-versions: master
           - php-versions: '8.2'
