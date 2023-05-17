@@ -5,7 +5,7 @@
     <name>Calendar Resource Management</name>
     <summary>Management for calendar resources and rooms</summary>
     <description><![CDATA[Management for calendar resources and rooms]]></description>
-    <version>0.5.0-alpha.1</version>
+    <version>0.5.0</version>
     <licence>agpl</licence>
 	<author>Richard Steinmetz</author>
 	<author homepage="https://github.com/nextcloud/groupware">Nextcloud Groupware Team</author>
