@@ -25,7 +25,7 @@ jobs:
     name: Nextcloud ${{ matrix.nextcloud-versions }} php${{ matrix.php-versions }} ${{ matrix.db }} setup testing
     services:
       mail-service:
-        image: christophwurst/imap-devel
+        image: ghcr.io/christophwurst/docker-imap-devel:latest
         env:
           MAILNAME: mail.domain.tld
           MAIL_ADDRESS: user@domain.tld
@@ -36,7 +36,7 @@ jobs:
           - 993:993
           - 4190:4190
       mysql-service:
-        image: mariadb:10.5
+        image: ghcr.io/nextcloud/continuous-integration-mariadb-10.6:latest
         env:
           MYSQL_ROOT_PASSWORD: my-secret-pw
           MYSQL_DATABASE: nextcloud
@@ -50,7 +50,7 @@ jobs:
           --health-timeout=5s
           --health-retries=3
       postgres-service:
-        image: postgres:14
+        image: ghcr.io/nextcloud/continuous-integration-postgres-14:latest
         env:
           POSTGRES_USER: nextcloud
           POSTGRES_DB: nextcloud
