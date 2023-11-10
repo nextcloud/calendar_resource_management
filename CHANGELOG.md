@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.6.0 - unreleased
+### Added
+- Support for Nextcloud 28
+
 ## 0.5.0 - 2023-05-17
 ### Added
 - Support for Nextcloud 27
