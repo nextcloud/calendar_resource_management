@@ -12,9 +12,6 @@ jobs:
         include:
           - php-versions: '8.0'
             db: 'pgsql'
-            nextcloud-versions: stable25
-          - php-versions: '8.1'
-            db: 'sqlite'
             nextcloud-versions: stable26
           - php-versions: '8.2'
             db: 'sqlite'
