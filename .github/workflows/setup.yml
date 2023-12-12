@@ -7,7 +7,7 @@ jobs:
     strategy:
       matrix:
         php-versions: ['8.1']
-        nextcloud-versions: ['master']
+        nextcloud-versions: ['stable28']
         db: ['mysql', 'sqlite', 'pgsql']
         include:
           - php-versions: '7.4'
@@ -15,16 +15,16 @@ jobs:
             nextcloud-versions: stable25
           - php-versions: '8.0'
             db: 'pgsql'
-            nextcloud-versions: master
+            nextcloud-versions: stable26
           - php-versions: '8.1'
             db: 'sqlite'
             nextcloud-versions: stable27
           - php-versions: '8.2'
             db: 'sqlite'
-            nextcloud-versions: master
+            nextcloud-versions: stable28
           - php-versions: '8.3'
             db: 'sqlite'
-            nextcloud-versions: master
+            nextcloud-versions: stable28
     name: Nextcloud ${{ matrix.nextcloud-versions }} php${{ matrix.php-versions }} ${{ matrix.db }} setup testing
     services:
       mail-service:
