@@ -10,16 +10,13 @@ jobs:
         nextcloud-versions: ['master']
         db: ['mysql', 'sqlite', 'pgsql']
         include:
-          - php-versions: '7.4'
-            db: 'mysql'
-            nextcloud-versions: stable25
           - php-versions: '8.0'
             db: 'pgsql'
-            nextcloud-versions: master
-          - php-versions: '8.1'
+            nextcloud-versions: stable26
+          - php-versions: '8.2'
             db: 'sqlite'
             nextcloud-versions: stable27
-          - php-versions: '8.2'
+          - php-versions: '8.3'
             db: 'sqlite'
             nextcloud-versions: master
     name: Nextcloud ${{ matrix.nextcloud-versions }} php${{ matrix.php-versions }} ${{ matrix.db }} setup testing
