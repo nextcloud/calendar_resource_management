@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.7.0 - 2024-03-26
+### Added
+- Support for Nextcloud 29
+- Support for PHP 8.3
+### Removed
+- Support for Nextcloud 25
+- Support for PHP 7.4
+
 ## 0.6.0 - 2023-12-12
 ### Added
 - Support for Nextcloud 28
