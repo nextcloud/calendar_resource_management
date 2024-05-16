@@ -6,6 +6,7 @@ declare(strict_types=1);
  * @copyright 2021 Anna Larch <anna.larch@nextcloud.com>
  *
  * @author 2021 Anna Larch <anna.larch@nextcloud.com>
+ * @author 2024 Richard Steinmetz <richard@steinmetz.cloud>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -27,6 +28,7 @@ namespace OCA\CalendarResourceManagement\Command;
 
 use OCA\CalendarResourceManagement\Db\RoomMapper;
 use OCA\CalendarResourceManagement\Db\RoomModel;
+use OCP\Calendar\Room\IManager as IRoomManager;
 use OCP\DB\Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
@@ -57,7 +59,11 @@ class CreateRoom extends Command {
 	/** @var RoomMapper */
 	private $roomMapper;
 
-	public function __construct(LoggerInterface $logger, RoomMapper $roomMapper) {
+	public function __construct(
+		LoggerInterface $logger,
+		RoomMapper $roomMapper,
+		private IRoomManager $roomManager,
+	) {
 		parent::__construct();
 		$this->logger = $logger;
 		$this->roomMapper = $roomMapper;
@@ -199,6 +205,10 @@ class CreateRoom extends Command {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
 			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');
 			return 1;
+		}
+
+		if (method_exists($this->roomManager, 'update')) {
+			$this->roomManager->update();
 		}
 
 		return 0;
