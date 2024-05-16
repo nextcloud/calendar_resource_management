@@ -6,6 +6,7 @@ declare(strict_types=1);
  * @copyright 2021 Anna Larch <anna.larch@nextcloud.com>
  *
  * @author 2021 Anna Larch <anna.larch@nextcloud.com>
+ * @author 2024 Richard Steinmetz <richard@steinmetz.cloud>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -27,7 +28,9 @@ namespace OCA\CalendarResourceManagement\Command;
 
 use OCA\CalendarResourceManagement\Db\ResourceMapper;
 use OCA\CalendarResourceManagement\Db\ResourceModel;
+use OCA\DAV\Events\ScheduleResourcesRoomsUpdateEvent;
 use OCP\DB\Exception;
+use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -49,11 +52,15 @@ class CreateResource extends Command {
 	/** @var ResourceMapper */
 	private $resourceMapper;
 
+	private IEventDispatcher $eventDispatcher;
+
 	public function __construct(LoggerInterface $logger,
-								ResourceMapper $resourceMapper) {
+								ResourceMapper $resourceMapper,
+								IEventDispatcher $eventDispatcher) {
 		parent::__construct();
 		$this->logger = $logger;
 		$this->resourceMapper = $resourceMapper;
+		$this->eventDispatcher = $eventDispatcher;
 	}
 
 	/**
@@ -98,6 +105,10 @@ class CreateResource extends Command {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
 			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');
 			return 1;
+		}
+
+		if (class_exists(ScheduleResourcesRoomsUpdateEvent::class)) {
+			$this->eventDispatcher->dispatchTyped(new ScheduleResourcesRoomsUpdateEvent());
 		}
 
 		return 0;

@@ -6,6 +6,7 @@ declare(strict_types=1);
  * @copyright 2021 Anna Larch <anna.larch@nextcloud.com>
  *
  * @author 2021 Anna Larch <anna.larch@nextcloud.com>
+ * @author 2024 Richard Steinmetz <richard@steinmetz.cloud>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -26,9 +27,11 @@ declare(strict_types=1);
 namespace OCA\CalendarResourceManagement\Command;
 
 use OCA\CalendarResourceManagement\Db\AMapper;
+use OCA\DAV\Events\ScheduleResourcesRoomsUpdateEvent;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\Exception;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
@@ -46,10 +49,13 @@ class DeleteResource extends Command {
 	/** @var IDBConnection */
 	private $connection;
 
-	public function __construct(LoggerInterface $logger, IDBConnection $connection) {
+	private IEventDispatcher $eventDispatcher;
+
+	public function __construct(LoggerInterface $logger, IDBConnection $connection, IEventDispatcher $eventDispatcher) {
 		parent::__construct();
 		$this->logger = $logger;
 		$this->connection = $connection;
+		$this->eventDispatcher = $eventDispatcher;
 	}
 
 	/**
@@ -99,6 +105,10 @@ class DeleteResource extends Command {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
 			$output->writeln('<error>Could not delete resource type ' . $type . ' with ID ' . $id . ': ' . $e->getMessage() . '</error>');
 			return 1;
+		}
+
+		if (class_exists(ScheduleResourcesRoomsUpdateEvent::class)) {
+			$this->eventDispatcher->dispatchTyped(new ScheduleResourcesRoomsUpdateEvent());
 		}
 
 		return 0;
