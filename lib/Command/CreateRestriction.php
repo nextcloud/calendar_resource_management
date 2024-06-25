@@ -6,6 +6,7 @@ declare(strict_types=1);
  * @copyright 2021 Anna Larch <anna.larch@nextcloud.com>
  *
  * @author 2021 Anna Larch <anna.larch@nextcloud.com>
+ * @author 2024 Richard Steinmetz <richard@steinmetz.cloud>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -27,6 +28,8 @@ namespace OCA\CalendarResourceManagement\Command;
 
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Db\RestrictionModel;
+use OCP\Calendar\Resource\IManager as IResourceManager;
+use OCP\Calendar\Room\IManager as IRoomManager;
 use OCP\DB\Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
@@ -46,7 +49,9 @@ class CreateRestriction extends Command {
 	private $restrictionMapper;
 
 	public function __construct(LoggerInterface $logger,
-								RestrictionMapper $restrictionMapper) {
+								RestrictionMapper $restrictionMapper,
+								private IResourceManager $resourceManager,
+								private IRoomManager $roomManager) {
 		parent::__construct();
 		$this->logger = $logger;
 		$this->restrictionMapper = $restrictionMapper;
@@ -84,6 +89,20 @@ class CreateRestriction extends Command {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
 			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');
 			return 1;
+		}
+
+		switch ($entityType) {
+			case "vehicle":
+			case "resource":
+				if (method_exists($this->resourceManager, 'update')) {
+					$this->resourceManager->update();
+				}
+				break;
+			case "room":
+				if (method_exists($this->roomManager, 'update')) {
+					$this->roomManager->update();
+				}
+				break;
 		}
 
 		return 0;

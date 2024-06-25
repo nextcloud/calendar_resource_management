@@ -6,6 +6,7 @@ declare(strict_types=1);
  * @copyright 2021 Anna Larch <anna.larch@nextcloud.com>
  *
  * @author 2021 Anna Larch <anna.larch@nextcloud.com>
+ * @author 2024 Richard Steinmetz <richard@steinmetz.cloud>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -27,6 +28,7 @@ namespace OCA\CalendarResourceManagement\Command;
 
 use OCA\CalendarResourceManagement\Db\VehicleMapper;
 use OCA\CalendarResourceManagement\Db\VehicleModel;
+use OCP\Calendar\Resource\IManager as IResourceManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -53,7 +55,11 @@ class CreateVehicle extends Command {
 	/** @var VehicleMapper */
 	private $vehicleMapper;
 
-	public function __construct(LoggerInterface $logger, VehicleMapper $vehicleMapper) {
+	public function __construct(
+		LoggerInterface $logger,
+		VehicleMapper $vehicleMapper,
+		private IResourceManager $resourceManager,
+	) {
 		parent::__construct();
 		$this->logger = $logger;
 		$this->vehicleMapper = $vehicleMapper;
@@ -115,6 +121,10 @@ class CreateVehicle extends Command {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
 			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');
 			return 1;
+		}
+
+		if (method_exists($this->resourceManager, 'update')) {
+			$this->resourceManager->update();
 		}
 
 		return 0;

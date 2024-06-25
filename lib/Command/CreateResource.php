@@ -6,6 +6,7 @@ declare(strict_types=1);
  * @copyright 2021 Anna Larch <anna.larch@nextcloud.com>
  *
  * @author 2021 Anna Larch <anna.larch@nextcloud.com>
+ * @author 2024 Richard Steinmetz <richard@steinmetz.cloud>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -27,6 +28,7 @@ namespace OCA\CalendarResourceManagement\Command;
 
 use OCA\CalendarResourceManagement\Db\ResourceMapper;
 use OCA\CalendarResourceManagement\Db\ResourceModel;
+use OCP\Calendar\Resource\IManager as IResourceManager;
 use OCP\DB\Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
@@ -50,7 +52,8 @@ class CreateResource extends Command {
 	private $resourceMapper;
 
 	public function __construct(LoggerInterface $logger,
-								ResourceMapper $resourceMapper) {
+								ResourceMapper $resourceMapper,
+								private IResourceManager $resourceManager) {
 		parent::__construct();
 		$this->logger = $logger;
 		$this->resourceMapper = $resourceMapper;
@@ -98,6 +101,10 @@ class CreateResource extends Command {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
 			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');
 			return 1;
+		}
+
+		if (method_exists($this->resourceManager, 'update')) {
+			$this->resourceManager->update();
 		}
 
 		return 0;

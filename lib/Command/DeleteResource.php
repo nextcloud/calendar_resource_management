@@ -6,6 +6,7 @@ declare(strict_types=1);
  * @copyright 2021 Anna Larch <anna.larch@nextcloud.com>
  *
  * @author 2021 Anna Larch <anna.larch@nextcloud.com>
+ * @author 2024 Richard Steinmetz <richard@steinmetz.cloud>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -28,6 +29,8 @@ namespace OCA\CalendarResourceManagement\Command;
 use OCA\CalendarResourceManagement\Db\AMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\Calendar\Resource\IManager as IResourceManager;
+use OCP\Calendar\Room\IManager as IRoomManager;
 use OCP\DB\Exception;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
@@ -46,7 +49,12 @@ class DeleteResource extends Command {
 	/** @var IDBConnection */
 	private $connection;
 
-	public function __construct(LoggerInterface $logger, IDBConnection $connection) {
+	public function __construct(
+		LoggerInterface $logger,
+		IDBConnection $connection,
+		private IResourceManager $resourceManager,
+		private IRoomManager $roomManager,
+	) {
 		parent::__construct();
 		$this->logger = $logger;
 		$this->connection = $connection;
@@ -101,6 +109,34 @@ class DeleteResource extends Command {
 			return 1;
 		}
 
+		switch ($type) {
+			case "building":
+			case "story":
+			case "room":
+				$this->updateRooms();
+				break;
+			case "vehicle":
+			case "resource":
+				$this->updateResources();
+				break;
+			default:
+				$this->updateResources();
+				$this->updateRooms();
+				break;
+		}
+
 		return 0;
+	}
+
+	private function updateResources(): void {
+		if (method_exists($this->resourceManager, 'update')) {
+			$this->resourceManager->update();
+		}
+	}
+
+	private function updateRooms(): void {
+		if (method_exists($this->roomManager, 'update')) {
+			$this->roomManager->update();
+		}
 	}
 }
