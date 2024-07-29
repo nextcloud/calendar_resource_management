@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.8.0 - 2024-07-29
+### Added
+- Update rooms and resources instantly (only on Nextcloud 30)
+- Support for Nextcloud 30
+### Removed
+- Support for Nextcloud 26
+- Support for Nextcloud 27
+
 ## 0.7.0 - 2024-03-26
 ### Added
 - Support for Nextcloud 29
