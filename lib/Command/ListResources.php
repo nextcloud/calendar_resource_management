@@ -62,12 +62,12 @@ class ListResources extends Command {
 	private $vehicleMapper;
 
 	public function __construct(LoggerInterface $logger,
-								BuildingMapper $buildingMapper,
-								ResourceMapper $resourceMapper,
-								RestrictionMapper $restrictionMapper,
-								RoomMapper $roomMapper,
-								StoryMapper $storyMapper,
-								VehicleMapper $vehicleMapper) {
+		BuildingMapper $buildingMapper,
+		ResourceMapper $resourceMapper,
+		RestrictionMapper $restrictionMapper,
+		RoomMapper $roomMapper,
+		StoryMapper $storyMapper,
+		VehicleMapper $vehicleMapper) {
 		parent::__construct();
 		$this->buildingMapper = $buildingMapper;
 		$this->resourceMapper = $resourceMapper;

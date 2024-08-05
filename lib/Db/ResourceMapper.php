@@ -51,10 +51,10 @@ class ResourceMapper extends AMapper {
 	 * @return array
 	 */
 	public function findAllByBuilding(int $buildingId,
-									  string $orderBy = 'display_name',
-									  bool $ascending = true,
-									  ?int $limit = null,
-									  ?int $offset = null): array {
+		string $orderBy = 'display_name',
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		return $this->findAllByFilter([
 			['building_id', $buildingId, IQueryBuilder::PARAM_INT],
 		], $orderBy, $ascending, $limit, $offset);
@@ -69,10 +69,10 @@ class ResourceMapper extends AMapper {
 	 * @return array
 	 */
 	public function findAllByResourceType(string $resourceType,
-										 string $orderBy = 'display_name',
-										 bool $ascending = true,
-										 ?int $limit = null,
-										 ?int $offset = null):array {
+		string $orderBy = 'display_name',
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null):array {
 		return $this->findAllByFilter([
 			['resource_type', $resourceType, IQueryBuilder::PARAM_STR],
 		], $orderBy, $ascending, $limit, $offset);
@@ -88,11 +88,11 @@ class ResourceMapper extends AMapper {
 	 * @return array
 	 */
 	public function findAllByBuildingAndResourceType(int $buildingId,
-													string $resourceType,
-													string $orderBy = 'display_name',
-													bool $ascending = true,
-													?int $limit = null,
-													?int $offset = null): array {
+		string $resourceType,
+		string $orderBy = 'display_name',
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		return $this->findAllByFilter([
 			['building_id', $buildingId, IQueryBuilder::PARAM_INT],
 			['resource_type', $resourceType, IQueryBuilder::PARAM_STR],

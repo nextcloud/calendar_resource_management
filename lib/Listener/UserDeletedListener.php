@@ -52,8 +52,8 @@ class UserDeletedListener implements IEventListener {
 	 * @param VehicleMapper $vehicleMapper
 	 */
 	public function __construct(ResourceMapper $resourceMapper,
-								  RoomMapper $roomMapper,
-								  VehicleMapper $vehicleMapper) {
+		RoomMapper $roomMapper,
+		VehicleMapper $vehicleMapper) {
 		$this->resourceMapper = $resourceMapper;
 		$this->roomMapper = $roomMapper;
 		$this->vehicleMapper = $vehicleMapper;

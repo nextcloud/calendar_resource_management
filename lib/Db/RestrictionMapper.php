@@ -78,9 +78,9 @@ class RestrictionMapper extends QBMapper {
 	 * @return BuildingModel[]
 	 */
 	public function findAll(string $orderBy = 'id',
-							bool $ascending = true,
-							?int $limit = null,
-							?int $offset = null): array {
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->select('*')
@@ -105,9 +105,9 @@ class RestrictionMapper extends QBMapper {
 	 * @return RestrictionModel[]
 	 */
 	public function findAllByEntityTypeAndId(string $entityType,
-											 int $entityId,
-											 ?int $limit = null,
-											 ?int $offset = null): array {
+		int $entityId,
+		?int $limit = null,
+		?int $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->select('*')
@@ -130,7 +130,7 @@ class RestrictionMapper extends QBMapper {
 	 * @param int $entityId
 	 */
 	public function deleteAllByEntityTypeAndId(string $entityType,
-											   int $entityId): void {
+		int $entityId): void {
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->delete($this->tableName)

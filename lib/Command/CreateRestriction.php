@@ -49,9 +49,9 @@ class CreateRestriction extends Command {
 	private $restrictionMapper;
 
 	public function __construct(LoggerInterface $logger,
-								RestrictionMapper $restrictionMapper,
-								private IResourceManager $resourceManager,
-								private IRoomManager $roomManager) {
+		RestrictionMapper $restrictionMapper,
+		private IResourceManager $resourceManager,
+		private IRoomManager $roomManager) {
 		parent::__construct();
 		$this->logger = $logger;
 		$this->restrictionMapper = $restrictionMapper;

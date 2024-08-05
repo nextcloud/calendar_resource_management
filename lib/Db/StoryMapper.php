@@ -71,9 +71,9 @@ class StoryMapper extends QBMapper {
 	 * @return BuildingModel[]
 	 */
 	public function findAll(string $orderBy = 'display_name',
-							bool $ascending = true,
-							?int $limit = null,
-							?int $offset = null): array {
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->select('*')
@@ -97,8 +97,8 @@ class StoryMapper extends QBMapper {
 	 * @return StoryModel[]
 	 */
 	public function findAllByBuilding(int $buildingId,
-									  ?int $limit = null,
-									  ?int $offset = null): array {
+		?int $limit = null,
+		?int $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->select('*')
@@ -120,8 +120,8 @@ class StoryMapper extends QBMapper {
 	 * @return StoryModel[]
 	 */
 	public function findAllByBuildings(array $buildingIds,
-									   ?int $limit = null,
-									   ?int $offset = null): array {
+		?int $limit = null,
+		?int $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->select('*')

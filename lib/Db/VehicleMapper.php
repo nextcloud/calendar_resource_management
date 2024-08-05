@@ -51,10 +51,10 @@ class VehicleMapper extends AMapper {
 	 * @return array
 	 */
 	public function findAllByBuilding(int $buildingId,
-									  string $orderBy = 'display_name',
-									  bool $ascending = true,
-									  ?int $limit = null,
-									  ?int $offset = null): array {
+		string $orderBy = 'display_name',
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		return $this->findAllByFilter([
 			['building_id', $buildingId, IQueryBuilder::PARAM_INT],
 		], $orderBy, $ascending, $limit, $offset);
@@ -69,10 +69,10 @@ class VehicleMapper extends AMapper {
 	 * @return array
 	 */
 	public function findAllByVehicleType(string $vehicleType,
-										 string $orderBy = 'display_name',
-										 bool $ascending = true,
-										 ?int $limit = null,
-										 ?int $offset = null):array {
+		string $orderBy = 'display_name',
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null):array {
 		return $this->findAllByFilter([
 			['vehicle_type', $vehicleType, IQueryBuilder::PARAM_STR],
 		], $orderBy, $ascending, $limit, $offset);
@@ -88,11 +88,11 @@ class VehicleMapper extends AMapper {
 	 * @return array
 	 */
 	public function findAllByBuildingAndVehicleType(int $buildingId,
-													string $vehicleType,
-													string $orderBy = 'display_name',
-													bool $ascending = true,
-													?int $limit = null,
-													?int $offset = null): array {
+		string $vehicleType,
+		string $orderBy = 'display_name',
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		return $this->findAllByFilter([
 			['building_id', $buildingId, IQueryBuilder::PARAM_INT],
 			['vehicle_type', $vehicleType, IQueryBuilder::PARAM_STR],

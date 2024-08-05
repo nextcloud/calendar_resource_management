@@ -46,7 +46,7 @@ class VehicleService {
 	 * @param RestrictionMapper $restrictionMapper
 	 */
 	public function __construct(VehicleMapper $vehicleMapper,
-								RestrictionMapper $restrictionMapper) {
+		RestrictionMapper $restrictionMapper) {
 		$this->vehicleMapper = $vehicleMapper;
 		$this->restrictionMapper = $restrictionMapper;
 	}

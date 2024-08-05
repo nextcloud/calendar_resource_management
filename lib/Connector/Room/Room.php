@@ -61,10 +61,10 @@ class Room implements IRoom, IMetadataProvider {
 	 * @param Backend $backend
 	 */
 	public function __construct(Db\RoomModel $entity,
-								Db\StoryModel $storyEntity,
-								Db\BuildingModel $buildingEntity,
-								array $restrictions,
-								Backend $backend) {
+		Db\StoryModel $storyEntity,
+		Db\BuildingModel $buildingEntity,
+		array $restrictions,
+		Backend $backend) {
 		$this->entity = $entity;
 		$this->storyEntity = $storyEntity;
 		$this->buildingEntity = $buildingEntity;

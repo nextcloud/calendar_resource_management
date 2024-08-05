@@ -48,7 +48,7 @@ class BuildingService {
 	 * @param StoryMapper $storyMapper
 	 */
 	public function __construct(BuildingMapper $buildingMapper,
-								StoryMapper $storyMapper) {
+		StoryMapper $storyMapper) {
 		$this->buildingMapper = $buildingMapper;
 		$this->storyMapper = $storyMapper;
 	}
