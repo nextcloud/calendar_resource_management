@@ -46,7 +46,7 @@ class RoomService {
 	 * @param RestrictionMapper $restrictionMapper
 	 */
 	public function __construct(RoomMapper $roomMapper,
-								RestrictionMapper $restrictionMapper) {
+		RestrictionMapper $restrictionMapper) {
 		$this->roomMapper = $roomMapper;
 		$this->restrictionMapper = $restrictionMapper;
 	}

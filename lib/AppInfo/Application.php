@@ -24,6 +24,7 @@ declare(strict_types=1);
  */
 namespace OCA\CalendarResourceManagement\AppInfo;
 
+use OCA\CalendarResourceManagement\Connector;
 use OCA\CalendarResourceManagement\Listener\GroupDeletedListener;
 use OCA\CalendarResourceManagement\Listener\UserDeletedListener;
 use OCP\AppFramework\App;
@@ -32,7 +33,6 @@ use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\Group\Events\GroupDeletedEvent;
 use OCP\User\Events\UserDeletedEvent;
-use OCA\CalendarResourceManagement\Connector;
 
 class Application extends App implements IBootstrap {
 	/**

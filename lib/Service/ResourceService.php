@@ -46,7 +46,7 @@ class ResourceService {
 	 * @param RestrictionMapper $restrictionMapper
 	 */
 	public function __construct(ResourceMapper $resourceMapper,
-								RestrictionMapper $restrictionMapper) {
+		RestrictionMapper $restrictionMapper) {
 		$this->resourceMapper = $resourceMapper;
 		$this->restrictionMapper = $restrictionMapper;
 	}

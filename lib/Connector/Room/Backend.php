@@ -66,11 +66,11 @@ class Backend implements IBackend {
 	 * @param ILogger $logger
 	 */
 	public function __construct(string $appName,
-								Db\RoomMapper $mapper,
-								Db\RestrictionMapper $restrictionMapper,
-								Db\StoryMapper $storyMapper,
-								Db\BuildingMapper $buildingMapper,
-								ILogger $logger) {
+		Db\RoomMapper $mapper,
+		Db\RestrictionMapper $restrictionMapper,
+		Db\StoryMapper $storyMapper,
+		Db\BuildingMapper $buildingMapper,
+		ILogger $logger) {
 		$this->appName = $appName;
 		$this->mapper = $mapper;
 		$this->restrictionMapper = $restrictionMapper;

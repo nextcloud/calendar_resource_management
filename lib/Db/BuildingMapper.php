@@ -71,9 +71,9 @@ class BuildingMapper extends QBMapper {
 	 * @return BuildingModel[]
 	 */
 	public function findAll(string $orderBy = 'display_name',
-							bool $ascending = true,
-							?int $limit = null,
-							?int $offset = null): array {
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->select('*')
@@ -99,10 +99,10 @@ class BuildingMapper extends QBMapper {
 	 * @return BuildingModel[]
 	 */
 	public function search(string $search,
-						   string $orderBy = 'display_name',
-						   bool $ascending = true,
-						   ?int $limit = null,
-						   ?int $offset = null): array {
+		string $orderBy = 'display_name',
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->select('*')

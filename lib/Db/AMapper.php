@@ -76,9 +76,9 @@ abstract class AMapper extends QBMapper {
 	 * @return Entity[]
 	 */
 	public function findAll(string $orderBy = 'display_name',
-							bool $ascending = true,
-							?int $limit = null,
-							?int $offset = null): array {
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->select('*')
@@ -104,10 +104,10 @@ abstract class AMapper extends QBMapper {
 	 * @return Entity[]
 	 */
 	protected function findAllByFilter(array $filter,
-									   string $orderBy = 'display_name',
-									   bool $ascending = true,
-									   ?int $limit = null,
-									   ?int $offset = null):array {
+		string $orderBy = 'display_name',
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null):array {
 		if (empty($filter)) {
 			return $this->findAll($orderBy, $ascending, $limit, $offset);
 		}
@@ -149,9 +149,9 @@ abstract class AMapper extends QBMapper {
 	 * @throws Exception
 	 */
 	public function findAllUIDs(string $orderBy = 'display_name',
-								bool $ascending = true,
-								int $limit = null,
-								int $offset = null): array {
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->select('uid')
@@ -184,11 +184,11 @@ abstract class AMapper extends QBMapper {
 	 * @return array
 	 */
 	public function search(string $search,
-						   string $searchBy = 'display_name',
-						   string $orderBy = 'display_name',
-						   bool $ascending = true,
-						   ?int $limit = null,
-						   ?int $offset = null): array {
+		string $searchBy = 'display_name',
+		string $orderBy = 'display_name',
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->select('*')

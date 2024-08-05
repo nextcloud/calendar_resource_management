@@ -51,10 +51,10 @@ class RoomMapper extends AMapper {
 	 * @return array
 	 */
 	public function findAllByRoomType(string $roomType,
-									  string $orderBy = 'display_name',
-									  bool $ascending = true,
-									  ?int $limit = null,
-									  ?int $offset = null): array {
+		string $orderBy = 'display_name',
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		return $this->findAllByFilter([
 			['room_type', $roomType, IQueryBuilder::PARAM_STR],
 		], $orderBy, $ascending, $limit, $offset);
@@ -69,10 +69,10 @@ class RoomMapper extends AMapper {
 	 * @return array
 	 */
 	public function findAllByStoryId(int $storyId,
-									 string $orderBy = 'display_name',
-									 bool $ascending = true,
-									 ?int $limit = null,
-									 ?int $offset = null): array {
+		string $orderBy = 'display_name',
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		return $this->findAllByFilter([
 			['story_id', $storyId, IQueryBuilder::PARAM_INT]
 		], $orderBy, $ascending, $limit, $offset);
@@ -87,10 +87,10 @@ class RoomMapper extends AMapper {
 	 * @return array
 	 */
 	public function findAllByBuildingId(int $buildingId,
-										string $orderBy = 'display_name',
-										bool $ascending = true,
-										?int $limit = null,
-										?int $offset = null): array {
+		string $orderBy = 'display_name',
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->select('r.*')
@@ -122,11 +122,11 @@ class RoomMapper extends AMapper {
 	 * @return array
 	 */
 	public function findAllByRoomTypeAndStoryId(string $roomType,
-												int $storyId,
-												string $orderBy = 'display_name',
-												bool $ascending = true,
-												?int $limit = null,
-												?int $offset = null): array {
+		int $storyId,
+		string $orderBy = 'display_name',
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		return $this->findAllByFilter([
 			['room_type', $roomType, IQueryBuilder::PARAM_STR],
 			['story_id', $storyId, IQueryBuilder::PARAM_INT],
@@ -143,11 +143,11 @@ class RoomMapper extends AMapper {
 	 * @return array
 	 */
 	public function findAllByRoomTypeAndBuildingId(string $roomType,
-												   int $buildingId,
-												   string $orderBy = 'display_name',
-												   bool $ascending = true,
-												   ?int $limit = null,
-												   ?int $offset = null): array {
+		int $buildingId,
+		string $orderBy = 'display_name',
+		bool $ascending = true,
+		?int $limit = null,
+		?int $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->select('r.*')

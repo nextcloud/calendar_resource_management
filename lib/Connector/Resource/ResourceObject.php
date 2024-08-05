@@ -24,10 +24,10 @@ declare(strict_types=1);
  */
 namespace OCA\CalendarResourceManagement\Connector\Resource;
 
+use OCA\CalendarResourceManagement\Db;
 use OCP\Calendar\IMetadataProvider;
 use OCP\Calendar\Resource\IBackend;
 use OCP\Calendar\Resource\IResource;
-use \OCA\CalendarResourceManagement\Db;
 use OCP\Calendar\Resource\IResourceMetadata;
 
 /**
@@ -57,8 +57,8 @@ class ResourceObject implements IResource, IMetadataProvider {
 	 * @param Backend $backend
 	 */
 	public function __construct(Db\ResourceModel $entity,
-								array $restrictions,
-								Backend $backend) {
+		array $restrictions,
+		Backend $backend) {
 		$this->entity = $entity;
 		$this->restrictions = $restrictions;
 		$this->backend = $backend;
