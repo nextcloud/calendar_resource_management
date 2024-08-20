@@ -1,12 +1,15 @@
 {
 	"config": {
 		"platform": {
-			"php": "7.4"
+			"php": "8.0"
 		},
 		"sort-packages": true,
 		"optimize-autoloader": true,
 		"classmap-authoritative": true,
-		"autoloader-suffix": "CalendarResourceManagement"
+		"autoloader-suffix": "CalendarResourceManagement",
+		"allow-plugins": {
+			"bamarni/composer-bin-plugin": true
+		}
 	},
 	"autoload": {
 		"psr-4": {
@@ -14,16 +17,21 @@
 		}
 	},
 	"require": {
-		"php": ">=7.4 <=8.2"
+		"php": ">=8.0 <=8.3"
 	},
 	"require-dev": {
+		"bamarni/composer-bin-plugin": "^1.8",
+		"nextcloud/coding-standard": "^1.2.1",
 		"psalm/phar": "^5.25.0",
-		"roave/security-advisories": "dev-master",
-		"nextcloud/coding-standard": "^1.2.1"
+		"roave/security-advisories": "dev-master"
 	},
 	"scripts": {
+		"post-install-cmd": [
+			"@composer bin phpunit install --ansi"
+		],
 		"cs:check": "php-cs-fixer fix --dry-run --diff",
 		"cs:fix": "php-cs-fixer fix",
-		"lint": "find . -name \\*.php -not -path './vendor/*' -exec php -l \"{}\" \\;"
+		"lint": "find . -name \\*.php -not -path './vendor/*' -exec php -l \"{}\" \\;",
+		"test:unit": "phpunit -c tests/phpunit.xml"
 	}
 }
