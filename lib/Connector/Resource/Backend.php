@@ -29,7 +29,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Calendar\BackendTemporarilyUnavailableException;
 use OCP\Calendar\Resource\IBackend;
 use OCP\Calendar\Resource\IResource;
-use OCP\ILogger;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class Backend
@@ -37,20 +37,6 @@ use OCP\ILogger;
  * @package OCA\CalendarResourceManagement\Connector\Resource
  */
 class Backend implements IBackend {
-	/** @var string */
-	private $appName;
-
-	/** @var Db\ResourceMapper */
-	private $resourceMapper;
-
-	/** @var Db\VehicleMapper */
-	private $vehicleMapper;
-
-	/** @var Db\RestrictionMapper */
-	private $restrictionMapper;
-
-	/** @var ILogger */
-	private $logger;
 
 	/**
 	 * Backend constructor.
@@ -59,18 +45,15 @@ class Backend implements IBackend {
 	 * @param Db\ResourceMapper $resourceMapper
 	 * @param Db\VehicleMapper $vehicleMapper
 	 * @param Db\RestrictionMapper $restrictionMapper
-	 * @param ILogger $logger
+	 * @param LoggerInterface $logger
 	 */
-	public function __construct(string $appName,
-		Db\ResourceMapper $resourceMapper,
-		Db\VehicleMapper $vehicleMapper,
-		Db\RestrictionMapper $restrictionMapper,
-		ILogger $logger) {
-		$this->appName = $appName;
-		$this->resourceMapper = $resourceMapper;
-		$this->vehicleMapper = $vehicleMapper;
-		$this->restrictionMapper = $restrictionMapper;
-		$this->logger = $logger;
+	public function __construct(
+		private string $appName,
+		private Db\ResourceMapper $resourceMapper,
+		private Db\VehicleMapper $vehicleMapper,
+		private Db\RestrictionMapper $restrictionMapper,
+		private LoggerInterface $logger,
+	) {
 	}
 
 	/**
@@ -129,7 +112,7 @@ class Backend implements IBackend {
 		} catch (DoesNotExistException $ex) {
 			return null;
 		} catch (\Exception $ex) {
-			$this->logger->logException($ex);
+			$this->logger->error('Could not fetch resource entity', ['exception' => $ex]);
 			throw new BackendTemporarilyUnavailableException($ex->getMessage());
 		}
 	}
@@ -145,7 +128,7 @@ class Backend implements IBackend {
 		} catch (DoesNotExistException $ex) {
 			return null;
 		} catch (\Exception $ex) {
-			$this->logger->logException($ex);
+			$this->logger->error('Could not fetch vehicle entity', ['exception' => $ex]);
 			throw new BackendTemporarilyUnavailableException($ex->getMessage());
 		}
 	}
