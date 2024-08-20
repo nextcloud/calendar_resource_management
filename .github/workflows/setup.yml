@@ -18,7 +18,7 @@ jobs:
             nextcloud-versions: stable29
           - php-versions: '8.3'
             db: 'sqlite'
-            nextcloud-versions: master
+            nextcloud-versions: stable30
     name: Nextcloud ${{ matrix.nextcloud-versions }} php${{ matrix.php-versions }} ${{ matrix.db }} setup testing
     services:
       mail-service:
