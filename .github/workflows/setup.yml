@@ -18,7 +18,7 @@ jobs:
             nextcloud-versions: stable29
           - php-versions: '8.3'
             db: 'sqlite'
-            nextcloud-versions: master
+            nextcloud-versions: stable30
     name: Nextcloud ${{ matrix.nextcloud-versions }} php${{ matrix.php-versions }} ${{ matrix.db }} setup testing
     services:
       mail-service:
@@ -33,7 +33,7 @@ jobs:
           - 993:993
           - 4190:4190
       mysql-service:
-        image: ghcr.io/nextcloud/continuous-integration-mariadb-10.6:latest
+        image: ghcr.io/nextcloud/continuous-integration-mariadb-10.11:latest
         env:
           MYSQL_ROOT_PASSWORD: my-secret-pw
           MYSQL_DATABASE: nextcloud
