@@ -29,7 +29,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Calendar\BackendTemporarilyUnavailableException;
 use OCP\Calendar\Room\IBackend;
 use OCP\Calendar\Room\IRoom;
-use OCP\ILogger;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class Backend
@@ -37,23 +37,6 @@ use OCP\ILogger;
  * @package OCA\CalendarResourceManagement\Connector\Room
  */
 class Backend implements IBackend {
-	/** @var string */
-	private $appName;
-
-	/** @var Db\RoomMapper */
-	private $mapper;
-
-	/** @var Db\RestrictionMapper */
-	private $restrictionMapper;
-
-	/** @var Db\StoryMapper */
-	private $storyMapper;
-
-	/** @var Db\BuildingMapper */
-	private $buildingMapper;
-
-	/** @var ILogger */
-	private $logger;
 
 	/**
 	 * Backend constructor.
@@ -63,20 +46,16 @@ class Backend implements IBackend {
 	 * @param Db\RestrictionMapper $restrictionMapper
 	 * @param Db\StoryMapper $storyMapper
 	 * @param Db\BuildingMapper $buildingMapper
-	 * @param ILogger $logger
+	 * @param LoggerInterface $logger
 	 */
-	public function __construct(string $appName,
-		Db\RoomMapper $mapper,
-		Db\RestrictionMapper $restrictionMapper,
-		Db\StoryMapper $storyMapper,
-		Db\BuildingMapper $buildingMapper,
-		ILogger $logger) {
-		$this->appName = $appName;
-		$this->mapper = $mapper;
-		$this->restrictionMapper = $restrictionMapper;
-		$this->storyMapper = $storyMapper;
-		$this->buildingMapper = $buildingMapper;
-		$this->logger = $logger;
+	public function __construct(
+		private string $appName,
+		private Db\RoomMapper $mapper,
+		private Db\RestrictionMapper $restrictionMapper,
+		private Db\StoryMapper $storyMapper,
+		private Db\BuildingMapper $buildingMapper,
+		private LoggerInterface $logger,
+	) {
 	}
 
 	/**
@@ -97,7 +76,7 @@ class Backend implements IBackend {
 		} catch (DoesNotExistException $ex) {
 			return null;
 		} catch (\Exception $ex) {
-			$this->logger->logException($ex);
+			$this->logger->error('Could not fetch room with id ' . $id, ['exception' => $ex]);
 			throw new BackendTemporarilyUnavailableException($ex->getMessage());
 		}
 
@@ -107,7 +86,7 @@ class Backend implements IBackend {
 			$story = $this->storyMapper->find($room->getStoryId());
 			$building = $this->buildingMapper->find($story->getBuildingId());
 		} catch (\Exception $ex) {
-			$this->logger->logException($ex);
+			$this->logger->error($ex->getMessage(), ['exception' => $ex]);
 			throw new BackendTemporarilyUnavailableException($ex->getMessage());
 		}
 
