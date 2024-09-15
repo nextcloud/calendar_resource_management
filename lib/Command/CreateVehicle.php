@@ -116,7 +116,7 @@ class CreateVehicle extends Command {
 		try {
 			$inserted = $this->vehicleMapper->insert($vehicleModel);
 			$output->writeln('<info>Created new Vehicle with ID:</info>');
-			$output->writeln("<info>" . $inserted->getId() . "</info>");
+			$output->writeln('<info>' . $inserted->getId() . '</info>');
 		} catch (\Exception $e) {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
 			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');

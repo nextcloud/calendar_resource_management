@@ -69,12 +69,12 @@ class DeleteResource extends Command {
 		$this->addArgument(
 			self::TYPE,
 			InputArgument::REQUIRED,
-			"Type of resource (building, story, room, vehicle, resource, restriction)"
+			'Type of resource (building, story, room, vehicle, resource, restriction)'
 		);
 		$this->addArgument(
 			self::ID,
 			InputArgument::REQUIRED,
-			"ID of the resource to delete, e.g. 42"
+			'ID of the resource to delete, e.g. 42'
 		);
 	}
 
@@ -94,7 +94,7 @@ class DeleteResource extends Command {
 
 		try {
 			$entity = $mapper->find($id);
-		} catch (DoesNotExistException | MultipleObjectsReturnedException $e) {
+		} catch (DoesNotExistException|MultipleObjectsReturnedException $e) {
 			$output->writeln('<error>Could not find resource type ' . $type . ' with ID ' . $id . '</error>');
 			return 2;
 		}
@@ -110,13 +110,13 @@ class DeleteResource extends Command {
 		}
 
 		switch ($type) {
-			case "building":
-			case "story":
-			case "room":
+			case 'building':
+			case 'story':
+			case 'room':
 				$this->updateRooms();
 				break;
-			case "vehicle":
-			case "resource":
+			case 'vehicle':
+			case 'resource':
 				$this->updateResources();
 				break;
 			default:

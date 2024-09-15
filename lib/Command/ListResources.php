@@ -43,22 +43,22 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class ListResources extends Command {
-	/** @var BuildingMapper  */
+	/** @var BuildingMapper */
 	private $buildingMapper;
 
-	/** @var ResourceMapper	 */
+	/** @var ResourceMapper */
 	private $resourceMapper;
 
-	/** @var RestrictionMapper	 */
+	/** @var RestrictionMapper */
 	private $restrictionMapper;
 
-	/** @var RoomMapper	 */
+	/** @var RoomMapper */
 	private $roomMapper;
 
-	/** @var StoryMapper	 */
+	/** @var StoryMapper */
 	private $storyMapper;
 
-	/** @var VehicleMapper	 */
+	/** @var VehicleMapper */
 	private $vehicleMapper;
 
 	public function __construct(LoggerInterface $logger,

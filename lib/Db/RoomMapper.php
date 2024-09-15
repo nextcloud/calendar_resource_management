@@ -95,7 +95,7 @@ class RoomMapper extends AMapper {
 
 		$qb->select('r.*')
 			->from('calresources_rooms', 'r')
-			->join('r', 'calresources_stories', 's', $qb->expr()->eq("r.story_id", "s.id", IQueryBuilder::PARAM_INT))
+			->join('r', 'calresources_stories', 's', $qb->expr()->eq('r.story_id', 's.id', IQueryBuilder::PARAM_INT))
 			->where(
 				$qb->expr()->eq('s.building_id', $qb->createNamedParameter($buildingId, IQueryBuilder::PARAM_INT))
 			)
