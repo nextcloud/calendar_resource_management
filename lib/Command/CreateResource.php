@@ -96,7 +96,7 @@ class CreateResource extends Command {
 		try {
 			$inserted = $this->resourceMapper->insert($resourceModel);
 			$output->writeln('<info>Created new Resource with ID:</info>');
-			$output->writeln("<info>" . $inserted->getId() . "</info>");
+			$output->writeln('<info>' . $inserted->getId() . '</info>');
 		} catch (Exception $e) {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
 			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');

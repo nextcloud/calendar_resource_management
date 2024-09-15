@@ -141,9 +141,9 @@ class Room implements IRoom, IMetadataProvider {
 				return $this->entity->getRoomType();
 
 			case IRoomMetadata::CAPACITY:
-				return (string) $this->entity->getCapacity();
+				return (string)$this->entity->getCapacity();
 
-			case  IRoomMetadata::BUILDING_ROOM_NUMBER:
+			case IRoomMetadata::BUILDING_ROOM_NUMBER:
 				return $this->entity->getRoomNumber();
 
 			case IRoomMetadata::BUILDING_ADDRESS:

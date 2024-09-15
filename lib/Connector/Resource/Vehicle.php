@@ -80,10 +80,10 @@ class Vehicle extends ResourceObject {
 					: '0';
 
 			case IResourceMetadata::VEHICLE_RANGE:
-				return (string) $this->entity->getRange();
+				return (string)$this->entity->getRange();
 
 			case IResourceMetadata::VEHICLE_SEATING_CAPACITY:
-				return (string) $this->entity->getSeatingCapacity();
+				return (string)$this->entity->getSeatingCapacity();
 
 			default:
 				return parent::getMetadataForKey($key);

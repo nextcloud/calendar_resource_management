@@ -103,7 +103,7 @@ class CreateBuilding extends Command {
 		try {
 			$inserted = $this->buildingMapper->insert($buildingModel);
 			$output->writeln('<info>Created new Building with ID:</info>');
-			$output->writeln("<info>" . $inserted->getId() . "</info>");
+			$output->writeln('<info>' . $inserted->getId() . '</info>');
 		} catch (Exception $e) {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
 			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');

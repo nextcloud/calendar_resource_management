@@ -84,7 +84,7 @@ class CreateRestriction extends Command {
 		try {
 			$inserted = $this->restrictionMapper->insert($restrictionModel);
 			$output->writeln('<info>Created new Restriction with ID:</info>');
-			$output->writeln("<info>" . $inserted->getId() . "</info>");
+			$output->writeln('<info>' . $inserted->getId() . '</info>');
 		} catch (Exception $e) {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
 			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');
@@ -92,13 +92,13 @@ class CreateRestriction extends Command {
 		}
 
 		switch ($entityType) {
-			case "vehicle":
-			case "resource":
+			case 'vehicle':
+			case 'resource':
 				if (method_exists($this->resourceManager, 'update')) {
 					$this->resourceManager->update();
 				}
 				break;
-			case "room":
+			case 'room':
 				if (method_exists($this->roomManager, 'update')) {
 					$this->roomManager->update();
 				}

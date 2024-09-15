@@ -233,22 +233,22 @@ abstract class AMapper extends QBMapper {
 		$type = strtolower($type);
 		$mapper = null;
 		switch ($type) {
-			case "building":
+			case 'building':
 				$mapper = new BuildingMapper($db);
 				break;
-			case "resource":
+			case 'resource':
 				$mapper = new ResourceMapper($db);
 				break;
-			case "restriction":
+			case 'restriction':
 				$mapper = new RestrictionMapper($db);
 				break;
-			case "room":
+			case 'room':
 				$mapper = new RoomMapper($db);
 				break;
-			case "story":
+			case 'story':
 				$mapper = new StoryMapper($db);
 				break;
-			case "vehicle":
+			case 'vehicle':
 				$mapper = new VehicleMapper($db);
 				break;
 			default:
