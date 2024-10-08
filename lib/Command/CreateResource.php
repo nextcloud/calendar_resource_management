@@ -51,9 +51,11 @@ class CreateResource extends Command {
 	/** @var ResourceMapper */
 	private $resourceMapper;
 
-	public function __construct(LoggerInterface $logger,
+	public function __construct(
+		LoggerInterface $logger,
 		ResourceMapper $resourceMapper,
-		private IResourceManager $resourceManager) {
+		private IResourceManager $resourceManager,
+	) {
 		parent::__construct();
 		$this->logger = $logger;
 		$this->resourceMapper = $resourceMapper;
