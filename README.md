@@ -4,6 +4,8 @@
 -->
 # Calendar Resource Management
 
+[![REUSE status](https://api.reuse.software/badge/github.com/nextcloud/calendar_resource_management)](https://api.reuse.software/info/github.com/nextcloud/calendar_resource_management)
+
 This app enables the 🗓️ [Calendar](https://github.com/nextcloud/calendar) App to work with resources and rooms
 
 ## Installation
