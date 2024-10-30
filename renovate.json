@@ -1,7 +1,7 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"extends": [
-		"config:base",
+		"config:recommended",
 		"helpers:pinGitHubActionDigests",
 		":dependencyDashboard",
 		":semanticCommits",
@@ -35,7 +35,9 @@
 	"packageRules": [
 		{
 			"description": "Request PHP reviews",
-			"matchManagers": ["composer"],
+			"matchManagers": [
+				"composer"
+			],
 			"reviewers": [
 				"st3iny",
 				"miaulalala"
@@ -43,15 +45,22 @@
 		},
 		{
 			"description": "Bump Github actions monthly and request reviews",
-			"matchManagers": ["github-actions"],
-			"extends": ["schedule:monthly"],
+			"matchManagers": [
+				"github-actions"
+			],
+			"extends": [
+				"schedule:monthly"
+			],
 			"reviewers": [
 				"st3iny",
 				"miaulalala"
 			]
 		},
 		{
-			"matchUpdateTypes": ["minor", "patch"],
+			"matchUpdateTypes": [
+				"minor",
+				"patch"
+			],
 			"matchCurrentVersion": "!/^0/",
 			"automerge": true,
 			"automergeType": "pr",
@@ -64,7 +73,9 @@
 		},
 		{
 			"description": "Only automerge packages that follow semver",
-			"matchPackageNames": ["friendsofphp/php-cs-fixer"],
+			"matchPackageNames": [
+				"friendsofphp/php-cs-fixer"
+			],
 			"automerge": false,
 			"labels": [
 				"dependencies",
@@ -80,9 +91,15 @@
 			"matchBaseBranches": "/^stable(.)+/"
 		},
 		{
-			"matchBaseBranches": ["main"],
-			"matchDepTypes": ["devDependencies"],
-			"extends": ["schedule:monthly"]
+			"matchBaseBranches": [
+				"main"
+			],
+			"matchDepTypes": [
+				"devDependencies"
+			],
+			"extends": [
+				"schedule:monthly"
+			]
 		}
 	],
 	"vulnerabilityAlerts": {
