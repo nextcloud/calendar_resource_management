@@ -1,5 +1,5 @@
-name: "Feature request"
-description: "You have a neat idea that should be implemented?"
+name: "🚀 Feature request"
+description: "Suggest an idea for this app"
 labels: ["enhancement", "0. to triage"]
 body:
   - type: textarea
