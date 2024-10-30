@@ -1,5 +1,5 @@
-name: "Bug"
-description: "Have you encountered a bug?"
+name: "🐞 Bug report"
+description: "Help us to improve by reporting a bug"
 labels: ["bug", "0. to triage"]
 body:
   - type: textarea

@@ -1,4 +1,9 @@
+<!--
+  - SPDX-FileCopyrightText: 2021 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 # Calendar Resource Management
+
 This app enables the 🗓️ [Calendar](https://github.com/nextcloud/calendar) App to work with resources and rooms
 
 ## Installation
@@ -40,9 +45,3 @@ Ref https://github.com/nextcloud/calendar_resource_management/issues/119#issueco
 The resources will be added to the calendar app via cron.
 
 Any create command will return the ID of the created resource as the last line.
-
-
-
-
-
-
