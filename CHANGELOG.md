@@ -5,6 +5,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.9.0-beta.1 - 2025-01-09
+### Added
+- Support for Nextcloud 31
+
 ## 0.8.0 - 2024-07-29
 ### Added
 - Update rooms and resources instantly (only on Nextcloud 30)
