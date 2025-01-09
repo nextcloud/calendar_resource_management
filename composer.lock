@@ -4,9 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "49cf44417498a8e89c834c8a03fe5cb0",
-    "packages": [],
-    "packages-dev": [
+    "content-hash": "f72e6f25ec4d0c8a545abf1478aa8faf",
+    "packages": [
         {
             "name": "bamarni/composer-bin-plugin",
             "version": "1.8.2",
@@ -63,7 +62,9 @@
                 "source": "https://github.com/bamarni/composer-bin-plugin/tree/1.8.2"
             },
             "time": "2022-10-31T08:38:03+00:00"
-        },
+        }
+    ],
+    "packages-dev": [
         {
             "name": "kubawerlos/php-cs-fixer-custom-fixers",
             "version": "v3.22.0",
