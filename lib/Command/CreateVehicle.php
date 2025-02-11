@@ -11,6 +11,7 @@ namespace OCA\CalendarResourceManagement\Command;
 
 use OCA\CalendarResourceManagement\Db\VehicleMapper;
 use OCA\CalendarResourceManagement\Db\VehicleModel;
+use OCA\CalendarResourceManagement\Service\UidValidationService;
 use OCP\Calendar\Resource\IManager as IResourceManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
@@ -42,6 +43,7 @@ class CreateVehicle extends Command {
 		LoggerInterface $logger,
 		VehicleMapper $vehicleMapper,
 		private IResourceManager $resourceManager,
+		private UidValidationService $uidValidationService,
 	) {
 		parent::__construct();
 		$this->logger = $logger;
@@ -82,6 +84,8 @@ class CreateVehicle extends Command {
 		$isElectric = (bool)$input->getOption(self::IS_ELECTRIC);
 		$range = (int)$input->getOption(self::RANGE);
 		$seating = (int)$input->getOption(self::SEATING_CAPACITY);
+
+		$this->uidValidationService->validateUidAndThrow($uid);
 
 		$vehicleModel = new VehicleModel();
 		$vehicleModel->setBuildingId($buildingId);
