@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         php-versions: ['8.1']
-        nextcloud-versions: ['master']
+        nextcloud-versions: ['stable31']
         db: ['mysql', 'sqlite', 'pgsql']
         include:
           - php-versions: '8.0'
