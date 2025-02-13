@@ -11,6 +11,7 @@ namespace OCA\CalendarResourceManagement\Command;
 
 use OCA\CalendarResourceManagement\Db\RoomMapper;
 use OCA\CalendarResourceManagement\Db\RoomModel;
+use OCA\CalendarResourceManagement\Service\UidValidationService;
 use OCP\Calendar\Room\IManager as IRoomManager;
 use OCP\DB\Exception;
 use Psr\Log\LoggerInterface;
@@ -46,6 +47,7 @@ class CreateRoom extends Command {
 		LoggerInterface $logger,
 		RoomMapper $roomMapper,
 		private IRoomManager $roomManager,
+		private UidValidationService $uidValidationService,
 	) {
 		parent::__construct();
 		$this->logger = $logger;
@@ -163,6 +165,8 @@ class CreateRoom extends Command {
 		$projector = (bool)$input->getOption(self::HAS_PROJECTOR);
 		$whiteboard = (bool)$input->getOption(self::HAS_WHITEBOARD);
 		$wheelchair = (bool)$input->getOption(self::IS_WHEELCHAIR_ACCESSIBLE);
+
+		$this->uidValidationService->validateUidAndThrow($uid);
 
 		$roomModel = new RoomModel();
 		$roomModel->setStoryId($storyId);
