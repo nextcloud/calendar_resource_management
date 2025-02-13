@@ -11,6 +11,7 @@ namespace OCA\CalendarResourceManagement\Command;
 
 use OCA\CalendarResourceManagement\Db\ResourceMapper;
 use OCA\CalendarResourceManagement\Db\ResourceModel;
+use OCA\CalendarResourceManagement\Service\UidValidationService;
 use OCP\Calendar\Resource\IManager as IResourceManager;
 use OCP\DB\Exception;
 use Psr\Log\LoggerInterface;
@@ -38,6 +39,7 @@ class CreateResource extends Command {
 		LoggerInterface $logger,
 		ResourceMapper $resourceMapper,
 		private IResourceManager $resourceManager,
+		private UidValidationService $uidValidationService,
 	) {
 		parent::__construct();
 		$this->logger = $logger;
@@ -69,6 +71,7 @@ class CreateResource extends Command {
 		$type = (string)$input->getArgument(self::TYPE);
 		$contact = (string)$input->getOption(self::CONTACT);
 
+		$this->uidValidationService->validateUidAndThrow($uid);
 
 		$resourceModel = new ResourceModel();
 		$resourceModel->setUid($uid);
