@@ -5,9 +5,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## 0.9.0-beta.2 - 2025-01-09
+## 0.9.0 - 2025-02-17
 ### Added
 - Support for Nextcloud 31
+- Support for PHP 8.4
+### Fixed
+- Validate uids of rooms, resources and vehicles
 
 ## 0.8.0 - 2024-07-29
 ### Added
