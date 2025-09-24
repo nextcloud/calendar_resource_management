@@ -21,7 +21,7 @@
 	"rangeStrategy": "bump",
 	"rebaseWhen": "conflicted",
 	"ignoreUnstable": false,
-	"baseBranches": [
+	"baseBranchPatterns": [
 		"main",
 		"stable0.7"
 	],
