@@ -123,7 +123,7 @@ class RestrictionMapper extends QBMapper {
 			->andWhere(
 				$qb->expr()->eq('entity_id', $qb->createNamedParameter($entityId, IQueryBuilder::PARAM_INT))
 			)
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -136,6 +136,6 @@ class RestrictionMapper extends QBMapper {
 			->where(
 				$qb->expr()->eq('group_id', $qb->createNamedParameter($groupId, IQueryBuilder::PARAM_STR))
 			)
-			->execute();
+			->executeStatement();
 	}
 }

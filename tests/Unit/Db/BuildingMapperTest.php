@@ -21,7 +21,7 @@ class BuildingMapperTest extends TestCase {
 
 		// make sure that DB is empty
 		$qb = self::$realDatabase->getQueryBuilder();
-		$qb->delete('calresources_buildings')->execute();
+		$qb->delete('calresources_buildings')->executeStatement();
 
 		$this->mapper = new BuildingMapper(self::$realDatabase);
 

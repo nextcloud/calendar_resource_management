@@ -21,7 +21,7 @@ class StoryMapperTest extends TestCase {
 
 		// make sure that DB is empty
 		$qb = self::$realDatabase->getQueryBuilder();
-		$qb->delete('calresources_stories')->execute();
+		$qb->delete('calresources_stories')->executeStatement();
 
 		$this->mapper = new StoryMapper(self::$realDatabase);
 

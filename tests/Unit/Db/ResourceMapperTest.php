@@ -21,7 +21,7 @@ class ResourceMapperTest extends TestCase {
 
 		// make sure that DB is empty
 		$qb = self::$realDatabase->getQueryBuilder();
-		$qb->delete('calresources_resources')->execute();
+		$qb->delete('calresources_resources')->executeStatement();
 
 		$this->mapper = new ResourceMapper(self::$realDatabase);
 
