@@ -147,7 +147,7 @@ abstract class AMapper extends QBMapper {
 		if ($offset !== null) {
 			$qb->setFirstResult($offset);
 		}
-		$stmt = $qb->execute();
+		$stmt = $qb->executeQuery();
 
 		$uids = [];
 		while ($row = $stmt->fetch()) {
@@ -204,7 +204,7 @@ abstract class AMapper extends QBMapper {
 			->set('contact_person_user_id', $qb->createNamedParameter(null))
 			->where($qb->expr()->eq('contact_person_user_id', $qb->createNamedParameter($userId)));
 
-		$qb->execute();
+		$qb->executeStatement();
 	}
 
 	/**

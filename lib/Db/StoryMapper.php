@@ -129,6 +129,6 @@ class StoryMapper extends QBMapper {
 			->where(
 				$qb->expr()->eq('building_id', $qb->createNamedParameter($buildingId, IQueryBuilder::PARAM_INT))
 			)
-			->execute();
+			->executeStatement();
 	}
 }

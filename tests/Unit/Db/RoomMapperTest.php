@@ -21,7 +21,7 @@ class RoomMapperTest extends TestCase {
 
 		// make sure that DB is empty
 		$qb = self::$realDatabase->getQueryBuilder();
-		$qb->delete('calresources_rooms')->execute();
+		$qb->delete('calresources_rooms')->executeStatement();
 
 		$this->mapper = new RoomMapper(self::$realDatabase);
 

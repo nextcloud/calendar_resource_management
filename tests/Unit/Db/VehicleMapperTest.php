@@ -21,7 +21,7 @@ class VehicleMapperTest extends TestCase {
 
 		// make sure that DB is empty
 		$qb = self::$realDatabase->getQueryBuilder();
-		$qb->delete('calresources_vehicles')->execute();
+		$qb->delete('calresources_vehicles')->executeStatement();
 
 		$this->mapper = new VehicleMapper(self::$realDatabase);
 

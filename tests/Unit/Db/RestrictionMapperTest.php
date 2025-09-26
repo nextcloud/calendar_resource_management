@@ -21,7 +21,7 @@ class RestrictionMapperTest extends TestCase {
 
 		// make sure that DB is empty
 		$qb = self::$realDatabase->getQueryBuilder();
-		$qb->delete('calresources_restricts')->execute();
+		$qb->delete('calresources_restricts')->executeStatement();
 
 		$this->mapper = new RestrictionMapper(self::$realDatabase);
 
