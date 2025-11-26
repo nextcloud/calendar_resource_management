@@ -8,22 +8,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-versions: ['8.1']
+        php-versions: ['8.2', '8.3', '8.4']
         nextcloud-versions: ['master']
         db: ['mysql', 'sqlite', 'pgsql']
         include:
-          - php-versions: '8.0'
-            db: 'pgsql'
-            nextcloud-versions: stable28
-          - php-versions: '8.2'
-            db: 'sqlite'
-            nextcloud-versions: stable29
           - php-versions: '8.3'
             db: 'sqlite'
             nextcloud-versions: stable30
           - php-versions: '8.4'
             db: 'sqlite'
             nextcloud-versions: stable31
+          - php-versions: '8.4'
+            db: 'sqlite'
+            nextcloud-versions: stable32
     name: Nextcloud ${{ matrix.nextcloud-versions }} php${{ matrix.php-versions }} ${{ matrix.db }} setup testing
     services:
       mail-service:
