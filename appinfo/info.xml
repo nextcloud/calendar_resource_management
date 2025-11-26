@@ -11,7 +11,7 @@
 	<description><![CDATA[Management for calendar resources and rooms]]></description>
 	<version>0.11.0-dev.1</version>
 	<licence>agpl</licence>
-	<author>Richard Steinmetz</author>
+	<author>Hamza Mahjoubi</author>
 	<author homepage="https://github.com/nextcloud/groupware">Nextcloud Groupware Team</author>
 	<namespace>CalendarResourceManagement</namespace>
 	<types>
