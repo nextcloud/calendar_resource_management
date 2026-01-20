@@ -7,6 +7,8 @@
 		":semanticCommits",
 		":gitSignOff"
 	],
+	"assigneesFromCodeOwners": true,
+	"expandCodeOwnersGroups": true,
 	"timezone": "Europe/Berlin",
 	"schedule": [
 		"before 5am on monday"
@@ -23,7 +25,7 @@
 	"ignoreUnstable": false,
 	"baseBranchPatterns": [
 		"main",
-		"stable0.7"
+		"stable0.11"
 	],
 	"enabledManagers": [
 		"composer",
@@ -37,10 +39,6 @@
 			"description": "Request PHP reviews",
 			"matchManagers": [
 				"composer"
-			],
-			"reviewers": [
-				"st3iny",
-				"SebastianKrupinski"
 			]
 		},
 		{
@@ -50,10 +48,6 @@
 			],
 			"extends": [
 				"schedule:monthly"
-			],
-			"reviewers": [
-				"st3iny",
-				"SebastianKrupinski"
 			]
 		},
 		{
@@ -80,10 +74,6 @@
 			"labels": [
 				"dependencies",
 				"3. to review"
-			],
-			"reviewers": [
-				"st3iny",
-				"miaulalala"
 			]
 		},
 		{
