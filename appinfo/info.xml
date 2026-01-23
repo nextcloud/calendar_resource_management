@@ -22,7 +22,7 @@
 	<bugs>https://github.com/nextcloud/calendar_resource_management</bugs>
 	<dependencies>
 		<php min-version="8.1" max-version="8.5" />
-		<nextcloud min-version="30" max-version="33"/>
+		<nextcloud min-version="31" max-version="34"/>
 	</dependencies>
 	<commands>
 		<command>OCA\CalendarResourceManagement\Command\CreateBuilding</command>
