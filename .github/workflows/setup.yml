@@ -63,7 +63,7 @@ jobs:
           --health-retries 5
     steps:
       - name: Set up php${{ matrix.php-versions }}
-        uses: shivammathur/setup-php@master
+        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2.36.0
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: ctype,curl,dom,gd,iconv,intl,json,mbstring,openssl,posix,sqlite,xml,zip,gmp
@@ -76,7 +76,7 @@ jobs:
       - name: Install Nextcloud
         run: php -f nextcloud/occ maintenance:install --database-host 127.0.0.1 --database-name nextcloud --database-user nextcloud --database-pass nextcloud --admin-user admin --admin-pass admin --database ${{ matrix.db }}
       - name: Checkout Calendar Resource Management
-        uses: actions/checkout@master
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           path: nextcloud/apps/calendar_resource_management
       - name: Install dependencies
