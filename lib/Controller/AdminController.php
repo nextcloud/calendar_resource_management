@@ -48,7 +48,16 @@ class AdminController extends Controller {
                 'name' => $room->getDisplayName(),
                 'email' => $room->getEmail(),
                 'roomType' => $room->getRoomType(),
-                'storyId' => $room->getStoryId()
+                'storyId' => $room->getStoryId(),
+                'roomNumber' => $room->getRoomNumber(),
+                'contactPersonUserId' => $room->getContactPersonUserId(),
+                'capacity' => $room->getCapacity(),
+                'hasPhone' => $room->getHasPhone(),
+                'hasVideoConferencing' => $room->getHasVideoConferencing(),
+                'hasTv' => $room->getHasTv(),
+                'hasProjector' => $room->getHasProjector(),
+                'hasWhiteboard' => $room->getHasWhiteboard(),
+                'isWheelchairAccessible' => $room->getIsWheelchairAccessible()
             ];
         }, $rooms);
         return new JSONResponse($result);
@@ -60,12 +69,36 @@ class AdminController extends Controller {
         $email = $params['email'] ?? '';
         $roomType = $params['roomType'] ?? 'default';
         $storyId = (int)($params['storyId'] ?? 1);
+        $roomNumber = $params['roomNumber'] ?? '';
+        $contactPersonUserId = $params['contactPersonUserId'] ?? '';
+        $capacity = isset($params['capacity']) ? (int)$params['capacity'] : null;
+        $hasPhone = (bool)($params['hasPhone'] ?? false);
+        $hasVideo = (bool)($params['hasVideo'] ?? false);
+        $hasTv = (bool)($params['hasTv'] ?? false);
+        $hasProjector = (bool)($params['hasProjector'] ?? false);
+        $hasWhiteboard = (bool)($params['hasWhiteboard'] ?? false);
+        $wheelchairAccessible = (bool)($params['wheelchairAccessible'] ?? false);
+        
         if (!$name) {
             return new JSONResponse(['success' => false, 'error' => 'Name fehlt'], 400);
         }
         
         try {
-            $room = $this->roomService->createRoom($name, $email, $roomType, $storyId);
+            $room = $this->roomService->createRoom(
+                $name, 
+                $email, 
+                $roomType, 
+                $storyId,
+                $roomNumber,
+                $contactPersonUserId,
+                $capacity,
+                $hasPhone,
+                $hasVideo,
+                $hasTv,
+                $hasProjector,
+                $hasWhiteboard,
+                $wheelchairAccessible
+            );
             
             // Invalidate room cache
             if ($this->roomManager && method_exists($this->roomManager, 'update')) {
