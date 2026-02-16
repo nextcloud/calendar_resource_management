@@ -224,10 +224,42 @@ class AdminController extends Controller {
         if (!$name || !$buildingId) {
             return new JSONResponse(['success' => false, 'error' => 'Name oder Building ID fehlt'], 400);
         }
-        $story = new \OCA\CalendarResourceManagement\Db\StoryModel();
-        $story->setDisplayName($name);
-        $story->setBuildingId($buildingId);
-        $story = $this->storyMapper->insert($story);
-        return new JSONResponse(['success' => true, 'id' => $story->getId(), 'name' => $story->getDisplayName()]);
+        
+        // Check if building exists
+        try {
+            $this->buildingMapper->find($buildingId);
+        } catch (\Exception $e) {
+            return new JSONResponse(['success' => false, 'error' => 'Das angegebene Gebäude existiert nicht'], 400);
+        }
+        
+        try {
+            $story = new \OCA\CalendarResourceManagement\Db\StoryModel();
+            $story->setDisplayName($name);
+            $story->setBuildingId($buildingId);
+            $story = $this->storyMapper->insert($story);
+            return new JSONResponse(['success' => true, 'id' => $story->getId(), 'name' => $story->getDisplayName()]);
+        } catch (\Exception $e) {
+            return new JSONResponse(['success' => false, 'error' => 'Fehler beim Erstellen des Stockwerks: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function deletebuilding(int $id) {
+        try {
+            $building = $this->buildingMapper->find($id);
+            $this->buildingMapper->delete($building);
+            return new JSONResponse(['success' => true]);
+        } catch (\Exception $e) {
+            return new JSONResponse(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function deletestory(int $id) {
+        try {
+            $story = $this->storyMapper->find($id);
+            $this->storyMapper->delete($story);
+            return new JSONResponse(['success' => true]);
+        } catch (\Exception $e) {
+            return new JSONResponse(['success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
 }
