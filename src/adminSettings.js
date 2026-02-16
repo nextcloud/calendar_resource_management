@@ -1,9 +1,6 @@
-/**
- * SPDX-FileCopyrightText: 2026 Nextcloud GmbH and Nextcloud contributors
- * SPDX-License-Identifier: AGPL-3.0-or-later
- */
+import { createApp } from 'vue'
+import CalendarResourceAdmin from './CalendarResourceAdmin.vue'
 
-import { createApp, h } from 'vue'
-
-// TODO: replaced by the real admin settings app in the follow-up feature PR
-createApp({ render: () => h('p', 'Coming soon') }).mount('#calendar-resource-admin')
+const app = createApp(CalendarResourceAdmin)
+app.mixin({ methods: { t, n } })
+app.mount('#calendar-resource-admin')
