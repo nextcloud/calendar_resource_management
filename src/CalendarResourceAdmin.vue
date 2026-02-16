@@ -1,74 +1,74 @@
 
 <template>
   <div class="section">
-    <h2>Ressourcen- und Raumverwaltung</h2>
+    <h2>{{ t('Resource and Room Management') }}</h2>
 
-    <NcFormGroup label="Gebäude">
-      <NcTextField v-model="newBuildingName" label="Gebäudename" placeholder="Pflichtfeld" />
-      <NcTextField v-model="newBuildingAddress" label="Adresse" />
-      <NcButton type="primary" @click="addBuilding">Hinzufügen</NcButton>
+    <NcFormGroup :label="t('Buildings')">
+      <NcTextField v-model="newBuildingName" :label="t('Building Name')" :placeholder="t('Required field')" />
+      <NcTextField v-model="newBuildingAddress" :label="t('Address')" />
+      <NcButton type="primary" @click="addBuilding">{{ t('Add') }}</NcButton>
       <table class="table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Adresse</th>
-            <th>Aktionen</th>
+            <th>{{ t('Name') }}</th>
+            <th>{{ t('Address') }}</th>
+            <th>{{ t('Actions') }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="building in buildings" :key="building.id">
             <td>{{ building.name }}</td>
-            <td>{{ building.address || 'Keine Adresse' }}</td>
-            <td><NcButton type="error" size="small" @click="deleteBuilding(building.id)">Löschen</NcButton></td>
+            <td>{{ building.address || t('No address') }}</td>
+            <td><NcButton type="error" size="small" @click="deleteBuilding(building.id)">{{ t('Delete') }}</NcButton></td>
           </tr>
         </tbody>
       </table>
     </NcFormGroup>
 
-    <NcFormGroup label="Stockwerke">
-      <NcTextField v-model="newStoryName" label="Stockwerkname" placeholder="Pflichtfeld" />
+    <NcFormGroup :label="t('Stories')">
+      <NcTextField v-model="newStoryName" :label="t('Story Name')" :placeholder="t('Required field')" />
       <NcSelect 
         v-model="selectedBuildingForStory" 
         :options="buildingOptions"
         label-key="label"
         value-key="id"
-        input-label="Gebäude"
-        placeholder="Bitte auswählen"
+        :input-label="t('Building')"
+        :placeholder="t('Please select')"
       />
-      <NcButton type="primary" @click="addStory">Hinzufügen</NcButton>
+      <NcButton type="primary" @click="addStory">{{ t('Add') }}</NcButton>
       <table class="table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Gebäude</th>
-            <th>Aktionen</th>
+            <th>{{ t('Name') }}</th>
+            <th>{{ t('Building') }}</th>
+            <th>{{ t('Actions') }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="story in stories" :key="story.id">
             <td>{{ story.name }}</td>
             <td>{{ getBuildingName(story.buildingId) }}</td>
-            <td><NcButton type="error" size="small" @click="deleteStory(story.id)">Löschen</NcButton></td>
+            <td><NcButton type="error" size="small" @click="deleteStory(story.id)">{{ t('Delete') }}</NcButton></td>
           </tr>
         </tbody>
       </table>
     </NcFormGroup>
 
-    <NcFormGroup label="Räume">
-      <NcTextField v-model="newRoomName" label="Raumname" placeholder="Pflichtfeld" />
-      <NcTextField v-model="newRoomEmail" label="E-Mail" type="email" />
-      <NcTextField v-model="newRoomType" label="Raumtyp" placeholder="z.B. meeting-room" />
-      <NcTextField v-model="newRoomNumber" label="Raumnummer" placeholder="z.B. 1.23" />
-      <NcTextField v-model="newRoomContactPerson" label="Ansprechpartner (User-ID)" placeholder="z.B. admin" />
+    <NcFormGroup :label="t('Rooms')">
+      <NcTextField v-model="newRoomName" :label="t('Room Name')" :placeholder="t('Required field')" />
+      <NcTextField v-model="newRoomEmail" :label="t('Email')" type="email" />
+      <NcTextField v-model="newRoomType" :label="t('Room Type')" :placeholder="t('e.g. meeting-room')" />
+      <NcTextField v-model="newRoomNumber" :label="t('Room Number')" :placeholder="t('e.g. 1.23')" />
+      <NcTextField v-model="newRoomContactPerson" :label="t('Contact Person (User ID)')" :placeholder="t('e.g. admin')" />
       
       <div class="input-field">
-        <label for="room-capacity">Kapazität (Personen)</label>
+        <label for="room-capacity">{{ t('Capacity') }} ({{ t('persons') }})</label>
         <input 
           id="room-capacity"
           v-model.number="newRoomCapacity" 
           type="number" 
           min="0"
-          placeholder="z.B. 10" 
+          :placeholder="t('e.g. 10')" 
           class="capacity-input"
         />
       </div>
@@ -78,8 +78,8 @@
         :options="buildingOptions"
         label-key="label"
         value-key="id"
-        input-label="Gebäude"
-        placeholder="Bitte auswählen"
+        :input-label="t('Building')"
+        :placeholder="t('Please select')"
         @update:modelValue="onBuildingSelectedForRoom"
       />
       
@@ -88,34 +88,34 @@
         :options="filteredStoryOptions"
         label-key="label"
         value-key="id"
-        input-label="Stockwerk"
-        placeholder="Zuerst Gebäude wählen"
+        :input-label="t('Story')"
+        :placeholder="t('Please select building first')"
         :disabled="!selectedBuildingForRoom"
       />
       
       <div class="checkbox-group">
-        <h4>Ausstattung</h4>
-        <NcCheckboxRadioSwitch v-model="newRoomHasPhone" type="switch">Telefon</NcCheckboxRadioSwitch>
-        <NcCheckboxRadioSwitch v-model="newRoomHasVideo" type="switch">Videokonferenz</NcCheckboxRadioSwitch>
-        <NcCheckboxRadioSwitch v-model="newRoomHasTv" type="switch">TV/Monitor</NcCheckboxRadioSwitch>
-        <NcCheckboxRadioSwitch v-model="newRoomHasProjector" type="switch">Projektor</NcCheckboxRadioSwitch>
-        <NcCheckboxRadioSwitch v-model="newRoomHasWhiteboard" type="switch">Whiteboard</NcCheckboxRadioSwitch>
-        <NcCheckboxRadioSwitch v-model="newRoomWheelchairAccessible" type="switch">Rollstuhlgerecht</NcCheckboxRadioSwitch>
+        <h4>{{ t('Equipment') }}</h4>
+        <NcCheckboxRadioSwitch v-model="newRoomHasPhone" type="switch">{{ t('Has Phone') }}</NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch v-model="newRoomHasVideo" type="switch">{{ t('Has Video Conferencing') }}</NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch v-model="newRoomHasTv" type="switch">{{ t('Has TV') }}</NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch v-model="newRoomHasProjector" type="switch">{{ t('Has Projector') }}</NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch v-model="newRoomHasWhiteboard" type="switch">{{ t('Has Whiteboard') }}</NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch v-model="newRoomWheelchairAccessible" type="switch">{{ t('Wheelchair Accessible') }}</NcCheckboxRadioSwitch>
       </div>
       
-      <NcButton type="primary" @click="addRoom">Hinzufügen</NcButton>
+      <NcButton type="primary" @click="addRoom">{{ t('Add') }}</NcButton>
       <table class="table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>E-Mail</th>
-            <th>Typ</th>
-            <th>Raum-Nr</th>
-            <th>Kapazität</th>
-            <th>Ausstattung</th>
-            <th>Gebäude</th>
-            <th>Stockwerk</th>
-            <th>Aktionen</th>
+            <th>{{ t('Name') }}</th>
+            <th>{{ t('Email') }}</th>
+            <th>{{ t('Room Type') }}</th>
+            <th>{{ t('Room Number') }}</th>
+            <th>{{ t('Capacity') }}</th>
+            <th>{{ t('Equipment') }}</th>
+            <th>{{ t('Building') }}</th>
+            <th>{{ t('Story') }}</th>
+            <th>{{ t('Actions') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -135,42 +135,42 @@
             </td>
             <td>{{ getBuildingNameForRoom(room.storyId) }}</td>
             <td>{{ getStoryName(room.storyId) }}</td>
-            <td><NcButton type="error" size="small" @click="deleteRoom(room.id)">Löschen</NcButton></td>
+            <td><NcButton type="error" size="small" @click="deleteRoom(room.id)">{{ t('Delete') }}</NcButton></td>
           </tr>
         </tbody>
       </table>
     </NcFormGroup>
 
-    <NcFormGroup label="Ressourcen">
-      <NcTextField v-model="newResourceName" label="Ressourcenname" placeholder="Pflichtfeld" />
-      <NcTextField v-model="newResourceEmail" label="E-Mail" type="email" />
-      <NcTextField v-model="newResourceType" label="Ressourcentyp" />
+    <NcFormGroup :label="t('Resources')">
+      <NcTextField v-model="newResourceName" :label="t('Resource Name')" :placeholder="t('Required field')" />
+      <NcTextField v-model="newResourceEmail" :label="t('Email')" type="email" />
+      <NcTextField v-model="newResourceType" :label="t('Resource Type')" />
       <NcSelect 
         v-model="selectedBuilding" 
         :options="buildingOptions"
         label-key="label"
         value-key="id"
-        input-label="Gebäude"
-        placeholder="Bitte auswählen"
+        :input-label="t('Building')"
+        :placeholder="t('Please select')"
       />
-      <NcButton type="primary" @click="addResource">Hinzufügen</NcButton>
+      <NcButton type="primary" @click="addResource">{{ t('Add') }}</NcButton>
       <table class="table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>E-Mail</th>
-            <th>Typ</th>
-            <th>Gebäude</th>
-            <th>Aktionen</th>
+            <th>{{ t('Name') }}</th>
+            <th>{{ t('Email') }}</th>
+            <th>{{ t('Resource Type') }}</th>
+            <th>{{ t('Building') }}</th>
+            <th>{{ t('Actions') }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="resource in resources" :key="resource.id">
             <td>{{ resource.name }}</td>
-            <td>{{ resource.email || 'Keine E-Mail' }}</td>
+            <td>{{ resource.email || '-' }}</td>
             <td>{{ resource.resourceType || 'default' }}</td>
             <td>{{ getBuildingName(resource.buildingId) }}</td>
-            <td><NcButton type="error" size="small" @click="deleteResource(resource.id)">Löschen</NcButton></td>
+            <td><NcButton type="error" size="small" @click="deleteResource(resource.id)">{{ t('Delete') }}</NcButton></td>
           </tr>
         </tbody>
       </table>
@@ -194,6 +194,16 @@ export default {
     NcSelect,
     NcFormGroup,
     NcCheckboxRadioSwitch
+  },
+  methods: {
+    t(text, vars) {
+      // Fallback if t is not available
+      if (typeof window.t === 'function') {
+        return window.t('calendar_resource_management', text, vars)
+      }
+      // Fallback to original text if translation not available
+      return text
+    }
   },
   data() {
     return {
@@ -275,7 +285,7 @@ export default {
     },
     async addBuilding() {
       if (!this.newBuildingName) {
-        alert('Bitte geben Sie einen Gebäudenamen ein!');
+        alert(this.t('Please enter a building name!'));
         return;
       }
       
@@ -312,12 +322,12 @@ export default {
     },
     async addStory() {
       if (!this.newStoryName) {
-        alert('Bitte geben Sie einen Stockwerksnamen ein!');
+        alert(this.t('Please enter a story name!'));
         return;
       }
       
       if (!this.selectedBuildingForStory) {
-        alert('Bitte wählen Sie zuerst ein Gebäude aus!');
+        alert(this.t('Please select a building first!'));
         return;
       }
       // Extract the ID from the selected object
@@ -339,7 +349,7 @@ export default {
         });
         const result = await response.json();
         if (!result.success) {
-          alert('Fehler: ' + (result.error || 'Unbekannter Fehler'));
+          alert(this.t('Error: %s', result.error || this.t('Unknown error')));
           return;
         }
         this.newStoryName = '';
@@ -347,11 +357,11 @@ export default {
         this.loadStories();
       } catch (error) {
         console.error('Error adding story:', error);
-        alert('Fehler beim Erstellen des Stockwerks');
+        alert(this.t('Error creating story'));
       }
     },
     async deleteBuilding(id) {
-      if (!confirm('Möchten Sie dieses Gebäude wirklich löschen?')) {
+      if (!confirm(this.t('Do you really want to delete this building?'))) {
         return;
       }
       await fetch(OC.generateUrl(`/apps/calendar_resource_management/admin/buildings/${id}`), {
@@ -377,7 +387,7 @@ export default {
       await this.loadStories(); // Also reload stories as they might be affected
     },
     async deleteStory(id) {
-      if (!confirm('Möchten Sie dieses Stockwerk wirklich löschen?')) {
+      if (!confirm(this.t('Do you really want to delete this story?'))) {
         return;
       }
       await fetch(OC.generateUrl(`/apps/calendar_resource_management/admin/stories/${id}`), {
@@ -395,11 +405,11 @@ export default {
     async addRoom() {
       // Validation
       if (!this.newRoomName) {
-        alert('Bitte geben Sie einen Raumnamen ein!');
+        alert(this.t('Please enter a room name!'));
         return;
       }
       if (!this.selectedStory) {
-        alert('Bitte wählen Sie ein Gebäude und Stockwerk aus!');
+        alert(this.t('Please select a building first!'));
         return;
       }
       
@@ -459,12 +469,12 @@ export default {
     },
     async addResource() {
       if (!this.newResourceName) {
-        alert('Bitte geben Sie einen Ressourcennamen ein!');
+        alert(this.t('Please enter a resource name!'));
         return;
       }
       
       if (!this.selectedBuilding) {
-        alert('Bitte wählen Sie zuerst ein Gebäude aus!');
+        alert(this.t('Please select a building first!'));
         return;
       }
       
@@ -498,17 +508,17 @@ export default {
     },
     getBuildingName(id) {
       const building = this.buildings.find(b => b.id == id);
-      return building ? building.name : 'Unbekannt';
+      return building ? building.name : this.t('Unknown');
     },
     getBuildingNameForRoom(storyId) {
       const story = this.stories.find(s => s.id == storyId);
-      if (!story) return 'Unbekannt';
+      if (!story) return this.t('Unknown');
       const building = this.buildings.find(b => b.id == story.buildingId);
-      return building ? building.name : 'Unbekannt';
+      return building ? building.name : this.t('Unknown');
     },
     getStoryName(id) {
       const story = this.stories.find(s => s.id == id);
-      return story ? story.name : 'Unbekannt';
+      return story ? story.name : this.t('Unknown');
     }
   }
 }
