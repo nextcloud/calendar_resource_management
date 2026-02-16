@@ -19,6 +19,7 @@
 	</types>
 	<category>office</category>
 	<category>organization</category>
+	<icon>img/app.svg</icon>
 	<bugs>https://github.com/nextcloud/calendar_resource_management</bugs>
 	<dependencies>
 		<php min-version="8.1" max-version="8.5" />
@@ -34,4 +35,9 @@
 		<command>OCA\CalendarResourceManagement\Command\ListResources</command>
 		<command>OCA\CalendarResourceManagement\Command\DeleteResource</command>
 	</commands>
+	<settings>
+		<admin>OCA\CalendarResourceManagement\Settings\AdminSettings</admin>
+		<admin-section>OCA\CalendarResourceManagement\Settings\AdminSection</admin-section>
+	</settings>
+	<javascript>calendar-resource-admin</javascript>
 </info>

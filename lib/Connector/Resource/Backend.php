@@ -43,7 +43,35 @@ class Backend implements IBackend {
 	 * @return array
 	 */
 	public function getAllResources(): array {
-		return [];
+		$resources = [];
+		try {
+			// Load all resources
+			$resourceModels = $this->resourceMapper->findAll();
+			
+			foreach ($resourceModels as $resourceModel) {
+				try {
+					$restrictions = $this->restrictionMapper->findAllByEntityTypeAndId('resource', $resourceModel->getId());
+					$resources[] = new ResourceObject($resourceModel, $restrictions, $this);
+				} catch (\Exception $ex) {
+					$this->logger->error('Could not load resource with id ' . $resourceModel->getId(), ['exception' => $ex]);
+				}
+			}
+			
+			// Load all vehicles
+			$vehicleModels = $this->vehicleMapper->findAll();
+			
+			foreach ($vehicleModels as $vehicleModel) {
+				try {
+					$restrictions = $this->restrictionMapper->findAllByEntityTypeAndId('vehicle', $vehicleModel->getId());
+					$resources[] = new Vehicle($vehicleModel, $restrictions, $this);
+				} catch (\Exception $ex) {
+					$this->logger->error('Could not load vehicle with id ' . $vehicleModel->getId(), ['exception' => $ex]);
+				}
+			}
+		} catch (\Exception $ex) {
+			$this->logger->error('Could not fetch all resources', ['exception' => $ex]);
+		}
+		return $resources;
 	}
 
 	/**
