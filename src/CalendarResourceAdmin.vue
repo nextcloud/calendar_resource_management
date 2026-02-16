@@ -4,7 +4,7 @@
     <h2>Ressourcen- und Raumverwaltung</h2>
 
     <NcFormGroup label="Gebäude">
-      <NcTextField v-model="newBuildingName" label="Gebäudename" required />
+      <NcTextField v-model="newBuildingName" label="Gebäudename" placeholder="Pflichtfeld" />
       <NcTextField v-model="newBuildingAddress" label="Adresse" />
       <NcButton type="primary" @click="addBuilding">Hinzufügen</NcButton>
       <table class="table">
@@ -12,19 +12,21 @@
           <tr>
             <th>Name</th>
             <th>Adresse</th>
+            <th>Aktionen</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="building in buildings" :key="building.id">
             <td>{{ building.name }}</td>
             <td>{{ building.address || 'Keine Adresse' }}</td>
+            <td><NcButton type="error" size="small" @click="deleteBuilding(building.id)">Löschen</NcButton></td>
           </tr>
         </tbody>
       </table>
     </NcFormGroup>
 
     <NcFormGroup label="Stockwerke">
-      <NcTextField v-model="newStoryName" label="Stockwerkname" required />
+      <NcTextField v-model="newStoryName" label="Stockwerkname" placeholder="Pflichtfeld" />
       <NcSelect 
         v-model="selectedBuildingForStory" 
         :options="buildingOptions"
@@ -32,7 +34,6 @@
         value-key="id"
         input-label="Gebäude"
         placeholder="Bitte auswählen"
-        required 
       />
       <NcButton type="primary" @click="addStory">Hinzufügen</NcButton>
       <table class="table">
@@ -40,19 +41,21 @@
           <tr>
             <th>Name</th>
             <th>Gebäude</th>
+            <th>Aktionen</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="story in stories" :key="story.id">
             <td>{{ story.name }}</td>
             <td>{{ getBuildingName(story.buildingId) }}</td>
+            <td><NcButton type="error" size="small" @click="deleteStory(story.id)">Löschen</NcButton></td>
           </tr>
         </tbody>
       </table>
     </NcFormGroup>
 
     <NcFormGroup label="Räume">
-      <NcTextField v-model="newRoomName" label="Raumname" required />
+      <NcTextField v-model="newRoomName" label="Raumname" placeholder="Pflichtfeld" />
       <NcTextField v-model="newRoomEmail" label="E-Mail" type="email" />
       <NcTextField v-model="newRoomType" label="Raumtyp" placeholder="z.B. meeting-room" />
       <NcTextField v-model="newRoomNumber" label="Raumnummer" placeholder="z.B. 1.23" />
@@ -71,13 +74,23 @@
       </div>
       
       <NcSelect 
+        v-model="selectedBuildingForRoom" 
+        :options="buildingOptions"
+        label-key="label"
+        value-key="id"
+        input-label="Gebäude"
+        placeholder="Bitte auswählen"
+        @update:modelValue="onBuildingSelectedForRoom"
+      />
+      
+      <NcSelect 
         v-model="selectedStory" 
-        :options="storyOptions"
+        :options="filteredStoryOptions"
         label-key="label"
         value-key="id"
         input-label="Stockwerk"
-        placeholder="Bitte auswählen"
-        required 
+        placeholder="Zuerst Gebäude wählen"
+        :disabled="!selectedBuildingForRoom"
       />
       
       <div class="checkbox-group">
@@ -100,6 +113,7 @@
             <th>Raum-Nr</th>
             <th>Kapazität</th>
             <th>Ausstattung</th>
+            <th>Gebäude</th>
             <th>Stockwerk</th>
             <th>Aktionen</th>
           </tr>
@@ -119,6 +133,7 @@
               <span v-if="room.hasWhiteboard" title="Whiteboard">📋 </span>
               <span v-if="room.isWheelchairAccessible" title="Rollstuhlgerecht">♿ </span>
             </td>
+            <td>{{ getBuildingNameForRoom(room.storyId) }}</td>
             <td>{{ getStoryName(room.storyId) }}</td>
             <td><NcButton type="error" size="small" @click="deleteRoom(room.id)">Löschen</NcButton></td>
           </tr>
@@ -127,7 +142,7 @@
     </NcFormGroup>
 
     <NcFormGroup label="Ressourcen">
-      <NcTextField v-model="newResourceName" label="Ressourcenname" required />
+      <NcTextField v-model="newResourceName" label="Ressourcenname" placeholder="Pflichtfeld" />
       <NcTextField v-model="newResourceEmail" label="E-Mail" type="email" />
       <NcTextField v-model="newResourceType" label="Ressourcentyp" />
       <NcSelect 
@@ -137,7 +152,6 @@
         value-key="id"
         input-label="Gebäude"
         placeholder="Bitte auswählen"
-        required 
       />
       <NcButton type="primary" @click="addResource">Hinzufügen</NcButton>
       <table class="table">
@@ -193,6 +207,7 @@ export default {
       newBuildingAddress: '',
       newStoryName: '',
       selectedBuildingForStory: null,
+      selectedBuildingForRoom: null,
       newRoomName: '',
       newRoomEmail: '',
       newRoomType: 'default',
@@ -212,6 +227,23 @@ export default {
       selectedBuilding: null
     }
   },
+  computed: {
+    filteredStoryOptions() {
+      if (!this.selectedBuildingForRoom) {
+        return [];
+      }
+      const buildingId = typeof this.selectedBuildingForRoom === 'object' 
+        ? this.selectedBuildingForRoom.id 
+        : this.selectedBuildingForRoom;
+      
+      return this.stories
+        .filter(story => story.buildingId === buildingId)
+        .map(story => ({
+          id: story.id,
+          label: story.name
+        }));
+    }
+  },
   mounted() {
     this.loadBuildings();
     this.loadStories();
@@ -219,6 +251,10 @@ export default {
     this.loadResources();
   },
   methods: {
+    onBuildingSelectedForRoom() {
+      // Reset story selection when building changes
+      this.selectedStory = null;
+    },
     async loadBuildings() {
       try {
         const res = await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/buildings'), {
@@ -232,13 +268,18 @@ export default {
           label: building.name
         }));
         console.log('Buildings loaded:', this.buildings);
-        console.log('Building options:', this.buildingOptions);
+        console.log('Building options:', JSON.parse(JSON.stringify(this.buildingOptions)));
       } catch (error) {
         console.error('Error loading buildings:', error);
       }
     },
     async addBuilding() {
-      await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/buildings'), {
+      if (!this.newBuildingName) {
+        alert('Bitte geben Sie einen Gebäudenamen ein!');
+        return;
+      }
+      
+      const response = await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/buildings'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'requesttoken': OC.requestToken },
         body: JSON.stringify({ 
@@ -248,7 +289,8 @@ export default {
       });
       this.newBuildingName = '';
       this.newBuildingAddress = '';
-      this.loadBuildings();
+      // Wait for buildings to reload before continuing
+      await this.loadBuildings();
     },
     async loadStories() {
       try {
@@ -269,16 +311,79 @@ export default {
       }
     },
     async addStory() {
-      await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/stories'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'requesttoken': OC.requestToken },
-        body: JSON.stringify({ 
-          name: this.newStoryName, 
-          buildingId: this.selectedBuildingForStory 
-        })
+      if (!this.newStoryName) {
+        alert('Bitte geben Sie einen Stockwerksnamen ein!');
+        return;
+      }
+      
+      if (!this.selectedBuildingForStory) {
+        alert('Bitte wählen Sie zuerst ein Gebäude aus!');
+        return;
+      }
+      // Extract the ID from the selected object
+      const buildingId = typeof this.selectedBuildingForStory === 'object' 
+        ? this.selectedBuildingForStory.id 
+        : this.selectedBuildingForStory;
+      
+      console.log('Creating story with buildingId:', buildingId);
+      console.log('Available buildings:', JSON.parse(JSON.stringify(this.buildings)));
+      console.log('Building options:', JSON.parse(JSON.stringify(this.buildingOptions)));
+      try {
+        const response = await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/stories'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'requesttoken': OC.requestToken },
+          body: JSON.stringify({ 
+            name: this.newStoryName, 
+            buildingId: buildingId 
+          })
+        });
+        const result = await response.json();
+        if (!result.success) {
+          alert('Fehler: ' + (result.error || 'Unbekannter Fehler'));
+          return;
+        }
+        this.newStoryName = '';
+        this.selectedBuildingForStory = null;
+        this.loadStories();
+      } catch (error) {
+        console.error('Error adding story:', error);
+        alert('Fehler beim Erstellen des Stockwerks');
+      }
+    },
+    async deleteBuilding(id) {
+      if (!confirm('Möchten Sie dieses Gebäude wirklich löschen?')) {
+        return;
+      }
+      await fetch(OC.generateUrl(`/apps/calendar_resource_management/admin/buildings/${id}`), {
+        method: 'DELETE',
+        headers: { 'requesttoken': OC.requestToken }
       });
-      this.newStoryName = '';
-      this.selectedBuildingForStory = '';
+      // Reset selected building if it was deleted
+      const selectedBuildingId = typeof this.selectedBuildingForStory === 'object' 
+        ? this.selectedBuildingForStory.id 
+        : this.selectedBuildingForStory;
+      const selectedResourceBuildingId = typeof this.selectedBuilding === 'object' 
+        ? this.selectedBuilding.id 
+        : this.selectedBuilding;
+        
+      if (selectedBuildingId === id) {
+        this.selectedBuildingForStory = null;
+      }
+      if (selectedResourceBuildingId === id) {
+        this.selectedBuilding = null;
+      }
+      // Wait for reloads to complete
+      await this.loadBuildings();
+      await this.loadStories(); // Also reload stories as they might be affected
+    },
+    async deleteStory(id) {
+      if (!confirm('Möchten Sie dieses Stockwerk wirklich löschen?')) {
+        return;
+      }
+      await fetch(OC.generateUrl(`/apps/calendar_resource_management/admin/stories/${id}`), {
+        method: 'DELETE',
+        headers: { 'requesttoken': OC.requestToken }
+      });
       this.loadStories();
     },
     async loadRooms() {
@@ -288,6 +393,21 @@ export default {
       this.rooms = await res.json();
     },
     async addRoom() {
+      // Validation
+      if (!this.newRoomName) {
+        alert('Bitte geben Sie einen Raumnamen ein!');
+        return;
+      }
+      if (!this.selectedStory) {
+        alert('Bitte wählen Sie ein Gebäude und Stockwerk aus!');
+        return;
+      }
+      
+      // Extract the ID from the selected object
+      const storyId = typeof this.selectedStory === 'object' 
+        ? this.selectedStory.id 
+        : this.selectedStory;
+        
       await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/rooms'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'requesttoken': OC.requestToken },
@@ -304,7 +424,7 @@ export default {
           hasProjector: this.newRoomHasProjector,
           hasWhiteboard: this.newRoomHasWhiteboard,
           isWheelchairAccessible: this.newRoomWheelchairAccessible,
-          storyId: this.selectedStory 
+          storyId: storyId 
         })
       });
       // Reset form
@@ -320,7 +440,8 @@ export default {
       this.newRoomHasProjector = false;
       this.newRoomHasWhiteboard = false;
       this.newRoomWheelchairAccessible = false;
-      this.selectedStory = '';
+      this.selectedBuildingForRoom = null;
+      this.selectedStory = null;
       this.loadRooms();
     },
     async deleteRoom(id) {
@@ -337,6 +458,21 @@ export default {
       this.resources = await res.json();
     },
     async addResource() {
+      if (!this.newResourceName) {
+        alert('Bitte geben Sie einen Ressourcennamen ein!');
+        return;
+      }
+      
+      if (!this.selectedBuilding) {
+        alert('Bitte wählen Sie zuerst ein Gebäude aus!');
+        return;
+      }
+      
+      // Extract the ID from the selected object
+      const buildingId = typeof this.selectedBuilding === 'object' 
+        ? this.selectedBuilding.id 
+        : this.selectedBuilding;
+        
       await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/resources'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'requesttoken': OC.requestToken },
@@ -344,13 +480,13 @@ export default {
           name: this.newResourceName, 
           email: this.newResourceEmail, 
           resourceType: this.newResourceType, 
-          buildingId: this.selectedBuilding 
+          buildingId: buildingId 
         })
       });
       this.newResourceName = '';
       this.newResourceEmail = '';
       this.newResourceType = 'default';
-      this.selectedBuilding = '';
+      this.selectedBuilding = null;
       this.loadResources();
     },
     async deleteResource(id) {
@@ -362,6 +498,12 @@ export default {
     },
     getBuildingName(id) {
       const building = this.buildings.find(b => b.id == id);
+      return building ? building.name : 'Unbekannt';
+    },
+    getBuildingNameForRoom(storyId) {
+      const story = this.stories.find(s => s.id == storyId);
+      if (!story) return 'Unbekannt';
+      const building = this.buildings.find(b => b.id == story.buildingId);
       return building ? building.name : 'Unbekannt';
     },
     getStoryName(id) {
