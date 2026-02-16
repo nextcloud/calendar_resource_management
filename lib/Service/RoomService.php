@@ -44,14 +44,38 @@ class RoomService {
 	/**
 	 * Raum anlegen
 	 */
-	public function createRoom(string $name, string $email = '', string $roomType = 'default', int $storyId = 1): RoomModel {
+	public function createRoom(
+		string $name, 
+		string $email = '', 
+		string $roomType = 'default', 
+		int $storyId = 1,
+		string $roomNumber = '',
+		string $contactPersonUserId = '',
+		?int $capacity = null,
+		bool $hasPhone = false,
+		bool $hasVideo = false,
+		bool $hasTv = false,
+		bool $hasProjector = false,
+		bool $hasWhiteboard = false,
+		bool $wheelchairAccessible = false
+	): RoomModel {
 		$room = new RoomModel();
 		$room->setUid(bin2hex(random_bytes(16)));
 		$room->setDisplayName($name);
 		$room->setEmail($email);
 		$room->setRoomType($roomType);
 		$room->setStoryId($storyId);
-		// Weitere Felder können hier gesetzt werden
+		$room->setRoomNumber($roomNumber);
+		$room->setContactPersonUserId($contactPersonUserId);
+		if ($capacity !== null) {
+			$room->setCapacity($capacity);
+		}
+		$room->setHasPhone($hasPhone);
+		$room->setHasVideoConferencing($hasVideo);
+		$room->setHasTv($hasTv);
+		$room->setHasProjector($hasProjector);
+		$room->setHasWhiteboard($hasWhiteboard);
+		$room->setIsWheelchairAccessible($wheelchairAccessible);
 		return $this->roomMapper->insert($room);
 	}
 

@@ -54,7 +54,22 @@
     <NcFormGroup label="Räume">
       <NcTextField v-model="newRoomName" label="Raumname" required />
       <NcTextField v-model="newRoomEmail" label="E-Mail" type="email" />
-      <NcTextField v-model="newRoomType" label="Raumtyp" />
+      <NcTextField v-model="newRoomType" label="Raumtyp" placeholder="z.B. meeting-room" />
+      <NcTextField v-model="newRoomNumber" label="Raumnummer" placeholder="z.B. 1.23" />
+      <NcTextField v-model="newRoomContactPerson" label="Ansprechpartner (User-ID)" placeholder="z.B. admin" />
+      
+      <div class="input-field">
+        <label for="room-capacity">Kapazität (Personen)</label>
+        <input 
+          id="room-capacity"
+          v-model.number="newRoomCapacity" 
+          type="number" 
+          min="0"
+          placeholder="z.B. 10" 
+          class="capacity-input"
+        />
+      </div>
+      
       <NcSelect 
         v-model="selectedStory" 
         :options="storyOptions"
@@ -64,6 +79,17 @@
         placeholder="Bitte auswählen"
         required 
       />
+      
+      <div class="checkbox-group">
+        <h4>Ausstattung</h4>
+        <NcCheckboxRadioSwitch v-model="newRoomHasPhone" type="switch">Telefon</NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch v-model="newRoomHasVideo" type="switch">Videokonferenz</NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch v-model="newRoomHasTv" type="switch">TV/Monitor</NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch v-model="newRoomHasProjector" type="switch">Projektor</NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch v-model="newRoomHasWhiteboard" type="switch">Whiteboard</NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch v-model="newRoomWheelchairAccessible" type="switch">Rollstuhlgerecht</NcCheckboxRadioSwitch>
+      </div>
+      
       <NcButton type="primary" @click="addRoom">Hinzufügen</NcButton>
       <table class="table">
         <thead>
@@ -71,6 +97,9 @@
             <th>Name</th>
             <th>E-Mail</th>
             <th>Typ</th>
+            <th>Raum-Nr</th>
+            <th>Kapazität</th>
+            <th>Ausstattung</th>
             <th>Stockwerk</th>
             <th>Aktionen</th>
           </tr>
@@ -78,8 +107,18 @@
         <tbody>
           <tr v-for="room in rooms" :key="room.id">
             <td>{{ room.name }}</td>
-            <td>{{ room.email || 'Keine E-Mail' }}</td>
+            <td>{{ room.email || '-' }}</td>
             <td>{{ room.roomType || 'default' }}</td>
+            <td>{{ room.roomNumber || '-' }}</td>
+            <td>{{ room.capacity || '-' }}</td>
+            <td>
+              <span v-if="room.hasPhone" title="Telefon">📞 </span>
+              <span v-if="room.hasVideoConferencing" title="Videokonferenz">📹 </span>
+              <span v-if="room.hasTv" title="TV">📺 </span>
+              <span v-if="room.hasProjector" title="Projektor">📽️ </span>
+              <span v-if="room.hasWhiteboard" title="Whiteboard">📋 </span>
+              <span v-if="room.isWheelchairAccessible" title="Rollstuhlgerecht">♿ </span>
+            </td>
             <td>{{ getStoryName(room.storyId) }}</td>
             <td><NcButton type="error" size="small" @click="deleteRoom(room.id)">Löschen</NcButton></td>
           </tr>
@@ -131,6 +170,7 @@ import NcTextField from '@nextcloud/vue/components/NcTextField'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcFormGroup from '@nextcloud/vue/components/NcFormGroup'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 
 export default {
   name: 'CalendarResourceAdmin',
@@ -138,7 +178,8 @@ export default {
     NcTextField,
     NcButton,
     NcSelect,
-    NcFormGroup
+    NcFormGroup,
+    NcCheckboxRadioSwitch
   },
   data() {
     return {
@@ -155,6 +196,15 @@ export default {
       newRoomName: '',
       newRoomEmail: '',
       newRoomType: 'default',
+      newRoomNumber: '',
+      newRoomContactPerson: '',
+      newRoomCapacity: null,
+      newRoomHasPhone: false,
+      newRoomHasVideo: false,
+      newRoomHasTv: false,
+      newRoomHasProjector: false,
+      newRoomHasWhiteboard: false,
+      newRoomWheelchairAccessible: false,
       selectedStory: null,
       newResourceName: '',
       newResourceEmail: '',
@@ -244,13 +294,32 @@ export default {
         body: JSON.stringify({ 
           name: this.newRoomName, 
           email: this.newRoomEmail, 
-          roomType: this.newRoomType, 
+          roomType: this.newRoomType,
+          roomNumber: this.newRoomNumber,
+          contactPersonUserId: this.newRoomContactPerson,
+          capacity: this.newRoomCapacity ? parseInt(this.newRoomCapacity) : null,
+          hasPhone: this.newRoomHasPhone,
+          hasVideoConferencing: this.newRoomHasVideo,
+          hasTv: this.newRoomHasTv,
+          hasProjector: this.newRoomHasProjector,
+          hasWhiteboard: this.newRoomHasWhiteboard,
+          isWheelchairAccessible: this.newRoomWheelchairAccessible,
           storyId: this.selectedStory 
         })
       });
+      // Reset form
       this.newRoomName = '';
       this.newRoomEmail = '';
       this.newRoomType = 'default';
+      this.newRoomNumber = '';
+      this.newRoomContactPerson = '';
+      this.newRoomCapacity = null;
+      this.newRoomHasPhone = false;
+      this.newRoomHasVideo = false;
+      this.newRoomHasTv = false;
+      this.newRoomHasProjector = false;
+      this.newRoomHasWhiteboard = false;
+      this.newRoomWheelchairAccessible = false;
       this.selectedStory = '';
       this.loadRooms();
     },
@@ -333,6 +402,72 @@ export default {
 :deep(.nc-select) {
   margin-bottom: 15px;
   max-width: 500px;
+  width: 100%;
+}
+
+:deep(.nc-select .select-wrapper) {
+  max-width: 500px;
+  width: 100%;
+}
+
+:deep(.nc-select .v-select) {
+  width: 100% !important;
+}
+
+/* Custom Input Field Styling */
+.input-field {
+  margin-bottom: 15px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.input-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--color-main-text);
+  font-size: 14px;
+}
+
+.capacity-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--color-border-dark);
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: var(--color-main-background);
+  color: var(--color-main-text);
+  transition: border-color 0.2s;
+}
+
+.capacity-input:focus {
+  outline: none;
+  border-color: var(--color-primary-element);
+}
+
+.capacity-input::placeholder {
+  color: var(--color-text-maxcontrast);
+}
+
+/* Checkbox Group Styling */
+.checkbox-group {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: var(--color-background-hover);
+  border-radius: 8px;
+  max-width: 500px;
+}
+
+.checkbox-group h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.checkbox-group :deep(.checkbox-radio-switch) {
+  margin-bottom: 8px;
 }
 
 /* Button Spacing */
