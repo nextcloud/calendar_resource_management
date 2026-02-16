@@ -2,13 +2,13 @@
 
 namespace OCA\CalendarResourceManagement\Settings;
 
-use OCP\Settings\ISettings;
+use OCP\Settings\IDelegatedSettings;
 use OCP\Util;
 use OCP\IInitialStateService;
 use OCP\IURLGenerator;
 use OCP\AppFramework\Http\TemplateResponse;
 
-class AdminSettings implements ISettings {
+class AdminSettings implements IDelegatedSettings {
 
     private IInitialStateService $initialStateService;
     private IURLGenerator $urlGenerator;
@@ -37,5 +37,13 @@ class AdminSettings implements ISettings {
 
     public function getPriority() {
         return 50;
+    }
+
+    public function getName(): ?string {
+        return null; // Use the section name
+    }
+
+    public function getAuthorizedAppConfig(): array {
+        return []; // No app config keys to authorize for delegated admins
     }
 }

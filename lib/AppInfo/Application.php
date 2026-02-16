@@ -7,8 +7,6 @@ declare(strict_types=1);
  */
 namespace OCA\CalendarResourceManagement\AppInfo;
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-
 use OCA\CalendarResourceManagement\Connector;
 use OCA\CalendarResourceManagement\Listener\GroupDeletedListener;
 use OCA\CalendarResourceManagement\Listener\UserDeletedListener;
