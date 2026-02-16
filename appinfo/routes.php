@@ -13,5 +13,7 @@ return [
         ['name' => 'admin#createbuilding', 'url' => '/admin/buildings', 'verb' => 'POST'],
         ['name' => 'admin#createstory', 'url' => '/admin/stories', 'verb' => 'POST'],
         ['name' => 'admin#getbuildings', 'url' => '/admin/buildings', 'verb' => 'GET'],
+        ['name' => 'admin#deletebuilding', 'url' => '/admin/buildings/{id}', 'verb' => 'DELETE'],
+        ['name' => 'admin#deletestory', 'url' => '/admin/stories/{id}', 'verb' => 'DELETE'],
     ]
 ];
