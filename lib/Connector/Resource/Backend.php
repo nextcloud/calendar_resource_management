@@ -49,7 +49,7 @@ class Backend implements IBackend {
 		try {
 			// Load all resources
 			$resourceModels = $this->resourceMapper->findAll();
-			
+
 			foreach ($resourceModels as $resourceModel) {
 				try {
 					$restrictions = $this->restrictionMapper->findAllByEntityTypeAndId('resource', $resourceModel->getId());
@@ -58,10 +58,10 @@ class Backend implements IBackend {
 					$this->logger->error('Could not load resource with id ' . $resourceModel->getId(), ['exception' => $ex]);
 				}
 			}
-			
+
 			// Load all vehicles
 			$vehicleModels = $this->vehicleMapper->findAll();
-			
+
 			foreach ($vehicleModels as $vehicleModel) {
 				try {
 					$restrictions = $this->restrictionMapper->findAllByEntityTypeAndId('vehicle', $vehicleModel->getId());

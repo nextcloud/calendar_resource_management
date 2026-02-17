@@ -9,28 +9,28 @@ declare(strict_types=1);
 namespace OCA\CalendarResourceManagement\AppInfo;
 
 use OCA\CalendarResourceManagement\Connector;
+use OCA\CalendarResourceManagement\Controller\AdminController;
+use OCA\CalendarResourceManagement\Db\BuildingMapper;
+use OCA\CalendarResourceManagement\Db\ResourceMapper;
+use OCA\CalendarResourceManagement\Db\RestrictionMapper;
+use OCA\CalendarResourceManagement\Db\RoomMapper;
+use OCA\CalendarResourceManagement\Db\StoryMapper;
 use OCA\CalendarResourceManagement\Listener\GroupDeletedListener;
 use OCA\CalendarResourceManagement\Listener\UserDeletedListener;
+use OCA\CalendarResourceManagement\Service\ResourceService;
+use OCA\CalendarResourceManagement\Service\RoomService;
+
+use OCA\CalendarResourceManagement\Settings\AdminSettings;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\Calendar\Resource\IManager as IResourceManager;
+use OCP\Calendar\Room\IManager as IRoomManager;
 use OCP\Group\Events\GroupDeletedEvent;
-use OCP\User\Events\UserDeletedEvent;
 use OCP\IInitialStateService;
 use OCP\IURLGenerator;
-
-use OCA\CalendarResourceManagement\Service\RoomService;
-use OCA\CalendarResourceManagement\Service\ResourceService;
-use OCA\CalendarResourceManagement\Db\RoomMapper;
-use OCA\CalendarResourceManagement\Db\ResourceMapper;
-use OCA\CalendarResourceManagement\Db\RestrictionMapper;
-use OCA\CalendarResourceManagement\Db\BuildingMapper;
-use OCA\CalendarResourceManagement\Db\StoryMapper;
-use OCA\CalendarResourceManagement\Controller\AdminController;
-use OCA\CalendarResourceManagement\Settings\AdminSettings;
-use OCP\Calendar\Room\IManager as IRoomManager;
-use OCP\Calendar\Resource\IManager as IResourceManager;
+use OCP\User\Events\UserDeletedEvent;
 
 class Application extends App implements IBootstrap {
 	/**
@@ -49,7 +49,7 @@ class Application extends App implements IBootstrap {
 		$container = $this->getContainer();
 
 		// RoomService
-		$container->registerService(RoomService::class, function($c) {
+		$container->registerService(RoomService::class, function ($c) {
 			return new RoomService(
 				$c->query(RoomMapper::class),
 				$c->query(RestrictionMapper::class)
@@ -57,7 +57,7 @@ class Application extends App implements IBootstrap {
 		});
 
 		// ResourceService
-		$container->registerService(ResourceService::class, function($c) {
+		$container->registerService(ResourceService::class, function ($c) {
 			return new ResourceService(
 				$c->query(ResourceMapper::class),
 				$c->query(RestrictionMapper::class)
@@ -65,19 +65,19 @@ class Application extends App implements IBootstrap {
 		});
 
 		// BuildingMapper
-		$container->registerService(BuildingMapper::class, function($c) {
+		$container->registerService(BuildingMapper::class, function ($c) {
 			return new BuildingMapper($c->query('ServerContainer')->getDatabaseConnection());
 		});
 
 		// StoryMapper
-		$container->registerService(StoryMapper::class, function($c) {
+		$container->registerService(StoryMapper::class, function ($c) {
 			return new StoryMapper($c->query('ServerContainer')->getDatabaseConnection());
 		});
 
 		// AdminController
-		$container->registerService(AdminController::class, function($c) {
+		$container->registerService(AdminController::class, function ($c) {
 			$server = $c->query('ServerContainer');
-			
+
 			// Try to get managers, but make them optional
 			$roomManager = null;
 			$resourceManager = null;
@@ -91,7 +91,7 @@ class Application extends App implements IBootstrap {
 			} catch (\Exception $e) {
 				// Resource manager not available - cache invalidation won't work
 			}
-			
+
 			return new AdminController(
 				self::APP_ID,
 				$server->getRequest(),
@@ -105,7 +105,7 @@ class Application extends App implements IBootstrap {
 		});
 
 		// AdminSettings
-		$container->registerService(AdminSettings::class, function($c) {
+		$container->registerService(AdminSettings::class, function ($c) {
 			return new AdminSettings(
 				$c->query(IInitialStateService::class),
 				$c->query(IURLGenerator::class)

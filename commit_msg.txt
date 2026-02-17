@@ -1,0 +1,10 @@
+fix: apply PHP CS Fixer formatting and correct info.xml element order
+
+- Run `composer run cs:fix` to fix coding style issues in 10 files
+- Move <icon> element before <category> in info.xml to comply with schema
+
+This addresses CI failures in #224:
+- XML validation error (info.xsd schema compliance)
+- PHP coding style check failures
+
+Signed-off-by: Marcel Meyer <meyerm@strato.de>
