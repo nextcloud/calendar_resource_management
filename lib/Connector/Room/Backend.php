@@ -48,7 +48,7 @@ class Backend implements IBackend {
 		$rooms = [];
 		try {
 			$roomModels = $this->mapper->findAll();
-			
+
 			foreach ($roomModels as $roomModel) {
 				try {
 					$restrictions = $this->restrictionMapper->findAllByEntityTypeAndId('room', $roomModel->getId());
