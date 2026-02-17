@@ -45,9 +45,9 @@ class RoomService {
 	 * Raum anlegen
 	 */
 	public function createRoom(
-		string $name, 
-		string $email = '', 
-		string $roomType = 'default', 
+		string $name,
+		string $email = '',
+		string $roomType = 'default',
 		int $storyId = 1,
 		string $roomNumber = '',
 		string $contactPersonUserId = '',
@@ -57,7 +57,7 @@ class RoomService {
 		bool $hasTv = false,
 		bool $hasProjector = false,
 		bool $hasWhiteboard = false,
-		bool $wheelchairAccessible = false
+		bool $wheelchairAccessible = false,
 	): RoomModel {
 		$room = new RoomModel();
 		$room->setUid(bin2hex(random_bytes(16)));

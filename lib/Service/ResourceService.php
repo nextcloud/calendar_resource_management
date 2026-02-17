@@ -8,8 +8,8 @@ declare(strict_types=1);
 namespace OCA\CalendarResourceManagement\Service;
 
 use OCA\CalendarResourceManagement\Db\ResourceMapper;
-use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Db\ResourceModel;
+use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 
 class ResourceService {
 	/** @var ResourceMapper */

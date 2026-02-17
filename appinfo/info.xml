@@ -17,9 +17,9 @@
 	<types>
 		<prevent_group_restriction/>
 	</types>
+	<icon>img/app.svg</icon>
 	<category>office</category>
 	<category>organization</category>
-	<icon>img/app.svg</icon>
 	<bugs>https://github.com/nextcloud/calendar_resource_management</bugs>
 	<dependencies>
 		<php min-version="8.1" max-version="8.5" />
