@@ -1,3 +1,8 @@
+/**
+ * SPDX-FileCopyrightText: 2026 Marcel Meyer
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
 OC.L10N.register(
     "calendar_resource_management",
     {
