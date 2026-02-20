@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 /**
- * SPDX-FileCopyrightText: 2026 Marcel Meyer <meyerm@strato.de>
+ * SPDX-FileCopyrightText: 2026 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 namespace OCA\CalendarResourceManagement\Settings;
@@ -24,15 +24,15 @@ class AdminSettings implements IDelegatedSettings {
 	}
 
 	public function getForm() {
-		// JS laden
-		Util::addScript('calendar_resource_management', 'calendar_resource_management-adminSettings');
+		// Load JavaScript (CSS is injected by the JS bundle)
+		Util::addScript('calendar_resource_management', 'calendar_resource_management-admin-settings');
 
-		// Initial state für die API URL
+		// Provide initial state for the API URL
 		$this->initialStateService->provideInitialState('calendar_resource_management', 'calendar-resource-admin', [
 			'apiUrl' => $this->urlGenerator->linkToRouteAbsolute('calendar_resource_management.admin.getresources'),
 		]);
 
-		// Template zurückgeben
+		// Return the template
 		return new TemplateResponse('calendar_resource_management', 'admin', []);
 	}
 

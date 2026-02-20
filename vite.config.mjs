@@ -1,29 +1,13 @@
 /**
- * SPDX-FileCopyrightText: 2026 Marcel Meyer <meyerm@strato.de>
+ * SPDX-FileCopyrightText: 2026 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
-import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue';
-import { resolve } from 'path';
+import { createAppConfig } from '@nextcloud/vite-config'
+import path from 'path'
 
-export default defineConfig({
-  plugins: [vue()],
-  build: {
-    outDir: 'js',
-    emptyOutDir: true,
-    rollupOptions: {
-      external: ['@nextcloud/vue'],
-      input: {
-        'calendar_resource_management-adminSettings': resolve(__dirname, 'src/adminSettings.js'),
-      },
-      output: {
-        entryFileNames: '[name].js',
-        assetFileNames: '[name].[ext]',
-        format: 'iife',
-        globals: {
-          '@nextcloud/vue': 'OCA.NextcloudVue',
-        },
-      }
-    }
-  }
-});
+export default createAppConfig({
+	'admin-settings': path.join(__dirname, 'src', 'adminSettings.js'),
+}, {
+	inlineCSS: true,
+	extractLicenseInformation: false,
+})

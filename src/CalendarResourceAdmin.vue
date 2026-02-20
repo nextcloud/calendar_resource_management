@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2026 Marcel Meyer
+SPDX-FileCopyrightText: 2026 Nextcloud GmbH and Nextcloud contributors
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
@@ -11,7 +11,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       <NcTextField v-model="newBuildingName" :label="t('Building Name')" :placeholder="t('Required field')" />
       <NcTextField v-model="newBuildingAddress" :label="t('Address')" />
       <NcButton type="primary" @click="addBuilding">{{ t('Add') }}</NcButton>
-      <table class="table">
+      <table v-if="buildings.length" class="table">
         <thead>
           <tr>
             <th>{{ t('Name') }}</th>
@@ -40,7 +40,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
         :placeholder="t('Please select')"
       />
       <NcButton type="primary" @click="addStory">{{ t('Add') }}</NcButton>
-      <table class="table">
+      <table v-if="stories.length" class="table">
         <thead>
           <tr>
             <th>{{ t('Name') }}</th>
@@ -108,7 +108,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       </div>
       
       <NcButton type="primary" @click="addRoom">{{ t('Add') }}</NcButton>
-      <table class="table">
+      <table v-if="rooms.length" class="table">
         <thead>
           <tr>
             <th>{{ t('Name') }}</th>
@@ -130,12 +130,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             <td>{{ room.roomNumber || '-' }}</td>
             <td>{{ room.capacity || '-' }}</td>
             <td>
-              <span v-if="room.hasPhone" title="Telefon">📞 </span>
-              <span v-if="room.hasVideoConferencing" title="Videokonferenz">📹 </span>
+              <span v-if="room.hasPhone" title="Phone">📞 </span>
+              <span v-if="room.hasVideoConferencing" title="Video Conferencing">📹 </span>
               <span v-if="room.hasTv" title="TV">📺 </span>
-              <span v-if="room.hasProjector" title="Projektor">📽️ </span>
+              <span v-if="room.hasProjector" title="Projector">📽️ </span>
               <span v-if="room.hasWhiteboard" title="Whiteboard">📋 </span>
-              <span v-if="room.isWheelchairAccessible" title="Rollstuhlgerecht">♿ </span>
+              <span v-if="room.isWheelchairAccessible" title="Wheelchair Accessible">♿ </span>
             </td>
             <td>{{ getBuildingNameForRoom(room.storyId) }}</td>
             <td>{{ getStoryName(room.storyId) }}</td>
@@ -158,7 +158,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
         :placeholder="t('Please select')"
       />
       <NcButton type="primary" @click="addResource">{{ t('Add') }}</NcButton>
-      <table class="table">
+      <table v-if="resources.length" class="table">
         <thead>
           <tr>
             <th>{{ t('Name') }}</th>
@@ -179,16 +179,38 @@ SPDX-License-Identifier: AGPL-3.0-or-later
         </tbody>
       </table>
     </NcFormGroup>
+
+    <NcDialog
+      :open="showDeleteDialog"
+      :name="t('Confirm deletion')"
+      :message="deleteDialogMessage"
+      :buttons="deleteDialogButtons"
+      @update:open="onDeleteDialogClose" />
   </div>
 </template>
 
 <script>
-import { toRaw } from 'vue'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcFormGroup from '@nextcloud/vue/components/NcFormGroup'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import NcDialog from '@nextcloud/vue/components/NcDialog'
+import { showError } from '@nextcloud/dialogs'
+import {
+  fetchBuildings,
+  createBuilding,
+  deleteBuilding as deleteBuildingApi,
+  fetchStories,
+  createStory,
+  deleteStory as deleteStoryApi,
+  fetchRooms,
+  createRoom,
+  deleteRoom as deleteRoomApi,
+  fetchResources,
+  createResource,
+  deleteResource as deleteResourceApi,
+} from './services/adminService.js'
 
 export default {
   name: 'CalendarResourceAdmin',
@@ -197,17 +219,8 @@ export default {
     NcButton,
     NcSelect,
     NcFormGroup,
-    NcCheckboxRadioSwitch
-  },
-  methods: {
-    t(text, vars) {
-      // Fallback if t is not available
-      if (typeof window.t === 'function') {
-        return window.t('calendar_resource_management', text, vars)
-      }
-      // Fallback to original text if translation not available
-      return text
-    }
+    NcCheckboxRadioSwitch,
+    NcDialog,
   },
   data() {
     return {
@@ -217,6 +230,9 @@ export default {
       resources: [],
       buildingOptions: [],
       storyOptions: [],
+      showDeleteDialog: false,
+      deleteDialogMessage: '',
+      pendingDeleteAction: null,
       newBuildingName: '',
       newBuildingAddress: '',
       newStoryName: '',
@@ -256,7 +272,29 @@ export default {
           id: story.id,
           label: story.name
         }));
-    }
+    },
+    deleteDialogButtons() {
+      return [
+        {
+          label: this.t('Cancel'),
+          callback: () => {
+            this.showDeleteDialog = false;
+          },
+        },
+        {
+          label: this.t('Delete'),
+          variant: 'error',
+          callback: () => {
+            const action = this.pendingDeleteAction;
+            this.showDeleteDialog = false;
+            this.pendingDeleteAction = null;
+            if (action) {
+              action();
+            }
+          },
+        },
+      ];
+    },
   },
   mounted() {
     this.loadBuildings();
@@ -265,95 +303,69 @@ export default {
     this.loadResources();
   },
   methods: {
+    onDeleteDialogClose(open) {
+      if (!open) {
+        this.showDeleteDialog = false;
+        this.pendingDeleteAction = null;
+      }
+    },
     onBuildingSelectedForRoom() {
       // Reset story selection when building changes
       this.selectedStory = null;
     },
     async loadBuildings() {
       try {
-        const res = await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/buildings'), {
-          headers: { 'requesttoken': OC.requestToken }
-        });
-        const data = await res.json();
+        const data = await fetchBuildings();
         this.buildings = data;
-        // Manually update buildingOptions
         this.buildingOptions = data.map(building => ({
           id: building.id,
-          label: building.name
+          label: building.name,
         }));
-        console.log('Buildings loaded:', this.buildings);
-        console.log('Building options:', JSON.parse(JSON.stringify(this.buildingOptions)));
       } catch (error) {
         console.error('Error loading buildings:', error);
       }
     },
     async addBuilding() {
       if (!this.newBuildingName) {
-        alert(this.t('Please enter a building name!'));
+        showError(this.t('Please enter a building name!'));
         return;
       }
-      
-      const response = await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/buildings'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'requesttoken': OC.requestToken },
-        body: JSON.stringify({ 
-          name: this.newBuildingName, 
-          address: this.newBuildingAddress 
-        })
-      });
+
+      await createBuilding(this.newBuildingName, this.newBuildingAddress);
       this.newBuildingName = '';
       this.newBuildingAddress = '';
-      // Wait for buildings to reload before continuing
       await this.loadBuildings();
     },
     async loadStories() {
       try {
-        const res = await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/stories'), {
-          headers: { 'requesttoken': OC.requestToken }
-        });
-        const data = await res.json();
+        const data = await fetchStories();
         this.stories = data;
-        // Manually update storyOptions
         this.storyOptions = data.map(story => ({
           id: story.id,
-          label: story.name
+          label: story.name,
         }));
-        console.log('Stories loaded:', this.stories);
-        console.log('Story options:', this.storyOptions);
       } catch (error) {
         console.error('Error loading stories:', error);
       }
     },
     async addStory() {
       if (!this.newStoryName) {
-        alert(this.t('Please enter a story name!'));
+        showError(this.t('Please enter a story name!'));
         return;
       }
-      
+
       if (!this.selectedBuildingForStory) {
-        alert(this.t('Please select a building first!'));
+        showError(this.t('Please select a building first!'));
         return;
       }
-      // Extract the ID from the selected object
-      const buildingId = typeof this.selectedBuildingForStory === 'object' 
-        ? this.selectedBuildingForStory.id 
+      const buildingId = typeof this.selectedBuildingForStory === 'object'
+        ? this.selectedBuildingForStory.id
         : this.selectedBuildingForStory;
-      
-      console.log('Creating story with buildingId:', buildingId);
-      console.log('Available buildings:', JSON.parse(JSON.stringify(this.buildings)));
-      console.log('Building options:', JSON.parse(JSON.stringify(this.buildingOptions)));
+
       try {
-        const response = await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/stories'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'requesttoken': OC.requestToken },
-          body: JSON.stringify({ 
-            name: this.newStoryName, 
-            buildingId: buildingId 
-          })
-        });
-        const result = await response.json();
+        const result = await createStory(this.newStoryName, buildingId);
         if (!result.success) {
-          alert(this.t('Error: %s', result.error || this.t('Unknown error')));
+          showError(this.t('Error: %s', result.error || this.t('Unknown error')));
           return;
         }
         this.newStoryName = '';
@@ -361,85 +373,71 @@ export default {
         this.loadStories();
       } catch (error) {
         console.error('Error adding story:', error);
-        alert(this.t('Error creating story'));
+        showError(this.t('Error creating story'));
       }
     },
-    async deleteBuilding(id) {
-      if (!confirm(this.t('Do you really want to delete this building?'))) {
-        return;
-      }
-      await fetch(OC.generateUrl(`/apps/calendar_resource_management/admin/buildings/${id}`), {
-        method: 'DELETE',
-        headers: { 'requesttoken': OC.requestToken }
-      });
-      // Reset selected building if it was deleted
-      const selectedBuildingId = typeof this.selectedBuildingForStory === 'object' 
-        ? this.selectedBuildingForStory.id 
-        : this.selectedBuildingForStory;
-      const selectedResourceBuildingId = typeof this.selectedBuilding === 'object' 
-        ? this.selectedBuilding.id 
-        : this.selectedBuilding;
-        
-      if (selectedBuildingId === id) {
-        this.selectedBuildingForStory = null;
-      }
-      if (selectedResourceBuildingId === id) {
-        this.selectedBuilding = null;
-      }
-      // Wait for reloads to complete
-      await this.loadBuildings();
-      await this.loadStories(); // Also reload stories as they might be affected
+    deleteBuilding(id) {
+      this.deleteDialogMessage = this.t('Do you really want to delete this building?');
+      this.pendingDeleteAction = async () => {
+        await deleteBuildingApi(id);
+        // Reset selected building if it was deleted
+        const selectedBuildingId = typeof this.selectedBuildingForStory === 'object'
+          ? this.selectedBuildingForStory.id
+          : this.selectedBuildingForStory;
+        const selectedResourceBuildingId = typeof this.selectedBuilding === 'object'
+          ? this.selectedBuilding.id
+          : this.selectedBuilding;
+
+        if (selectedBuildingId === id) {
+          this.selectedBuildingForStory = null;
+        }
+        if (selectedResourceBuildingId === id) {
+          this.selectedBuilding = null;
+        }
+        await this.loadBuildings();
+        await this.loadStories();
+      };
+      this.showDeleteDialog = true;
     },
-    async deleteStory(id) {
-      if (!confirm(this.t('Do you really want to delete this story?'))) {
-        return;
-      }
-      await fetch(OC.generateUrl(`/apps/calendar_resource_management/admin/stories/${id}`), {
-        method: 'DELETE',
-        headers: { 'requesttoken': OC.requestToken }
-      });
-      this.loadStories();
+    deleteStory(id) {
+      this.deleteDialogMessage = this.t('Do you really want to delete this story?');
+      this.pendingDeleteAction = async () => {
+        await deleteStoryApi(id);
+        await this.loadStories();
+      };
+      this.showDeleteDialog = true;
     },
     async loadRooms() {
-      const res = await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/rooms'), {
-        headers: { 'requesttoken': OC.requestToken }
-      });
-      this.rooms = await res.json();
+      this.rooms = await fetchRooms();
     },
     async addRoom() {
-      // Validation
       if (!this.newRoomName) {
-        alert(this.t('Please enter a room name!'));
+        showError(this.t('Please enter a room name!'));
         return;
       }
       if (!this.selectedStory) {
-        alert(this.t('Please select a building first!'));
+        showError(this.t('Please select a building first!'));
         return;
       }
-      
-      // Extract the ID from the selected object
-      const storyId = typeof this.selectedStory === 'object' 
-        ? this.selectedStory.id 
+
+      const storyId = typeof this.selectedStory === 'object'
+        ? this.selectedStory.id
         : this.selectedStory;
-        
-      await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/rooms'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'requesttoken': OC.requestToken },
-        body: JSON.stringify({ 
-          name: this.newRoomName, 
-          email: this.newRoomEmail, 
-          roomType: this.newRoomType,
-          roomNumber: this.newRoomNumber,
-          contactPersonUserId: this.newRoomContactPerson,
-          capacity: this.newRoomCapacity ? parseInt(this.newRoomCapacity) : null,
-          hasPhone: this.newRoomHasPhone,
-          hasVideoConferencing: this.newRoomHasVideo,
-          hasTv: this.newRoomHasTv,
-          hasProjector: this.newRoomHasProjector,
-          hasWhiteboard: this.newRoomHasWhiteboard,
-          isWheelchairAccessible: this.newRoomWheelchairAccessible,
-          storyId: storyId 
-        })
+
+      await createRoom({
+        name: this.newRoomName,
+        email: this.newRoomEmail,
+        roomType: this.newRoomType,
+        roomNumber: this.newRoomNumber,
+        contactPersonUserId: this.newRoomContactPerson,
+        capacity: this.newRoomCapacity ? parseInt(this.newRoomCapacity) : null,
+        hasPhone: this.newRoomHasPhone,
+        hasVideoConferencing: this.newRoomHasVideo,
+        hasTv: this.newRoomHasTv,
+        hasProjector: this.newRoomHasProjector,
+        hasWhiteboard: this.newRoomHasWhiteboard,
+        isWheelchairAccessible: this.newRoomWheelchairAccessible,
+        storyId,
       });
       // Reset form
       this.newRoomName = '';
@@ -458,44 +456,37 @@ export default {
       this.selectedStory = null;
       this.loadRooms();
     },
-    async deleteRoom(id) {
-      await fetch(OC.generateUrl(`/apps/calendar_resource_management/admin/rooms/${id}`), {
-        method: 'DELETE',
-        headers: { 'requesttoken': OC.requestToken }
-      });
-      this.loadRooms();
+    deleteRoom(id) {
+      this.deleteDialogMessage = this.t('Do you really want to delete this room?');
+      this.pendingDeleteAction = async () => {
+        await deleteRoomApi(id);
+        await this.loadRooms();
+      };
+      this.showDeleteDialog = true;
     },
     async loadResources() {
-      const res = await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/resources'), {
-        headers: { 'requesttoken': OC.requestToken }
-      });
-      this.resources = await res.json();
+      this.resources = await fetchResources();
     },
     async addResource() {
       if (!this.newResourceName) {
-        alert(this.t('Please enter a resource name!'));
+        showError(this.t('Please enter a resource name!'));
         return;
       }
-      
+
       if (!this.selectedBuilding) {
-        alert(this.t('Please select a building first!'));
+        showError(this.t('Please select a building first!'));
         return;
       }
-      
-      // Extract the ID from the selected object
-      const buildingId = typeof this.selectedBuilding === 'object' 
-        ? this.selectedBuilding.id 
+
+      const buildingId = typeof this.selectedBuilding === 'object'
+        ? this.selectedBuilding.id
         : this.selectedBuilding;
-        
-      await fetch(OC.generateUrl('/apps/calendar_resource_management/admin/resources'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'requesttoken': OC.requestToken },
-        body: JSON.stringify({ 
-          name: this.newResourceName, 
-          email: this.newResourceEmail, 
-          resourceType: this.newResourceType, 
-          buildingId: buildingId 
-        })
+
+      await createResource({
+        name: this.newResourceName,
+        email: this.newResourceEmail,
+        resourceType: this.newResourceType,
+        buildingId,
       });
       this.newResourceName = '';
       this.newResourceEmail = '';
@@ -503,28 +494,29 @@ export default {
       this.selectedBuilding = null;
       this.loadResources();
     },
-    async deleteResource(id) {
-      await fetch(OC.generateUrl(`/apps/calendar_resource_management/admin/resources/${id}`), {
-        method: 'DELETE',
-        headers: { 'requesttoken': OC.requestToken }
-      });
-      this.loadResources();
+    deleteResource(id) {
+      this.deleteDialogMessage = this.t('Do you really want to delete this resource?');
+      this.pendingDeleteAction = async () => {
+        await deleteResourceApi(id);
+        await this.loadResources();
+      };
+      this.showDeleteDialog = true;
     },
     getBuildingName(id) {
-      const building = this.buildings.find(b => b.id == id);
+      const building = this.buildings.find(b => b.id === id);
       return building ? building.name : this.t('Unknown');
     },
     getBuildingNameForRoom(storyId) {
-      const story = this.stories.find(s => s.id == storyId);
+      const story = this.stories.find(s => s.id === storyId);
       if (!story) return this.t('Unknown');
-      const building = this.buildings.find(b => b.id == story.buildingId);
+      const building = this.buildings.find(b => b.id === story.buildingId);
       return building ? building.name : this.t('Unknown');
     },
     getStoryName(id) {
-      const story = this.stories.find(s => s.id == id);
+      const story = this.stories.find(s => s.id === id);
       return story ? story.name : this.t('Unknown');
-    }
-  }
+    },
+  },
 }
 </script>
 

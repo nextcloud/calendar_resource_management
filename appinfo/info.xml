@@ -39,5 +39,4 @@
 		<admin>OCA\CalendarResourceManagement\Settings\AdminSettings</admin>
 		<admin-section>OCA\CalendarResourceManagement\Settings\AdminSection</admin-section>
 	</settings>
-	<javascript>calendar-resource-admin</javascript>
 </info>
