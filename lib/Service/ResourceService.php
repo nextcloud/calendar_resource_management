@@ -35,14 +35,14 @@ class ResourceService {
 		$this->restrictionMapper = $restrictionMapper;
 	}
 	/**
-	 * Liste aller Ressourcen
+	 * List all resources
 	 */
 	public function listResources(): array {
 		return $this->resourceMapper->findAll();
 	}
 
 	/**
-	 * Ressource anlegen
+	 * Create a resource
 	 */
 	public function createResource(string $name, string $email = '', string $resourceType = 'default', int $buildingId = 1): ResourceModel {
 		$resource = new ResourceModel();
@@ -51,12 +51,12 @@ class ResourceService {
 		$resource->setEmail($email);
 		$resource->setResourceType($resourceType);
 		$resource->setBuildingId($buildingId);
-		// Weitere Felder können hier gesetzt werden
+		// Additional fields can be set here
 		return $this->resourceMapper->insert($resource);
 	}
 
 	/**
-	 * Ressource löschen
+	 * Delete a resource
 	 */
 	public function deleteResource(int $id): void {
 		$resource = $this->resourceMapper->find($id);
