@@ -36,14 +36,14 @@ class RoomService {
 		$this->restrictionMapper = $restrictionMapper;
 	}
 	/**
-	 * Liste aller Räume
+	 * List all rooms
 	 */
 	public function listRooms(): array {
 		return $this->roomMapper->findAll();
 	}
 
 	/**
-	 * Raum anlegen
+	 * Create a room
 	 */
 	public function createRoom(
 		string $name,
@@ -81,7 +81,7 @@ class RoomService {
 	}
 
 	/**
-	 * Raum löschen
+	 * Delete a room
 	 */
 	public function deleteRoom(int $id): void {
 		$room = $this->roomMapper->find($id);

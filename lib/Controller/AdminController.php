@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 /**
- * SPDX-FileCopyrightText: 2026 Marcel Meyer <meyerm@strato.de>
+ * SPDX-FileCopyrightText: 2026 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 namespace OCA\CalendarResourceManagement\Controller;
@@ -46,7 +46,7 @@ class AdminController extends Controller {
 
 	public function getrooms() {
 		$rooms = $this->roomService->listRooms();
-		// Mehr Felder für die Tabelle zurückgeben
+		// Return additional fields for the table
 		$result = array_map(function ($room) {
 			return [
 				'id' => $room->getId(),
@@ -85,7 +85,7 @@ class AdminController extends Controller {
 		$wheelchairAccessible = (bool)($params['wheelchairAccessible'] ?? false);
 
 		if (!$name) {
-			return new JSONResponse(['success' => false, 'error' => 'Name fehlt'], 400);
+			return new JSONResponse(['success' => false, 'error' => 'Name is missing'], 400);
 		}
 
 		try {
@@ -152,7 +152,7 @@ class AdminController extends Controller {
 		$resourceType = $params['resourceType'] ?? 'default';
 		$buildingId = (int)($params['buildingId'] ?? 1);
 		if (!$name) {
-			return new JSONResponse(['success' => false, 'error' => 'Name fehlt'], 400);
+			return new JSONResponse(['success' => false, 'error' => 'Name is missing'], 400);
 		}
 
 		try {
@@ -213,7 +213,7 @@ class AdminController extends Controller {
 		$name = $params['name'] ?? '';
 		$address = $params['address'] ?? '';
 		if (!$name) {
-			return new JSONResponse(['success' => false, 'error' => 'Name fehlt'], 400);
+			return new JSONResponse(['success' => false, 'error' => 'Name is missing'], 400);
 		}
 		$building = new \OCA\CalendarResourceManagement\Db\BuildingModel();
 		$building->setDisplayName($name);
@@ -227,14 +227,14 @@ class AdminController extends Controller {
 		$name = $params['name'] ?? '';
 		$buildingId = (int)($params['buildingId'] ?? 0);
 		if (!$name || !$buildingId) {
-			return new JSONResponse(['success' => false, 'error' => 'Name oder Building ID fehlt'], 400);
+			return new JSONResponse(['success' => false, 'error' => 'Name or Building ID is missing'], 400);
 		}
 
 		// Check if building exists
 		try {
 			$this->buildingMapper->find($buildingId);
 		} catch (\Exception $e) {
-			return new JSONResponse(['success' => false, 'error' => 'Das angegebene Gebäude existiert nicht'], 400);
+			return new JSONResponse(['success' => false, 'error' => 'The specified building does not exist'], 400);
 		}
 
 		try {
@@ -244,7 +244,7 @@ class AdminController extends Controller {
 			$story = $this->storyMapper->insert($story);
 			return new JSONResponse(['success' => true, 'id' => $story->getId(), 'name' => $story->getDisplayName()]);
 		} catch (\Exception $e) {
-			return new JSONResponse(['success' => false, 'error' => 'Fehler beim Erstellen des Stockwerks: ' . $e->getMessage()], 500);
+			return new JSONResponse(['success' => false, 'error' => 'Error creating story: ' . $e->getMessage()], 500);
 		}
 	}
 
