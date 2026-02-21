@@ -63,7 +63,7 @@ class Backend implements IBackend {
 			throw new BackendTemporarilyUnavailableException($ex->getMessage());
 		}
 
-		$restrictions = $this->restrictionMapper->findAllByEntityTypeAndId('room', $room->getId());
+		$restrictions = array_map(fn ($restriction) => $restriction->getGroupId(), $this->restrictionMapper->findAllByEntityTypeAndId('room', $room->getId()));
 
 		try {
 			$story = $this->storyMapper->find($room->getStoryId());

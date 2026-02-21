@@ -54,13 +54,13 @@ class Backend implements IBackend {
 	public function getResource($id):?IResource {
 		$resource = $this->getResourceEntity($id);
 		if ($resource) {
-			$restrictions = $this->restrictionMapper->findAllByEntityTypeAndId('resource', $resource->getId());
+			$restrictions = array_map(fn ($restriction) => $restriction->getGroupId(), $this->restrictionMapper->findAllByEntityTypeAndId('resource', $resource->getId()));
 			return new ResourceObject($resource, $restrictions, $this);
 		}
 
 		$vehicle = $this->getVehicleEntity($id);
 		if ($vehicle) {
-			$restrictions = $this->restrictionMapper->findAllByEntityTypeAndId('vehicle', $vehicle->getId());
+			$restrictions = array_map(fn ($restriction) => $restriction->getGroupId(), $this->restrictionMapper->findAllByEntityTypeAndId('vehicle', $vehicle->getId()));
 			return new Vehicle($vehicle, $restrictions, $this);
 		}
 
