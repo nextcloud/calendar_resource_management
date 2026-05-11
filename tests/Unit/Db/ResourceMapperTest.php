@@ -7,8 +7,13 @@ declare(strict_types=1);
  */
 namespace OCA\CalendarResourceManagement\Tests\Unit\Db;
 
+use OCA\CalendarResourceManagement\Constants;
+use OCA\CalendarResourceManagement\Db\BuildingMapper;
+use OCA\CalendarResourceManagement\Db\BuildingModel;
 use OCA\CalendarResourceManagement\Db\ResourceMapper;
 use OCA\CalendarResourceManagement\Db\ResourceModel;
+use OCA\CalendarResourceManagement\Db\RestrictionMapper;
+use OCA\CalendarResourceManagement\Db\RestrictionModel;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Test\TestCase;
 
@@ -16,14 +21,27 @@ class ResourceMapperTest extends TestCase {
 	/** @var ResourceMapper */
 	private $mapper;
 
+	private BuildingMapper $buildingMapper;
+
+	private RestrictionMapper $restrictionMapper;
+
 	protected function setUp(): void {
 		parent::setUp();
 
 		// make sure that DB is empty
 		$qb = self::$realDatabase->getQueryBuilder();
 		$qb->delete('calresources_resources')->executeStatement();
+		$qb->delete('calresources_restricts')->executeStatement();
+		$qb->delete('calresources_buildings')->executeStatement();
 
+		$this->buildingMapper = new BuildingMapper(self::$realDatabase);
 		$this->mapper = new ResourceMapper(self::$realDatabase);
+		$this->restrictionMapper = new RestrictionMapper(self::$realDatabase);
+
+		$buildings = $this->getSampleBuildings();
+		array_map(function ($building): void {
+			$this->buildingMapper->insert($building);
+		}, $buildings);
 
 		$resources = $this->getSampleResources();
 		array_map(function ($resource): void {
@@ -115,6 +133,67 @@ class ResourceMapperTest extends TestCase {
 		$this->assertCount(2, $resourceSet0);
 		$this->assertEquals('Resource 0', $resourceSet0[0]->getDisplayName());
 		$this->assertEquals('Resource 1', $resourceSet0[1]->getDisplayName());
+	}
+
+	public function testUpdateRestricted(): void {
+		$resource = $this->mapper->findByUID('uid0');
+		$this->assertFalse($resource->isRestricted());
+
+		$resource->setRestricted(true);
+		$this->mapper->update($resource);
+		$this->assertTrue($this->mapper->find($resource->getId())->isRestricted());
+
+		$resource->setRestricted(false);
+		$this->mapper->update($resource);
+		$this->assertFalse($this->mapper->find($resource->getId())->isRestricted());
+	}
+
+	public function testFindAllVisibleUIDs(): void {
+		$restrictedResourceWithGroup = $this->mapper->findByUID('uid1');
+		$restrictedResourceWithoutGroup = $this->mapper->findByUID('uid2');
+
+		$restrictedResourceWithGroup->setRestricted(true);
+		$this->mapper->update($restrictedResourceWithGroup);
+		$restrictedResourceWithoutGroup->setRestricted(true);
+		$this->mapper->update($restrictedResourceWithoutGroup);
+		$this->restrictionMapper->insert(RestrictionModel::fromParams([
+			'entityType' => Constants::RESOURCE,
+			'entityId' => $restrictedResourceWithGroup->getId(),
+			'groupId' => 'group-1',
+		]));
+
+		$this->assertSame([
+			'uid0',
+			'uid1',
+			'uid3',
+			'uid4',
+			'uid5',
+			'uid6',
+			'uid7',
+			'uid8',
+			'uid9',
+		], $this->mapper->findAllVisibleUIDs(Constants::RESOURCE));
+	}
+
+	protected function getSampleBuildings(): array {
+		return [
+			BuildingModel::fromParams([
+				'id' => 1,
+				'displayName' => 'Building 1',
+			]),
+			BuildingModel::fromParams([
+				'id' => 3,
+				'displayName' => 'Building 3',
+			]),
+			BuildingModel::fromParams([
+				'id' => 4,
+				'displayName' => 'Building 4',
+			]),
+			BuildingModel::fromParams([
+				'id' => 99,
+				'displayName' => 'Building 99',
+			]),
+		];
 	}
 
 	protected function getSampleResources(): array {

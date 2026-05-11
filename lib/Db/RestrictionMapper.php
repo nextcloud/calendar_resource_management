@@ -17,15 +17,6 @@ use OCP\IDBConnection;
  * @package OCA\CalendarResourceManagement\Db
  */
 class RestrictionMapper extends QBMapper {
-	/** @var string */
-	public const TYPE_RESOURCE = 'resource';
-
-	/** @var string */
-	public const TYPE_ROOM = 'room';
-
-	/** @var string */
-	public const TYPE_VEHICLE = 'vehicle';
-
 	/**
 	 * RestrictionMapper constructor.
 	 *
