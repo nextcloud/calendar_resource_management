@@ -7,14 +7,24 @@ declare(strict_types=1);
  */
 namespace OCA\CalendarResourceManagement\Tests\Unit\Db;
 
+use OCA\CalendarResourceManagement\Constants;
+use OCA\CalendarResourceManagement\Db\BuildingMapper;
+use OCA\CalendarResourceManagement\Db\BuildingModel;
+use OCA\CalendarResourceManagement\Db\RestrictionMapper;
+use OCA\CalendarResourceManagement\Db\RestrictionModel;
 use OCA\CalendarResourceManagement\Db\RoomMapper;
 use OCA\CalendarResourceManagement\Db\RoomModel;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use Test\TestCase;
 
 class RoomMapperTest extends TestCase {
 	/** @var RoomMapper */
 	private $mapper;
+
+	private BuildingMapper $buildingMapper;
+
+	private RestrictionMapper $restrictionMapper;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -22,8 +32,22 @@ class RoomMapperTest extends TestCase {
 		// make sure that DB is empty
 		$qb = self::$realDatabase->getQueryBuilder();
 		$qb->delete('calresources_rooms')->execute();
+		$qb->delete('calresources_restricts')->execute();
+		$qb->delete('calresources_stories')->execute();
+		$qb->delete('calresources_buildings')->execute();
+
+		$this->buildingMapper = new BuildingMapper(self::$realDatabase);
+		$buildings = $this->getSampleBuildings();
+		array_map(function ($building): void {
+			$this->buildingMapper->insert($building);
+		}, $buildings);
+		$this->insertStory(1, 1, 'Story 1');
+		$this->insertStory(3, 1, 'Story 3');
+		$this->insertStory(4, 2, 'Story 4');
+		$this->insertStory(99, 2, 'Story 99');
 
 		$this->mapper = new RoomMapper(self::$realDatabase);
+		$this->restrictionMapper = new RestrictionMapper(self::$realDatabase);
 
 		$rooms = $this->getSampleRooms();
 		array_map(function ($room): void {
@@ -116,6 +140,70 @@ class RoomMapperTest extends TestCase {
 		$this->assertCount(1, $rooms);
 
 		$this->assertEquals('Room 3', $rooms[0]->getDisplayName());
+	}
+
+	public function testUpdateRestricted(): void {
+		$room = $this->mapper->findByUID('uid0');
+		$this->assertFalse($room->isRestricted());
+
+		$room->setRestricted(true);
+		$this->mapper->update($room);
+		$this->assertTrue($this->mapper->find($room->getId())->isRestricted());
+
+		$room->setRestricted(false);
+		$this->mapper->update($room);
+		$this->assertFalse($this->mapper->find($room->getId())->isRestricted());
+	}
+
+	public function testFindAllVisibleUIDs(): void {
+		$restrictedRoomWithGroup = $this->mapper->findByUID('uid1');
+		$restrictedRoomWithoutGroup = $this->mapper->findByUID('uid2');
+
+		$restrictedRoomWithGroup->setRestricted(true);
+		$this->mapper->update($restrictedRoomWithGroup);
+		$restrictedRoomWithoutGroup->setRestricted(true);
+		$this->mapper->update($restrictedRoomWithoutGroup);
+		$this->restrictionMapper->insert(RestrictionModel::fromParams([
+			'entityType' => Constants::ROOM,
+			'entityId' => $restrictedRoomWithGroup->getId(),
+			'groupId' => 'group-1',
+		]));
+
+		$this->assertSame([
+			'uid0',
+			'uid1',
+			'uid3',
+			'uid4',
+			'uid5',
+			'uid6',
+			'uid7',
+			'uid8',
+			'uid9',
+		], $this->mapper->findAllVisibleUIDs(Constants::ROOM));
+	}
+
+	protected function getSampleBuildings(): array {
+		return [
+			BuildingModel::fromParams([
+				'id' => 1,
+				'displayName' => 'Building 1',
+			]),
+			BuildingModel::fromParams([
+				'id' => 2,
+				'displayName' => 'Building 2',
+			]),
+		];
+	}
+
+	private function insertStory(int $id, int $buildingId, string $displayName): void {
+		$qb = self::$realDatabase->getQueryBuilder();
+		$qb->insert('calresources_stories')
+			->values([
+				'id' => $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT),
+				'building_id' => $qb->createNamedParameter($buildingId, IQueryBuilder::PARAM_INT),
+				'display_name' => $qb->createNamedParameter($displayName, IQueryBuilder::PARAM_STR),
+			])
+			->executeStatement();
 	}
 
 	protected function getSampleRooms(): array {

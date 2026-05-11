@@ -7,6 +7,11 @@ declare(strict_types=1);
  */
 namespace OCA\CalendarResourceManagement\Tests\Unit\Db;
 
+use OCA\CalendarResourceManagement\Constants;
+use OCA\CalendarResourceManagement\Db\BuildingMapper;
+use OCA\CalendarResourceManagement\Db\BuildingModel;
+use OCA\CalendarResourceManagement\Db\RestrictionMapper;
+use OCA\CalendarResourceManagement\Db\RestrictionModel;
 use OCA\CalendarResourceManagement\Db\VehicleMapper;
 use OCA\CalendarResourceManagement\Db\VehicleModel;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -16,14 +21,27 @@ class VehicleMapperTest extends TestCase {
 	/** @var VehicleMapper */
 	private $mapper;
 
+	private BuildingMapper $buildingMapper;
+
+	private RestrictionMapper $restrictionMapper;
+
 	protected function setUp(): void {
 		parent::setUp();
 
 		// make sure that DB is empty
 		$qb = self::$realDatabase->getQueryBuilder();
 		$qb->delete('calresources_vehicles')->execute();
+		$qb->delete('calresources_restricts')->execute();
+		$qb->delete('calresources_buildings')->execute();
 
+		$this->buildingMapper = new BuildingMapper(self::$realDatabase);
 		$this->mapper = new VehicleMapper(self::$realDatabase);
+		$this->restrictionMapper = new RestrictionMapper(self::$realDatabase);
+
+		$buildings = $this->getSampleBuildings();
+		array_map(function ($building): void {
+			$this->buildingMapper->insert($building);
+		}, $buildings);
 
 		$vehicles = $this->getSampleVehicles();
 		array_map(function ($vehicle): void {
@@ -117,6 +135,67 @@ class VehicleMapperTest extends TestCase {
 		$this->assertCount(1, $vehicles);
 
 		$this->assertEquals('Vehicle 3', $vehicles[0]->getDisplayName());
+	}
+
+	public function testUpdateRestricted(): void {
+		$vehicle = $this->mapper->findByUID('uid0');
+		$this->assertFalse($vehicle->isRestricted());
+
+		$vehicle->setRestricted(true);
+		$this->mapper->update($vehicle);
+		$this->assertTrue($this->mapper->find($vehicle->getId())->isRestricted());
+
+		$vehicle->setRestricted(false);
+		$this->mapper->update($vehicle);
+		$this->assertFalse($this->mapper->find($vehicle->getId())->isRestricted());
+	}
+
+	public function testFindAllVisibleUIDs(): void {
+		$restrictedVehicleWithGroup = $this->mapper->findByUID('uid1');
+		$restrictedVehicleWithoutGroup = $this->mapper->findByUID('uid2');
+
+		$restrictedVehicleWithGroup->setRestricted(true);
+		$this->mapper->update($restrictedVehicleWithGroup);
+		$restrictedVehicleWithoutGroup->setRestricted(true);
+		$this->mapper->update($restrictedVehicleWithoutGroup);
+		$this->restrictionMapper->insert(RestrictionModel::fromParams([
+			'entityType' => Constants::VEHICLE,
+			'entityId' => $restrictedVehicleWithGroup->getId(),
+			'groupId' => 'group-1',
+		]));
+
+		$this->assertSame([
+			'uid0',
+			'uid1',
+			'uid3',
+			'uid4',
+			'uid5',
+			'uid6',
+			'uid7',
+			'uid8',
+			'uid9',
+		], $this->mapper->findAllVisibleUIDs(Constants::VEHICLE));
+	}
+
+	protected function getSampleBuildings(): array {
+		return [
+			BuildingModel::fromParams([
+				'id' => 1,
+				'displayName' => 'Building 1',
+			]),
+			BuildingModel::fromParams([
+				'id' => 3,
+				'displayName' => 'Building 3',
+			]),
+			BuildingModel::fromParams([
+				'id' => 4,
+				'displayName' => 'Building 4',
+			]),
+			BuildingModel::fromParams([
+				'id' => 99,
+				'displayName' => 'Building 99',
+			]),
+		];
 	}
 
 	protected function getSampleVehicles(): array {
