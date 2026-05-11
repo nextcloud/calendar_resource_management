@@ -28,6 +28,7 @@ use OCP\AppFramework\Db\Entity;
  * @method void setResourceType(string $resourceType)
  * @method string getContactPersonUserId()
  * @method void setContactPersonUserId(string $contactPersonUserId)
+ * @method void setRestricted(bool $restricted)
  */
 class ResourceModel extends Entity {
 	/** @var string */
@@ -48,6 +49,9 @@ class ResourceModel extends Entity {
 	/** @var string */
 	protected $contactPersonUserId;
 
+	/** @var boolean|null */
+	protected $restricted;
+
 	/**
 	 * Resource constructor.
 	 */
@@ -58,5 +62,10 @@ class ResourceModel extends Entity {
 		$this->addType('email', 'string');
 		$this->addType('resourceType', 'string');
 		$this->addType('contactPersonUserId', 'string');
+		$this->addType('restricted', 'boolean');
+	}
+
+	public function isRestricted(): bool {
+		return $this->restricted ?? false;
 	}
 }
