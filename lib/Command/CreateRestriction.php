@@ -9,16 +9,11 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Command;
 
-use OCA\CalendarResourceManagement\Constants;
-use OCA\CalendarResourceManagement\Db\AMapper;
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Db\RestrictionModel;
-use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\Calendar\Resource\IManager as IResourceManager;
 use OCP\Calendar\Room\IManager as IRoomManager;
 use OCP\DB\Exception;
-use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -39,7 +34,6 @@ class CreateRestriction extends Command {
 	public function __construct(
 		LoggerInterface $logger,
 		RestrictionMapper $restrictionMapper,
-		private IDBConnection $db,
 		private IResourceManager $resourceManager,
 		private IRoomManager $roomManager,
 	) {
@@ -67,58 +61,35 @@ class CreateRestriction extends Command {
 		$entityId = (int)$input->getArgument(self::ENTITY_ID);
 		$groupId = (string)$input->getArgument(self::GROUP_ID);
 
-		if (!in_array($entityType, Constants::RESTRICTABLE_TYPES, true)) {
-			$output->writeln('<error>Restrictions can only be assigned to resource, room, or vehicle entities.</error>');
-			return self::FAILURE;
-		}
-
-		// resolve corresponding mapper
-		$resourceMapper = AMapper::getMapper($entityType, $this->db);
-		if ($resourceMapper === null) {
-			$output->writeln('<error>No such resource type found!</error>');
-			return self::FAILURE;
-		}
-		// find corresponding entity
-		try {
-			$resource = $resourceMapper->find($entityId);
-		} catch (DoesNotExistException|MultipleObjectsReturnedException $e) {
-			$this->logger->warning($e->getMessage(), ['exception' => $e]);
-			$output->writeln('<error>Could not find resource type ' . $entityType . ' with ID ' . $entityId . '</error>');
-			return self::FAILURE;
-		}
-		// create restriction and set resource to restricted
 		$restrictionModel = new RestrictionModel();
 		$restrictionModel->setEntityType($entityType);
 		$restrictionModel->setEntityId($entityId);
 		$restrictionModel->setGroupId($groupId);
 
 		try {
-			$resource->setRestricted(true);
-			$resourceMapper->update($resource);
 			$inserted = $this->restrictionMapper->insert($restrictionModel);
-
 			$output->writeln('<info>Created new Restriction with ID:</info>');
 			$output->writeln('<info>' . $inserted->getId() . '</info>');
 		} catch (Exception $e) {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
 			$output->writeln('<error>Could not create entry: ' . $e->getMessage() . '</error>');
-			return self::FAILURE;
+			return 1;
 		}
-		// trigger update of resource for other apps
+
 		switch ($entityType) {
-			case Constants::VEHICLE:
-			case Constants::RESOURCE:
+			case 'vehicle':
+			case 'resource':
 				if (method_exists($this->resourceManager, 'update')) {
 					$this->resourceManager->update();
 				}
 				break;
-			case Constants::ROOM:
+			case 'room':
 				if (method_exists($this->roomManager, 'update')) {
 					$this->roomManager->update();
 				}
 				break;
 		}
 
-		return self::SUCCESS;
+		return 0;
 	}
 }

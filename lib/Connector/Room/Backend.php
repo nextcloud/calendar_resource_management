@@ -7,7 +7,6 @@ declare(strict_types=1);
  */
 namespace OCA\CalendarResourceManagement\Connector\Room;
 
-use OCA\CalendarResourceManagement\Constants;
 use OCA\CalendarResourceManagement\Db;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Calendar\BackendTemporarilyUnavailableException;
@@ -81,7 +80,7 @@ class Backend implements IBackend {
 	 * @return String[]
 	 */
 	public function listAllRooms(): array {
-		return $this->mapper->findAllVisibleUIDs(Constants::ROOM);
+		return $this->mapper->findAllUIDs();
 	}
 
 	/**

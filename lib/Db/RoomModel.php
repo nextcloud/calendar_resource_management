@@ -42,7 +42,6 @@ use OCP\AppFramework\Db\Entity;
  * @method void setHasWhiteboard(bool $hasWhiteboard)
  * @method bool getIsWheelchairAccessible()
  * @method void setIsWheelchairAccessible(bool $isWheelchairAccessible)
- * @method void setRestricted(bool $restricted)
  */
 class RoomModel extends Entity {
 	/** @var integer */
@@ -87,9 +86,6 @@ class RoomModel extends Entity {
 	/** @var boolean */
 	protected $isWheelchairAccessible;
 
-	/** @var boolean|null */
-	protected $restricted;
-
 	/**
 	 * Room constructor.
 	 */
@@ -108,10 +104,5 @@ class RoomModel extends Entity {
 		$this->addType('hasProjector', 'boolean');
 		$this->addType('hasWhiteboard', 'boolean');
 		$this->addType('isWheelchairAccessible', 'boolean');
-		$this->addType('restricted', 'boolean');
-	}
-
-	public function isRestricted(): bool {
-		return $this->restricted ?? false;
 	}
 }

@@ -7,7 +7,6 @@ declare(strict_types=1);
  */
 namespace OCA\CalendarResourceManagement\Connector\Resource;
 
-use OCA\CalendarResourceManagement\Constants;
 use OCA\CalendarResourceManagement\Db;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Calendar\BackendTemporarilyUnavailableException;
@@ -73,8 +72,8 @@ class Backend implements IBackend {
 	 */
 	public function listAllResources(): array {
 		return array_merge(
-			$this->resourceMapper->findAllVisibleUIDs(Constants::RESOURCE),
-			$this->vehicleMapper->findAllVisibleUIDs(Constants::VEHICLE)
+			$this->resourceMapper->findAllUIDs(),
+			$this->vehicleMapper->findAllUIDs()
 		);
 	}
 

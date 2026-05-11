@@ -158,65 +158,6 @@ abstract class AMapper extends QBMapper {
 	}
 
 	/**
-	 * @param string $entityType
-	 * @param string $orderBy
-	 * @param bool $ascending
-	 * @param int|null $limit
-	 * @param int|null $offset
-	 * @return string[]
-	 * @throws Exception
-	 */
-	public function findAllVisibleUIDs(string $entityType,
-		string $orderBy = 'display_name',
-		bool $ascending = true,
-		?int $limit = null,
-		?int $offset = null): array {
-		$qb = $this->db->getQueryBuilder();
-		$orderByColumn = 'entity.' . $orderBy;
-
-		$qb->selectDistinct('entity.uid')
-			->addSelect($orderByColumn)
-			->from($this->tableName, 'entity')
-			->leftJoin(
-				'entity',
-				'calresources_restricts',
-				'restriction',
-				$qb->expr()->andX(
-					$qb->expr()->eq('restriction.entity_id', 'entity.id'),
-					$qb->expr()->eq('restriction.entity_type', $qb->createNamedParameter($entityType, IQueryBuilder::PARAM_STR))
-				)
-			)
-			->where(
-				$qb->expr()->orX(
-					$qb->expr()->eq('entity.restricted', $qb->createNamedParameter(0, IQueryBuilder::PARAM_INT)),
-					$qb->expr()->andX(
-						$qb->expr()->eq('entity.restricted', $qb->createNamedParameter(1, IQueryBuilder::PARAM_INT)),
-						$qb->expr()->isNotNull('restriction.id')
-					)
-				)
-			)
-			->orderBy($orderByColumn, $ascending ? 'ASC' : 'DESC');
-
-		if ($limit !== null) {
-			$qb->setMaxResults($limit);
-		}
-		if ($offset !== null) {
-			$qb->setFirstResult($offset);
-		}
-
-		$stmt = $qb->executeQuery();
-
-		$uids = [];
-		while (($row = $stmt->fetchAssociative()) !== false) {
-			$uids[] = $row['uid'];
-		}
-
-		$stmt->closeCursor();
-
-		return $uids;
-	}
-
-	/**
 	 * @param string $search
 	 * @param string $searchBy
 	 * @param string $orderBy
