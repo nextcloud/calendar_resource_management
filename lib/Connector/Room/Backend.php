@@ -46,7 +46,24 @@ class Backend implements IBackend {
 	 * @return array
 	 */
 	public function getAllRooms(): array {
-		return [];
+		$rooms = [];
+		try {
+			$roomModels = $this->mapper->findAll();
+
+			foreach ($roomModels as $roomModel) {
+				try {
+					$restrictions = $this->restrictionMapper->findAllByEntityTypeAndId('room', $roomModel->getId());
+					$story = $this->storyMapper->find($roomModel->getStoryId());
+					$building = $this->buildingMapper->find($story->getBuildingId());
+					$rooms[] = new Room($roomModel, $story, $building, $restrictions, $this);
+				} catch (\Exception $ex) {
+					$this->logger->error('Could not load room with id ' . $roomModel->getId(), ['exception' => $ex]);
+				}
+			}
+		} catch (\Exception $ex) {
+			$this->logger->error('Could not fetch all rooms', ['exception' => $ex]);
+		}
+		return $rooms;
 	}
 
 	/**

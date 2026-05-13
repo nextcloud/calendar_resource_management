@@ -17,6 +17,7 @@
 	<types>
 		<prevent_group_restriction/>
 	</types>
+	<icon>img/app.svg</icon>
 	<category>office</category>
 	<category>organization</category>
 	<bugs>https://github.com/nextcloud/calendar_resource_management</bugs>
@@ -35,4 +36,8 @@
 		<command>OCA\CalendarResourceManagement\Command\DeleteResource</command>
 		<command>OCA\CalendarResourceManagement\Command\RestrictedResource</command>
 	</commands>
+	<settings>
+		<admin>OCA\CalendarResourceManagement\Settings\AdminSettings</admin>
+		<admin-section>OCA\CalendarResourceManagement\Settings\AdminSection</admin-section>
+	</settings>
 </info>

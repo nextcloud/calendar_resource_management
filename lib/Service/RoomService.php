@@ -9,6 +9,7 @@ namespace OCA\CalendarResourceManagement\Service;
 
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Db\RoomMapper;
+use OCA\CalendarResourceManagement\Db\RoomModel;
 
 class RoomService {
 	/** @var RoomMapper */
@@ -32,5 +33,57 @@ class RoomService {
 		RestrictionMapper $restrictionMapper) {
 		$this->roomMapper = $roomMapper;
 		$this->restrictionMapper = $restrictionMapper;
+	}
+	/**
+	 * List all rooms
+	 */
+	public function listRooms(): array {
+		return $this->roomMapper->findAll();
+	}
+
+	/**
+	 * Create a room
+	 */
+	public function createRoom(
+		string $name,
+		string $email = '',
+		string $roomType = 'default',
+		int $storyId = 1,
+		string $roomNumber = '',
+		string $contactPersonUserId = '',
+		?int $capacity = null,
+		bool $hasPhone = false,
+		bool $hasVideo = false,
+		bool $hasTv = false,
+		bool $hasProjector = false,
+		bool $hasWhiteboard = false,
+		bool $wheelchairAccessible = false,
+	): RoomModel {
+		$room = new RoomModel();
+		$room->setUid(bin2hex(random_bytes(16)));
+		$room->setDisplayName($name);
+		$room->setEmail($email);
+		$room->setRoomType($roomType);
+		$room->setStoryId($storyId);
+		$room->setRoomNumber($roomNumber);
+		$room->setContactPersonUserId($contactPersonUserId);
+		if ($capacity !== null) {
+			$room->setCapacity($capacity);
+		}
+		$room->setHasPhone($hasPhone);
+		$room->setHasVideoConferencing($hasVideo);
+		$room->setHasTv($hasTv);
+		$room->setHasProjector($hasProjector);
+		$room->setHasWhiteboard($hasWhiteboard);
+		$room->setIsWheelchairAccessible($wheelchairAccessible);
+		return $this->roomMapper->insert($room);
+	}
+
+	/**
+	 * Delete a room
+	 */
+	public function deleteRoom(int $id): void {
+		$room = $this->roomMapper->find($id);
+		$this->roomMapper->delete($room);
 	}
 }
