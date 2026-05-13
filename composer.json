@@ -5,7 +5,6 @@
 		},
 		"sort-packages": true,
 		"optimize-autoloader": true,
-		"classmap-authoritative": true,
 		"autoloader-suffix": "CalendarResourceManagement",
 		"allow-plugins": {
 			"bamarni/composer-bin-plugin": true
