@@ -84,7 +84,7 @@ class Version1012Date20260410000001 extends SimpleMigrationStep {
 				$select->expr()->eq('entity_type', $select->createNamedParameter($entityType, IQueryBuilder::PARAM_STR))
 			);
 
-		$entityIds = array_map('intval', $select->executeQuery()->fetchFirstColumn());
+		$entityIds = array_map('intval', array_column($select->executeQuery()->fetchAll(), 'entity_id'));
 		if ($entityIds === []) {
 			return;
 		}
