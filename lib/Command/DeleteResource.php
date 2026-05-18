@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OCA\CalendarResourceManagement\Command;
 
 use OCA\CalendarResourceManagement\Db\AMapper;
+use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\Calendar\Resource\IManager as IResourceManager;
@@ -37,6 +38,7 @@ class DeleteResource extends Command {
 		IDBConnection $connection,
 		private IResourceManager $resourceManager,
 		private IRoomManager $roomManager,
+		private RestrictionMapper $restrictionMapper,
 	) {
 		parent::__construct();
 		$this->logger = $logger;
@@ -85,6 +87,7 @@ class DeleteResource extends Command {
 		// delete cascading with FKs
 		try {
 			$mapper->delete($entity);
+			$this->restrictionMapper->deleteAllByEntityTypeAndId($type, $entity->getId());
 			$output->writeln('<info>Deleted resource type ' . $type . ' with ID ' . $id . ' and all associated entries.</info>');
 		} catch (Exception $e) {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
