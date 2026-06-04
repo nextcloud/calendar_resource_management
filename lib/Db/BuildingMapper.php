@@ -17,6 +17,7 @@ use OCP\IDBConnection;
  * Class BuildingMapper
  *
  * @package OCA\CalendarResourceManagement\Db
+ * @template-extends QBMapper<BuildingModel>
  */
 class BuildingMapper extends QBMapper {
 	/**

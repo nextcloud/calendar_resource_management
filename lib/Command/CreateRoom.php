@@ -194,9 +194,7 @@ class CreateRoom extends Command {
 			return 1;
 		}
 
-		if (method_exists($this->roomManager, 'update')) {
-			$this->roomManager->update();
-		}
+		$this->roomManager->update();
 
 		return 0;
 	}

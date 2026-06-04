@@ -14,10 +14,14 @@ use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\Exception;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
+/**
+ * @template T of Entity
+ * @template-extends QBMapper<T>
+ */
 abstract class AMapper extends QBMapper {
 	/**
 	 * @param int $id
-	 * @return Entity
+	 * @return T
 	 * @throws DoesNotExistException if not found
 	 * @throws MultipleObjectsReturnedException if more than one result
 	 */
@@ -35,7 +39,7 @@ abstract class AMapper extends QBMapper {
 
 	/**
 	 * @param string $uid
-	 * @return Entity
+	 * @return T
 	 * @throws DoesNotExistException
 	 * @throws MultipleObjectsReturnedException
 	 */
@@ -56,7 +60,7 @@ abstract class AMapper extends QBMapper {
 	 * @param bool $ascending
 	 * @param int|null $limit
 	 * @param int|null $offset
-	 * @return Entity[]
+	 * @return T[]
 	 */
 	public function findAll(string $orderBy = 'display_name',
 		bool $ascending = true,
@@ -84,7 +88,7 @@ abstract class AMapper extends QBMapper {
 	 * @param bool $ascending
 	 * @param int|null $limit
 	 * @param int|null $offset
-	 * @return Entity[]
+	 * @return T[]
 	 */
 	protected function findAllByFilter(array $filter,
 		string $orderBy = 'display_name',
@@ -223,7 +227,7 @@ abstract class AMapper extends QBMapper {
 	 * @param bool $ascending
 	 * @param int|null $limit
 	 * @param int|null $offset
-	 * @return array
+	 * @return list<T>
 	 */
 	public function search(string $search,
 		string $searchBy = 'display_name',

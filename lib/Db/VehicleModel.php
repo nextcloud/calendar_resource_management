@@ -20,9 +20,9 @@ namespace OCA\CalendarResourceManagement\Db;
  * @method void setVehicleModel(string $vehicleModel)
  * @method bool getIsElectric()
  * @method void setIsElectric(bool $isElectric)
- * @method int getRange()
+ * @method int|null getRange()
  * @method void setRange(int $range)
- * @method int getSeatingCapacity()
+ * @method int|null getSeatingCapacity()
  * @method void setSeatingCapacity(int $seatingCapacity)
  */
 class VehicleModel extends ResourceModel {

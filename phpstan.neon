@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: 2026 Nextcloud GmbH and Nextcloud contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+parameters:
+	level: 5
+	phpVersion:
+		min: 80200
+		max: 80500
+	paths:
+		- lib
+		- tests
+	excludePaths:
+		- tests/stubs
+	scanDirectories:
+		- vendor-bin/phpunit/vendor/phpunit/phpunit
+		- vendor-bin/phpstan/vendor/nextcloud/ocp
+
+	ignoreErrors:
+		-
+			identifier: property.onlyWritten
+			paths:
+			- lib/Service/VehicleService.php
+			- lib/Service/RoomService.php
+			- lib/Service/ResourceService.php
+			- lib/Service/BuildingService.php
+		-
+			identifier: classConstant.unused
+			paths:
+			- lib/Service/VehicleService.php
+			- lib/Service/RoomService.php
+			- lib/Service/ResourceService.php
+			- lib/Service/BuildingService.php
+	scanFiles:
+		- tests/stubs/doctrine_dbal_arrayparametertype.php
+		- tests/stubs/doctrine_dbal_schema_abstractasset.php
+		- tests/stubs/doctrine_dbal_schema_column.php
+		- tests/stubs/doctrine_dbal_schema_schema.php
+		- tests/stubs/doctrine_dbal_schema_table.php
+		- tests/stubs/stecman_component_symfony_console_bashcompletion_completion_completionawareinterface.php
+		- tests/stubs/symfony_component_console_command_command.php
+		- tests/stubs/symfony_component_console_exception_invalidargumentexception.php
+		- tests/stubs/symfony_component_console_helper_questionhelper.php
+		- tests/stubs/symfony_component_console_helper_table.php
+		- tests/stubs/symfony_component_console_input_inputargument.php
+		- tests/stubs/symfony_component_console_input_inputinterface.php
+		- tests/stubs/symfony_component_console_input_inputoption.php
+		- tests/stubs/symfony_component_console_output_outputinterface.php
+		- tests/stubs/symfony_component_console_question_confirmationquestion.php
+		- tests/stubs/symfony_component_console_question_question.php
+		- tests/stubs/test_testcase.php
+		- tests/stubs/test_traits_usertrait.php

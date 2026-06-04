@@ -47,29 +47,16 @@ class Vehicle extends ResourceObject {
 	 * @return string|null
 	 */
 	public function getMetadataForKey(string $key): ?string {
-		switch ($key) {
-			case IResourceMetadata::VEHICLE_TYPE:
-				return $this->entity->getVehicleType();
-
-			case IResourceMetadata::VEHICLE_MAKE:
-				return $this->entity->getVehicleMake();
-
-			case IResourceMetadata::VEHICLE_MODEL:
-				return $this->entity->getVehicleModel();
-
-			case IResourceMetadata::VEHICLE_IS_ELECTRIC:
-				return $this->entity->getIsElectric()
-					? '1'
-					: '0';
-
-			case IResourceMetadata::VEHICLE_RANGE:
-				return (string)$this->entity->getRange();
-
-			case IResourceMetadata::VEHICLE_SEATING_CAPACITY:
-				return (string)$this->entity->getSeatingCapacity();
-
-			default:
-				return parent::getMetadataForKey($key);
-		}
+		return match ($key) {
+			IResourceMetadata::VEHICLE_TYPE => $this->entity->getVehicleType(),
+			IResourceMetadata::VEHICLE_MAKE => $this->entity->getVehicleMake(),
+			IResourceMetadata::VEHICLE_MODEL => $this->entity->getVehicleModel(),
+			IResourceMetadata::VEHICLE_IS_ELECTRIC => $this->entity->getIsElectric()
+				? '1'
+				: '0',
+			IResourceMetadata::VEHICLE_RANGE => (string)$this->entity->getRange(),
+			IResourceMetadata::VEHICLE_SEATING_CAPACITY => (string)$this->entity->getSeatingCapacity(),
+			default => parent::getMetadataForKey($key),
+		};
 	}
 }
