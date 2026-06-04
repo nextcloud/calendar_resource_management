@@ -98,14 +98,10 @@ class RestrictedResource extends Command {
 		switch ($entityType) {
 			case Constants::VEHICLE:
 			case Constants::RESOURCE:
-				if (method_exists($this->resourceManager, 'update')) {
-					$this->resourceManager->update();
-				}
+				$this->resourceManager->update();
 				break;
 			case Constants::ROOM:
-				if (method_exists($this->roomManager, 'update')) {
-					$this->roomManager->update();
-				}
+				$this->roomManager->update();
 				break;
 		}
 

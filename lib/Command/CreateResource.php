@@ -91,9 +91,7 @@ class CreateResource extends Command {
 			return 1;
 		}
 
-		if (method_exists($this->resourceManager, 'update')) {
-			$this->resourceManager->update();
-		}
+		$this->resourceManager->update();
 
 		return 0;
 	}
