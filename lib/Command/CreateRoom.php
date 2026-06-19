@@ -11,7 +11,9 @@ namespace OCA\CalendarResourceManagement\Command;
 
 use OCA\CalendarResourceManagement\Db\RoomMapper;
 use OCA\CalendarResourceManagement\Db\RoomModel;
+use OCA\CalendarResourceManagement\Db\StoryMapper;
 use OCA\CalendarResourceManagement\Service\UidValidationService;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Calendar\Room\IManager as IRoomManager;
 use OCP\DB\Exception;
 use Psr\Log\LoggerInterface;
@@ -48,6 +50,7 @@ class CreateRoom extends Command {
 		RoomMapper $roomMapper,
 		private IRoomManager $roomManager,
 		private UidValidationService $uidValidationService,
+		private StoryMapper $storyMapper,
 	) {
 		parent::__construct();
 		$this->logger = $logger;
@@ -167,6 +170,13 @@ class CreateRoom extends Command {
 		$wheelchair = (bool)$input->getOption(self::IS_WHEELCHAIR_ACCESSIBLE);
 
 		$this->uidValidationService->validateUidAndThrow($uid);
+
+		try {
+			$this->storyMapper->find($storyId);
+		} catch (DoesNotExistException) {
+			$output->writeln('<error>Story with ID ' . $storyId . ' does not exist. Use `calendar-resource:resources:list` to see available stories.</error>');
+			return 1;
+		}
 
 		$roomModel = new RoomModel();
 		$roomModel->setStoryId($storyId);
