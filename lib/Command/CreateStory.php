@@ -9,8 +9,10 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Command;
 
+use OCA\CalendarResourceManagement\Db\BuildingMapper;
 use OCA\CalendarResourceManagement\Db\StoryMapper;
 use OCA\CalendarResourceManagement\Db\StoryModel;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
@@ -28,10 +30,14 @@ class CreateStory extends Command {
 	/** @var StoryMapper */
 	private $storyMapper;
 
-	public function __construct(LoggerInterface $logger, StoryMapper $storyMapper) {
+	/** @var BuildingMapper */
+	private $buildingMapper;
+
+	public function __construct(LoggerInterface $logger, StoryMapper $storyMapper, BuildingMapper $buildingMapper) {
 		parent::__construct();
 		$this->logger = $logger;
 		$this->storyMapper = $storyMapper;
+		$this->buildingMapper = $buildingMapper;
 	}
 
 	/**
@@ -58,6 +64,13 @@ class CreateStory extends Command {
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$displayName = (string)$input->getArgument(self::DISPLAY_NAME);
 		$building = (int)$input->getArgument(self::BUILDING_ID);
+
+		try {
+			$this->buildingMapper->find($building);
+		} catch (DoesNotExistException) {
+			$output->writeln('<error>Building with ID ' . $building . ' does not exist. Use `calendar-resource:resources:list` to see available buildings.</error>');
+			return 1;
+		}
 
 		$storyModel = new StoryModel();
 		$storyModel->setDisplayName($displayName);
