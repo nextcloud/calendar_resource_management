@@ -18,19 +18,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  matrix:
-    runs-on: ubuntu-latest-low
-    outputs:
-      php-version: ${{ steps.versions.outputs.php-available-list }}
-      server-max: ${{ steps.versions.outputs.branches-max-list }}
-    steps:
-      - name: Checkout app
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
-
-      - name: Get version matrix
-        id: versions
-        uses: icewind1991/nextcloud-version-matrix@58becf3b4bb6dc6cef677b15e2fd8e7d48c0908f # v1.3.1
-
   changes:
     runs-on: ubuntu-latest-low
     permissions:
@@ -61,13 +48,21 @@ jobs:
   phpunit-sqlite:
     runs-on: ubuntu-latest
 
-    needs: [changes, matrix]
+    needs: changes
     if: needs.changes.outputs.src != 'false'
 
     strategy:
+      fail-fast: false
       matrix:
-        php-versions: ${{ fromJson(needs.matrix.outputs.php-version) }}
-        server-versions: ${{ fromJson(needs.matrix.outputs.server-max) }}
+        php-versions: [ '8.3', '8.4', '8.5' ]
+        server-versions: [ 'master' ]
+        include:
+          - php-versions: '8.5'
+            server-versions: 'stable34'
+          - php-versions: '8.5'
+            server-versions: 'stable33'
+          - php-versions: '8.3'
+            server-versions: 'stable32'
 
     name: SQLite PHP ${{ matrix.php-versions }} Nextcloud ${{ matrix.server-versions }}
 
