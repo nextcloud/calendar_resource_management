@@ -1,0 +1,29 @@
+{
+  "name": "calendar-resource-management",
+  "version": "1.0.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "build": "vite build --mode production",
+    "dev": "vite build --mode development",
+    "watch": "vite build --mode development --watch",
+    "lint": "eslint --ext .js,.vue src",
+    "lint:fix": "eslint --ext .js,.vue src --fix",
+    "stylelint": "stylelint src/**/*.vue src/**/*.scss src/**/*.css",
+    "stylelint:fix": "stylelint src/**/*.vue src/**/*.scss src/**/*.css --fix"
+  },
+  "dependencies": {
+    "@nextcloud/axios": "^2.5.1",
+    "@nextcloud/dialogs": "^7.0.0",
+    "@nextcloud/l10n": "^3.4.1",
+    "@nextcloud/router": "^3.0.1",
+    "@nextcloud/vue": "^9.0.0",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@nextcloud/eslint-config": "^8.4.1",
+    "@nextcloud/stylelint-config": "^3.0.1",
+    "@nextcloud/vite-config": "^2.5.2",
+    "vite": "^7.3.1"
+  }
+}
