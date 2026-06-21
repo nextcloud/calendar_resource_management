@@ -15,6 +15,7 @@ use OCP\IDBConnection;
  * Class RestrictionMapper
  *
  * @package OCA\CalendarResourceManagement\Db
+ * @template-extends QBMapper<RestrictionModel>
  */
 class RestrictionMapper extends QBMapper {
 	/**
@@ -49,7 +50,7 @@ class RestrictionMapper extends QBMapper {
 	 * @param bool $ascending
 	 * @param int|null $limit
 	 * @param int|null $offset
-	 * @return BuildingModel[]
+	 * @return list<RestrictionModel>
 	 */
 	public function findAll(string $orderBy = 'id',
 		bool $ascending = true,

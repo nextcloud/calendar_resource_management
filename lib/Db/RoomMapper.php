@@ -14,6 +14,7 @@ use OCP\IDBConnection;
  * Class RoomMapper
  *
  * @package OCA\CalendarResourceManagement\Db
+ * @template-extends AMapper<RoomModel>
  */
 class RoomMapper extends AMapper {
 	/**

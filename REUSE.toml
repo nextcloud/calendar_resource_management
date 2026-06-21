@@ -12,7 +12,7 @@ SPDX-FileCopyrightText = "2021 Nextcloud GmbH and Nextcloud contributors"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
 [[annotations]]
-path = ["renovate.json", "vendor-bin/phpunit/composer.json", "vendor-bin/phpunit/composer.lock"]
+path = ["renovate.json", "vendor-bin/**"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2024 Nextcloud GmbH and Nextcloud contributors"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
@@ -27,4 +27,22 @@ SPDX-License-Identifier = "Apache-2.0"
 path = "composer/autoload.php"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Nils Adermann, Jordi Boggiano"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = ["tests/stubs/doctrine_dbal_**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "none"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = ["tests/stubs/symfony_component_**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "none"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = ["tests/stubs/stecman_component_**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "none"
 SPDX-License-Identifier = "MIT"
