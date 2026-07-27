@@ -6,17 +6,17 @@
 
 [![REUSE status](https://api.reuse.software/badge/github.com/nextcloud/calendar_resource_management)](https://api.reuse.software/info/github.com/nextcloud/calendar_resource_management)
 
-This app enables the 🗓️ [Calendar](https://github.com/nextcloud/calendar) App to work with resources and rooms
+**Calendar Resource Management** is a Nextcloud app for managing shared resources—such as buildings, floors, meeting rooms, general resources, and vehicles—for use with the 🗓️ [Nextcloud Calendar](https://github.com/nextcloud/calendar) app.
+
+* **For users:** View room availability for selected time slots and choose an appropriate location when booking events.
+* **For administrators:** Configure resource details such as capacity, accessibility, contact information, and group restrictions through CLI commands.
+* **Automation:** Synchronize resources with Nextcloud Calendar through cron jobs.
 
 ## Installation
 
-### Obtain the latest pre-release build
+The app is distributed through the [app store](https://apps.nextcloud.com/apps/calendar_resource_management) and you can install it [right from your Nextcloud installation](https://docs.nextcloud.com/server/stable/admin_manual/apps_management.html).
 
-Builds are available at https://github.com/nextcloud-releases/calendar_resource_management/releases.
-
-Download and extract `calendar_resource_management.tar.gz` into `nextcloud/apps/`.
-
-### Activate it within the apps menu
+Release tarballs are also hosted at [https://github.com/nextcloud-releases/calendar/releases](https://github.com/nextcloud-releases/calendar_resource_management/releases).
 
 ## Configuration
 
