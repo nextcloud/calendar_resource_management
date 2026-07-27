@@ -17,6 +17,7 @@ use OCP\IDBConnection;
  * Class StoryMapper
  *
  * @package OCA\CalendarResourceManagement\Db
+ * @template-extends QBMapper<StoryModel>
  */
 class StoryMapper extends QBMapper {
 	/**
@@ -51,7 +52,7 @@ class StoryMapper extends QBMapper {
 	 * @param bool $ascending
 	 * @param int|null $limit
 	 * @param int|null $offset
-	 * @return BuildingModel[]
+	 * @return list<StoryModel>
 	 */
 	public function findAll(string $orderBy = 'display_name',
 		bool $ascending = true,

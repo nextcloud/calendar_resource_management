@@ -20,51 +20,24 @@ use OCA\CalendarResourceManagement\Db\StoryMapper;
 use OCA\CalendarResourceManagement\Db\StoryModel;
 use OCA\CalendarResourceManagement\Db\VehicleMapper;
 use OCA\CalendarResourceManagement\Db\VehicleModel;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class ListResources extends Command {
-	/** @var BuildingMapper */
-	private $buildingMapper;
-
-	/** @var ResourceMapper */
-	private $resourceMapper;
-
-	/** @var RestrictionMapper */
-	private $restrictionMapper;
-
-	/** @var RoomMapper */
-	private $roomMapper;
-
-	/** @var StoryMapper */
-	private $storyMapper;
-
-	/** @var VehicleMapper */
-	private $vehicleMapper;
-
-	public function __construct(LoggerInterface $logger,
-		BuildingMapper $buildingMapper,
-		ResourceMapper $resourceMapper,
-		RestrictionMapper $restrictionMapper,
-		RoomMapper $roomMapper,
-		StoryMapper $storyMapper,
-		VehicleMapper $vehicleMapper) {
+	public function __construct(
+		private BuildingMapper $buildingMapper,
+		private ResourceMapper $resourceMapper,
+		private RestrictionMapper $restrictionMapper,
+		private RoomMapper $roomMapper,
+		private StoryMapper $storyMapper,
+		private VehicleMapper $vehicleMapper,
+	) {
 		parent::__construct();
-		$this->buildingMapper = $buildingMapper;
-		$this->resourceMapper = $resourceMapper;
-		$this->restrictionMapper = $restrictionMapper;
-		$this->roomMapper = $roomMapper;
-		$this->storyMapper = $storyMapper;
-		$this->vehicleMapper = $vehicleMapper;
 	}
 
-	/**
-	 * @return void
-	 */
-	protected function configure() {
+	protected function configure(): void {
 		$this->setName('calendar-resource:resources:list');
 		$this->setDescription('List all resources');
 	}

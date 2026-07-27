@@ -115,14 +115,10 @@ class DeleteResource extends Command {
 	}
 
 	private function updateResources(): void {
-		if (method_exists($this->resourceManager, 'update')) {
-			$this->resourceManager->update();
-		}
+		$this->resourceManager->update();
 	}
 
 	private function updateRooms(): void {
-		if (method_exists($this->roomManager, 'update')) {
-			$this->roomManager->update();
-		}
+		$this->roomManager->update();
 	}
 }

@@ -14,6 +14,7 @@ use OCP\IDBConnection;
  * Class ResourceMapper
  *
  * @package OCA\CalendarResourceManagement\Db
+ * @template-extends AMapper<ResourceModel>
  */
 class ResourceMapper extends AMapper {
 	/**

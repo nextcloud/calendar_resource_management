@@ -14,6 +14,7 @@ use OCP\IDBConnection;
  * Class VehicleMapper
  *
  * @package OCA\CalendarResourceManagement\Db
+ * @template-extends AMapper<VehicleModel>
  */
 class VehicleMapper extends AMapper {
 	/**

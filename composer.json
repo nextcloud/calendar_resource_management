@@ -21,16 +21,16 @@
 	},
 	"require-dev": {
 		"nextcloud/coding-standard": "^1.4.0",
-		"psalm/phar": "^5.26.1",
 		"roave/security-advisories": "dev-master"
 	},
 	"scripts": {
 		"post-install-cmd": [
-			"@composer bin phpunit install --ansi"
+			"@composer bin all install --ansi"
 		],
 		"cs:check": "php-cs-fixer fix --dry-run --diff",
 		"cs:fix": "php-cs-fixer fix",
 		"lint": "find . -name \\*.php -not -path './vendor/*' -exec php -l \"{}\" \\;",
-		"test:unit": "phpunit -c tests/phpunit.xml"
+		"test:unit": "phpunit -c tests/phpunit.xml",
+		"phpstan": "phpstan analyse -c phpstan.neon"
 	}
 }

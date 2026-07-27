@@ -11,6 +11,7 @@ namespace OCA\CalendarResourceManagement\Command;
 
 use OCA\CalendarResourceManagement\Constants;
 use OCA\CalendarResourceManagement\Db\AMapper;
+use OCA\CalendarResourceManagement\Db\ResourceModel;
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Db\RestrictionModel;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -93,6 +94,7 @@ class CreateRestriction extends Command {
 		$restrictionModel->setGroupId($groupId);
 
 		try {
+			/** @var ResourceModel $resource */
 			$resource->setRestricted(true);
 			$resourceMapper->update($resource);
 			$inserted = $this->restrictionMapper->insert($restrictionModel);
@@ -108,14 +110,10 @@ class CreateRestriction extends Command {
 		switch ($entityType) {
 			case Constants::VEHICLE:
 			case Constants::RESOURCE:
-				if (method_exists($this->resourceManager, 'update')) {
-					$this->resourceManager->update();
-				}
+				$this->resourceManager->update();
 				break;
 			case Constants::ROOM:
-				if (method_exists($this->roomManager, 'update')) {
-					$this->roomManager->update();
-				}
+				$this->roomManager->update();
 				break;
 		}
 
