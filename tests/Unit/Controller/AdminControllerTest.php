@@ -21,6 +21,8 @@ use OCP\AppFramework\Http;
 use OCP\Calendar\Resource\IManager as IResourceManager;
 use OCP\Calendar\Room\IManager as IRoomManager;
 use OCP\IRequest;
+use OCP\IUser;
+use OCP\IUserManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -33,6 +35,7 @@ class AdminControllerTest extends TestCase {
 	private ResourceService&MockObject $resourceService;
 	private IRoomManager&MockObject $roomManager;
 	private IResourceManager&MockObject $resourceManager;
+	private IUserManager&MockObject $userManager;
 	private LoggerInterface&MockObject $logger;
 	private AdminController $controller;
 
@@ -45,6 +48,7 @@ class AdminControllerTest extends TestCase {
 		$this->resourceService = $this->createMock(ResourceService::class);
 		$this->roomManager = $this->createMock(IRoomManager::class);
 		$this->resourceManager = $this->createMock(IResourceManager::class);
+		$this->userManager = $this->createMock(IUserManager::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 
 		$this->controller = new AdminController(
@@ -56,8 +60,35 @@ class AdminControllerTest extends TestCase {
 			$this->resourceService,
 			$this->roomManager,
 			$this->resourceManager,
+			$this->userManager,
 			$this->logger,
 		);
+	}
+
+	public function testGetUsersMapsAccounts(): void {
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$user->method('getDisplayName')->willReturn('Alice Doe');
+		$this->userManager->expects(self::once())
+			->method('searchDisplayName')
+			->with('ali', 25)
+			->willReturn(['alice' => $user]);
+
+		$response = $this->controller->getUsers('ali');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame([
+			['id' => 'alice', 'displayName' => 'Alice Doe'],
+		], $response->getData());
+	}
+
+	public function testGetUsersCapsTheLimit(): void {
+		$this->userManager->expects(self::once())
+			->method('searchDisplayName')
+			->with('', 100)
+			->willReturn([]);
+
+		self::assertSame([], $this->controller->getUsers('', 5000)->getData());
 	}
 
 	public function testGetBuildingsMapsEntities(): void {

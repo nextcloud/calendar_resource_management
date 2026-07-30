@@ -8,12 +8,14 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 		<BuildingsSection
 			ref="buildings"
 			:buildings="buildings"
+			:loading="creating.building"
 			@create="createBuilding"
 			@delete="confirmDeleteBuilding" />
 
 		<StoriesSection
 			ref="stories"
 			:buildings="buildings"
+			:loading="creating.story"
 			:stories="stories"
 			@create="createStory"
 			@delete="confirmDeleteStory" />
@@ -21,6 +23,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 		<RoomsSection
 			ref="rooms"
 			:buildings="buildings"
+			:loading="creating.room"
 			:rooms="rooms"
 			:stories="stories"
 			@create="createRoom"
@@ -29,6 +32,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 		<ResourcesSection
 			ref="resources"
 			:buildings="buildings"
+			:loading="creating.resource"
 			:resources="resources"
 			@create="createResource"
 			@delete="confirmDeleteResource" />
@@ -75,6 +79,14 @@ export default {
 			stories: [],
 			rooms: [],
 			resources: [],
+			// Blocks the submit buttons while a create request is running
+			creating: {
+				building: false,
+				story: false,
+				room: false,
+				resource: false,
+			},
+
 			pendingDelete: null,
 		}
 	},
@@ -144,7 +156,7 @@ export default {
 		async loadStories() {
 			const stories = await this.request(
 				api.fetchStories,
-				t('calendar_resource_management', 'Could not load stories'),
+				t('calendar_resource_management', 'Could not load floors'),
 			)
 			if (stories !== null) {
 				this.stories = stories
@@ -172,46 +184,66 @@ export default {
 		},
 
 		async createBuilding(building) {
-			const created = await this.request(
-				() => api.createBuilding(building.name, building.address),
-				t('calendar_resource_management', 'Could not create building'),
-			)
-			if (created !== null) {
-				this.$refs.buildings.reset()
-				await this.loadBuildings()
+			this.creating.building = true
+			try {
+				const created = await this.request(
+					() => api.createBuilding(building.name, building.address),
+					t('calendar_resource_management', 'Could not create building'),
+				)
+				if (created !== null) {
+					this.$refs.buildings.reset()
+					await this.loadBuildings()
+				}
+			} finally {
+				this.creating.building = false
 			}
 		},
 
 		async createStory(story) {
-			const created = await this.request(
-				() => api.createStory(story.name, story.buildingId),
-				t('calendar_resource_management', 'Could not create story'),
-			)
-			if (created !== null) {
-				this.$refs.stories.reset()
-				await this.loadStories()
+			this.creating.story = true
+			try {
+				const created = await this.request(
+					() => api.createStory(story.name, story.buildingId),
+					t('calendar_resource_management', 'Could not create floor'),
+				)
+				if (created !== null) {
+					this.$refs.stories.reset()
+					await this.loadStories()
+				}
+			} finally {
+				this.creating.story = false
 			}
 		},
 
 		async createRoom(room) {
-			const created = await this.request(
-				() => api.createRoom(room),
-				t('calendar_resource_management', 'Could not create room'),
-			)
-			if (created !== null) {
-				this.$refs.rooms.reset()
-				await this.loadRooms()
+			this.creating.room = true
+			try {
+				const created = await this.request(
+					() => api.createRoom(room),
+					t('calendar_resource_management', 'Could not create room'),
+				)
+				if (created !== null) {
+					this.$refs.rooms.reset()
+					await this.loadRooms()
+				}
+			} finally {
+				this.creating.room = false
 			}
 		},
 
 		async createResource(resource) {
-			const created = await this.request(
-				() => api.createResource(resource),
-				t('calendar_resource_management', 'Could not create resource'),
-			)
-			if (created !== null) {
-				this.$refs.resources.reset()
-				await this.loadResources()
+			this.creating.resource = true
+			try {
+				const created = await this.request(
+					() => api.createResource(resource),
+					t('calendar_resource_management', 'Could not create resource'),
+				)
+				if (created !== null) {
+					this.$refs.resources.reset()
+					await this.loadResources()
+				}
+			} finally {
+				this.creating.resource = false
 			}
 		},
 
@@ -238,11 +270,11 @@ export default {
 
 		confirmDeleteStory(id) {
 			this.pendingDelete = {
-				message: t('calendar_resource_management', 'Do you really want to delete this story?'),
+				message: t('calendar_resource_management', 'Do you really want to delete this floor?'),
 				action: async () => {
 					const deleted = await this.request(
 						() => api.deleteStory(id),
-						t('calendar_resource_management', 'Could not delete story'),
+						t('calendar_resource_management', 'Could not delete floor'),
 					)
 					if (deleted !== null) {
 						// Rooms reference the story
@@ -296,15 +328,20 @@ export default {
 
 <style lang="scss" scoped>
 .crm-admin {
-	// Form fields and tables of all sections
+	// Every form field and table of all sections shares this width
+	--crm-content-max-width: 700px;
+
+	// Text fields, selects and the submit button all line up on the same edges
 	:deep(.crm-field) {
 		margin-block-end: calc(2 * var(--default-grid-baseline));
-		max-width: 500px;
+		max-width: var(--crm-content-max-width);
+		min-width: 0;
+		width: 100%;
 	}
 
 	:deep(.crm-equipment) {
 		margin-block: calc(2 * var(--default-grid-baseline));
-		max-width: 500px;
+		max-width: var(--crm-content-max-width);
 
 		legend {
 			font-weight: bold;
@@ -313,14 +350,14 @@ export default {
 
 	:deep(.crm-table) {
 		border-collapse: collapse;
-		margin-block-start: calc(3 * var(--default-grid-baseline));
 		max-width: 100%;
 		width: 100%;
 
 		th,
 		td {
 			border-block-end: 1px solid var(--color-border);
-			padding: calc(2 * var(--default-grid-baseline));
+			// Leaves 4px above and below the delete buttons
+			padding: var(--default-grid-baseline) calc(2 * var(--default-grid-baseline));
 			text-align: start;
 		}
 
@@ -329,13 +366,28 @@ export default {
 			font-weight: normal;
 		}
 
+		// The wrapper already draws the outer border
+		tbody tr:last-child td {
+			border-block-end: none;
+		}
+
 		tbody tr:hover {
 			background-color: var(--color-background-hover);
 		}
 	}
 
 	:deep(.crm-table-wrapper) {
+		border: 1px solid var(--color-border-dark);
+		// Clips the rows to the rounded corners, together with the overflow
+		border-radius: var(--border-radius-element);
+		margin-block-end: calc(4 * var(--default-grid-baseline));
+		max-width: var(--crm-content-max-width);
 		overflow-x: auto;
+	}
+
+	// The room table has too many columns to fit the shared width
+	:deep(.crm-table-wrapper--wide) {
+		max-width: 100%;
 	}
 }
 </style>

@@ -12,6 +12,15 @@ use OCA\CalendarResourceManagement\Db\StoryMapper;
 use OCA\CalendarResourceManagement\Db\StoryModel;
 use OCP\AppFramework\Db\DoesNotExistException;
 
+/**
+ * A story is a floor of a building.
+ *
+ * The admin interface calls them floors, which is the more common wording, but
+ * the entity keeps the name story: it is the wording of the database tables, of
+ * the `calendar-resource:*` commands and of the public metadata key
+ * \OCP\Calendar\Room\IRoomMetadata::BUILDING_STORY, which is part of the room
+ * metadata sent to clients and can therefore not be renamed.
+ */
 class StoryService {
 	public function __construct(
 		private StoryMapper $storyMapper,

@@ -7,6 +7,38 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 	<NcSettingsSection
 		:description="t('calendar_resource_management', 'Resources are bookable in the calendar and belong to a building.')"
 		:name="t('calendar_resource_management', 'Resources')">
+		<div v-if="resources.length" class="crm-table-wrapper">
+			<table class="crm-table">
+				<thead>
+					<tr>
+						<th>{{ t('calendar_resource_management', 'Name') }}</th>
+						<th>{{ t('calendar_resource_management', 'Email') }}</th>
+						<th>{{ t('calendar_resource_management', 'Resource type') }}</th>
+						<th>{{ t('calendar_resource_management', 'Building') }}</th>
+						<th>{{ t('calendar_resource_management', 'Actions') }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="resource in resources" :key="resource.id">
+						<td>{{ resource.name }}</td>
+						<td>{{ resource.email || '-' }}</td>
+						<td>{{ resource.resourceType || '-' }}</td>
+						<td>{{ nameById(buildings, resource.buildingId) }}</td>
+						<td>
+							<NcButton
+								:aria-label="t('calendar_resource_management', 'Delete resource {name}', { name: resource.name })"
+								variant="tertiary"
+								@click="$emit('delete', resource.id)">
+								<template #icon>
+									<NcIconSvgWrapper :path="mdiDelete" />
+								</template>
+							</NcButton>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
 		<NcTextField
 			v-model="name"
 			class="crm-field"
@@ -33,47 +65,26 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 			:placeholder="t('calendar_resource_management', 'Please select a building')" />
 
 		<NcButton
-			:disabled="!canSubmit"
+			class="crm-field"
+			:disabled="!canSubmit || loading"
 			variant="primary"
+			wide
 			@click="submit">
+			<template #icon>
+				<NcLoadingIcon v-if="loading" />
+				<NcIconSvgWrapper v-else :path="mdiPlus" />
+			</template>
 			{{ t('calendar_resource_management', 'Add resource') }}
 		</NcButton>
-
-		<div v-if="resources.length" class="crm-table-wrapper">
-			<table class="crm-table">
-				<thead>
-					<tr>
-						<th>{{ t('calendar_resource_management', 'Name') }}</th>
-						<th>{{ t('calendar_resource_management', 'Email') }}</th>
-						<th>{{ t('calendar_resource_management', 'Resource type') }}</th>
-						<th>{{ t('calendar_resource_management', 'Building') }}</th>
-						<th>{{ t('calendar_resource_management', 'Actions') }}</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="resource in resources" :key="resource.id">
-						<td>{{ resource.name }}</td>
-						<td>{{ resource.email || '-' }}</td>
-						<td>{{ resource.resourceType || '-' }}</td>
-						<td>{{ nameById(buildings, resource.buildingId) }}</td>
-						<td>
-							<NcButton
-								:aria-label="t('calendar_resource_management', 'Delete resource {name}', { name: resource.name })"
-								variant="error"
-								@click="$emit('delete', resource.id)">
-								{{ t('calendar_resource_management', 'Delete') }}
-							</NcButton>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
 	</NcSettingsSection>
 </template>
 
 <script>
+import { mdiDelete, mdiPlus } from '@mdi/js'
 import { translate as t } from '@nextcloud/l10n'
 import NcButton from '@nextcloud/vue/components/NcButton'
+import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
@@ -85,6 +96,8 @@ export default {
 	components: {
 		NcButton,
 		NcSelect,
+		NcIconSvgWrapper,
+		NcLoadingIcon,
 		NcSettingsSection,
 		NcTextField,
 	},
@@ -99,12 +112,19 @@ export default {
 			type: Array,
 			required: true,
 		},
+
+		loading: {
+			type: Boolean,
+			default: false,
+		},
 	},
 
 	emits: ['create', 'delete'],
 
 	data() {
 		return {
+			mdiDelete,
+			mdiPlus,
 			name: '',
 			email: '',
 			resourceType: 'default',

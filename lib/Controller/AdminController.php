@@ -25,6 +25,8 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\Calendar\Resource\IManager as IResourceManager;
 use OCP\Calendar\Room\IManager as IRoomManager;
 use OCP\IRequest;
+use OCP\IUser;
+use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -38,9 +40,27 @@ class AdminController extends Controller {
 		private ResourceService $resourceService,
 		private IRoomManager $roomManager,
 		private IResourceManager $resourceManager,
+		private IUserManager $userManager,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct($appName, $request);
+	}
+
+	/**
+	 * Accounts that can be picked as the contact person of a room.
+	 */
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'GET', url: '/admin/users')]
+	public function getUsers(string $search = '', int $limit = 25): JSONResponse {
+		$users = $this->userManager->searchDisplayName($search, max(1, min($limit, 100)));
+
+		return new JSONResponse(array_map(
+			static fn (IUser $user): array => [
+				'id' => $user->getUID(),
+				'displayName' => $user->getDisplayName(),
+			],
+			array_values($users),
+		));
 	}
 
 	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
