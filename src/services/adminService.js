@@ -9,6 +9,19 @@ import { generateUrl } from '@nextcloud/router'
 const baseUrl = '/apps/calendar_resource_management/admin'
 
 /**
+ * Fetch the accounts that can be picked as the contact person of a room
+ *
+ * @param {string} search Filter for the display name
+ * @return {Promise<Array>} List of accounts
+ */
+export async function fetchUsers(search = '') {
+	const response = await axios.get(generateUrl(`${baseUrl}/users`), {
+		params: { search },
+	})
+	return response.data
+}
+
+/**
  * Fetch all buildings
  *
  * @return {Promise<Array>} List of buildings
