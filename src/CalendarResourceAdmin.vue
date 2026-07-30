@@ -122,14 +122,9 @@ export default {
 		 */
 		async request(call, errorMessage) {
 			try {
-				const data = await call()
-				if (data?.success === false) {
-					showError(data.error ? `${errorMessage}: ${data.error}` : errorMessage)
-					return null
-				}
-
-				return data
+				return await call()
 			} catch (error) {
+				// The endpoints answer with an untranslated message, so only log it
 				logger.error(errorMessage, { error })
 				showError(errorMessage)
 				return null
