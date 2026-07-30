@@ -7,48 +7,144 @@ declare(strict_types=1);
  */
 namespace OCA\CalendarResourceManagement\Controller;
 
-use OCA\CalendarResourceManagement\Db\BuildingMapper;
-use OCA\CalendarResourceManagement\Db\StoryMapper;
+use OCA\CalendarResourceManagement\Db\BuildingModel;
+use OCA\CalendarResourceManagement\Db\ResourceModel;
+use OCA\CalendarResourceManagement\Db\RoomModel;
+use OCA\CalendarResourceManagement\Db\StoryModel;
+use OCA\CalendarResourceManagement\Service\BuildingService;
 use OCA\CalendarResourceManagement\Service\ResourceService;
 use OCA\CalendarResourceManagement\Service\RoomService;
+use OCA\CalendarResourceManagement\Service\StoryService;
+use OCA\CalendarResourceManagement\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
+use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\Calendar\Resource\IManager as IResourceManager;
 use OCP\Calendar\Room\IManager as IRoomManager;
 use OCP\IRequest;
+use Psr\Log\LoggerInterface;
+use Throwable;
 
 class AdminController extends Controller {
-	private $roomService;
-	private $resourceService;
-	private $buildingMapper;
-	private $storyMapper;
-	private $roomManager;
-	private $resourceManager;
-
 	public function __construct(
-		$AppName,
+		string $appName,
 		IRequest $request,
-		RoomService $roomService,
-		ResourceService $resourceService,
-		BuildingMapper $buildingMapper,
-		StoryMapper $storyMapper,
-		?IRoomManager $roomManager = null,
-		?IResourceManager $resourceManager = null,
+		private BuildingService $buildingService,
+		private StoryService $storyService,
+		private RoomService $roomService,
+		private ResourceService $resourceService,
+		private IRoomManager $roomManager,
+		private IResourceManager $resourceManager,
+		private LoggerInterface $logger,
 	) {
-		parent::__construct($AppName, $request);
-		$this->roomService = $roomService;
-		$this->resourceService = $resourceService;
-		$this->buildingMapper = $buildingMapper;
-		$this->storyMapper = $storyMapper;
-		$this->roomManager = $roomManager;
-		$this->resourceManager = $resourceManager;
+		parent::__construct($appName, $request);
 	}
 
-	public function getrooms() {
-		$rooms = $this->roomService->listRooms();
-		// Return additional fields for the table
-		$result = array_map(function ($room) {
-			return [
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'GET', url: '/admin/buildings')]
+	public function getBuildings(): JSONResponse {
+		return new JSONResponse(array_map(
+			static fn (BuildingModel $building): array => [
+				'id' => $building->getId(),
+				'name' => $building->getDisplayName(),
+				'address' => $building->getAddress(),
+			],
+			$this->buildingService->listBuildings(),
+		));
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'POST', url: '/admin/buildings')]
+	public function createBuilding(string $name = '', string $address = ''): JSONResponse {
+		if (trim($name) === '') {
+			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$building = $this->buildingService->createBuilding($name, $address);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not create building', $e);
+		}
+
+		return new JSONResponse([
+			'id' => $building->getId(),
+			'name' => $building->getDisplayName(),
+		]);
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'DELETE', url: '/admin/buildings/{id}')]
+	public function deleteBuilding(int $id): JSONResponse {
+		try {
+			$this->buildingService->deleteBuilding($id);
+		} catch (DoesNotExistException) {
+			return $this->error('The building does not exist', Http::STATUS_NOT_FOUND);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not delete building', $e);
+		}
+
+		return new JSONResponse([]);
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'GET', url: '/admin/stories')]
+	public function getStories(): JSONResponse {
+		return new JSONResponse(array_map(
+			static fn (StoryModel $story): array => [
+				'id' => $story->getId(),
+				'name' => $story->getDisplayName(),
+				'buildingId' => $story->getBuildingId(),
+			],
+			$this->storyService->listStories(),
+		));
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'POST', url: '/admin/stories')]
+	public function createStory(string $name = '', ?int $buildingId = null): JSONResponse {
+		if (trim($name) === '') {
+			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+		}
+		if ($buildingId === null) {
+			return $this->error('A building has to be selected', Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$story = $this->storyService->createStory($name, $buildingId);
+		} catch (DoesNotExistException) {
+			return $this->error('The selected building does not exist', Http::STATUS_BAD_REQUEST);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not create story', $e);
+		}
+
+		return new JSONResponse([
+			'id' => $story->getId(),
+			'name' => $story->getDisplayName(),
+		]);
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'DELETE', url: '/admin/stories/{id}')]
+	public function deleteStory(int $id): JSONResponse {
+		try {
+			$this->storyService->deleteStory($id);
+		} catch (DoesNotExistException) {
+			return $this->error('The story does not exist', Http::STATUS_NOT_FOUND);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not delete story', $e);
+		}
+
+		return new JSONResponse([]);
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'GET', url: '/admin/rooms')]
+	public function getRooms(): JSONResponse {
+		return new JSONResponse(array_map(
+			static fn (RoomModel $room): array => [
 				'id' => $room->getId(),
 				'name' => $room->getDisplayName(),
 				'email' => $room->getEmail(),
@@ -62,38 +158,42 @@ class AdminController extends Controller {
 				'hasTv' => $room->getHasTv(),
 				'hasProjector' => $room->getHasProjector(),
 				'hasWhiteboard' => $room->getHasWhiteboard(),
-				'isWheelchairAccessible' => $room->getIsWheelchairAccessible()
-			];
-		}, $rooms);
-		return new JSONResponse($result);
+				'isWheelchairAccessible' => $room->getIsWheelchairAccessible(),
+			],
+			$this->roomService->listRooms(),
+		));
 	}
 
-	public function createroom() {
-		$params = $this->request->getParams();
-		$name = $params['name'] ?? '';
-		$email = $params['email'] ?? '';
-		$roomType = $params['roomType'] ?? 'default';
-		$storyId = (int)($params['storyId'] ?? 1);
-		$roomNumber = $params['roomNumber'] ?? '';
-		$contactPersonUserId = $params['contactPersonUserId'] ?? '';
-		$capacity = isset($params['capacity']) ? (int)$params['capacity'] : null;
-		$hasPhone = (bool)($params['hasPhone'] ?? false);
-		$hasVideo = (bool)($params['hasVideo'] ?? false);
-		$hasTv = (bool)($params['hasTv'] ?? false);
-		$hasProjector = (bool)($params['hasProjector'] ?? false);
-		$hasWhiteboard = (bool)($params['hasWhiteboard'] ?? false);
-		$wheelchairAccessible = (bool)($params['wheelchairAccessible'] ?? false);
-
-		if (!$name) {
-			return new JSONResponse(['success' => false, 'error' => 'Name is missing'], 400);
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'POST', url: '/admin/rooms')]
+	public function createRoom(
+		string $name = '',
+		?int $storyId = null,
+		string $email = '',
+		string $roomType = 'default',
+		string $roomNumber = '',
+		string $contactPersonUserId = '',
+		?int $capacity = null,
+		bool $hasPhone = false,
+		bool $hasVideo = false,
+		bool $hasTv = false,
+		bool $hasProjector = false,
+		bool $hasWhiteboard = false,
+		bool $wheelchairAccessible = false,
+	): JSONResponse {
+		if (trim($name) === '') {
+			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+		}
+		if ($storyId === null) {
+			return $this->error('A story has to be selected', Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
 			$room = $this->roomService->createRoom(
 				$name,
+				$storyId,
 				$email,
 				$roomType,
-				$storyId,
 				$roomNumber,
 				$contactPersonUserId,
 				$capacity,
@@ -102,169 +202,105 @@ class AdminController extends Controller {
 				$hasTv,
 				$hasProjector,
 				$hasWhiteboard,
-				$wheelchairAccessible
+				$wheelchairAccessible,
 			);
-
-			// Invalidate room cache
-			if ($this->roomManager && method_exists($this->roomManager, 'update')) {
-				$this->roomManager->update();
-			}
-
-			return new JSONResponse(['success' => true, 'id' => $room->getId(), 'name' => $room->getDisplayName()]);
-		} catch (\Exception $e) {
-			return new JSONResponse(['success' => false, 'error' => $e->getMessage()], 500);
+		} catch (DoesNotExistException) {
+			return $this->error('The selected story does not exist', Http::STATUS_BAD_REQUEST);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not create room', $e);
 		}
+
+		$this->roomManager->update();
+
+		return new JSONResponse([
+			'id' => $room->getId(),
+			'name' => $room->getDisplayName(),
+		]);
 	}
 
-	public function deleteroom($id) {
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'DELETE', url: '/admin/rooms/{id}')]
+	public function deleteRoom(int $id): JSONResponse {
 		try {
-			$this->roomService->deleteRoom((int)$id);
-
-			// Invalidate room cache
-			if ($this->roomManager && method_exists($this->roomManager, 'update')) {
-				$this->roomManager->update();
-			}
-
-			return new JSONResponse(['success' => true]);
-		} catch (\Exception $e) {
-			return new JSONResponse(['success' => false, 'error' => $e->getMessage()], 500);
+			$this->roomService->deleteRoom($id);
+		} catch (DoesNotExistException) {
+			return $this->error('The room does not exist', Http::STATUS_NOT_FOUND);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not delete room', $e);
 		}
+
+		$this->roomManager->update();
+
+		return new JSONResponse([]);
 	}
 
-	public function getresources() {
-		$resources = $this->resourceService->listResources();
-		$result = array_map(function ($resource) {
-			return [
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'GET', url: '/admin/resources')]
+	public function getResources(): JSONResponse {
+		return new JSONResponse(array_map(
+			static fn (ResourceModel $resource): array => [
 				'id' => $resource->getId(),
 				'name' => $resource->getDisplayName(),
 				'email' => $resource->getEmail(),
 				'resourceType' => $resource->getResourceType(),
-				'buildingId' => $resource->getBuildingId()
-			];
-		}, $resources);
-		return new JSONResponse($result);
+				'buildingId' => $resource->getBuildingId(),
+			],
+			$this->resourceService->listResources(),
+		));
 	}
 
-	public function createresource() {
-		$params = $this->request->getParams();
-		$name = $params['name'] ?? '';
-		$email = $params['email'] ?? '';
-		$resourceType = $params['resourceType'] ?? 'default';
-		$buildingId = (int)($params['buildingId'] ?? 1);
-		if (!$name) {
-			return new JSONResponse(['success' => false, 'error' => 'Name is missing'], 400);
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'POST', url: '/admin/resources')]
+	public function createResource(string $name = '', ?int $buildingId = null, string $email = '', string $resourceType = 'default'): JSONResponse {
+		if (trim($name) === '') {
+			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+		}
+		if ($buildingId === null) {
+			return $this->error('A building has to be selected', Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
-			$resource = $this->resourceService->createResource($name, $email, $resourceType, $buildingId);
-
-			// Invalidate resource cache
-			if ($this->resourceManager && method_exists($this->resourceManager, 'update')) {
-				$this->resourceManager->update();
-			}
-
-			return new JSONResponse(['success' => true, 'id' => $resource->getId(), 'name' => $resource->getDisplayName()]);
-		} catch (\Exception $e) {
-			return new JSONResponse(['success' => false, 'error' => $e->getMessage()], 500);
+			$resource = $this->resourceService->createResource($name, $buildingId, $email, $resourceType);
+		} catch (DoesNotExistException) {
+			return $this->error('The selected building does not exist', Http::STATUS_BAD_REQUEST);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not create resource', $e);
 		}
+
+		$this->resourceManager->update();
+
+		return new JSONResponse([
+			'id' => $resource->getId(),
+			'name' => $resource->getDisplayName(),
+		]);
 	}
 
-	public function deleteresource($id) {
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'DELETE', url: '/admin/resources/{id}')]
+	public function deleteResource(int $id): JSONResponse {
 		try {
-			$this->resourceService->deleteResource((int)$id);
-
-			// Invalidate resource cache
-			if ($this->resourceManager && method_exists($this->resourceManager, 'update')) {
-				$this->resourceManager->update();
-			}
-
-			return new JSONResponse(['success' => true]);
-		} catch (\Exception $e) {
-			return new JSONResponse(['success' => false, 'error' => $e->getMessage()], 500);
+			$this->resourceService->deleteResource($id);
+		} catch (DoesNotExistException) {
+			return $this->error('The resource does not exist', Http::STATUS_NOT_FOUND);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not delete resource', $e);
 		}
+
+		$this->resourceManager->update();
+
+		return new JSONResponse([]);
 	}
 
-	public function getstories() {
-		$stories = $this->storyMapper->findAll();
-		$result = array_map(function ($story) {
-			return [
-				'id' => $story->getId(),
-				'name' => $story->getDisplayName(),
-				'buildingId' => $story->getBuildingId()
-			];
-		}, $stories);
-		return new JSONResponse($result);
+	private function error(string $message, int $status): JSONResponse {
+		return new JSONResponse(['error' => $message], $status);
 	}
 
-	public function getbuildings() {
-		$buildings = $this->buildingMapper->findAll();
-		$result = array_map(function ($building) {
-			return [
-				'id' => $building->getId(),
-				'name' => $building->getDisplayName(),
-				'address' => $building->getAddress()
-			];
-		}, $buildings);
-		return new JSONResponse($result);
-	}
+	/**
+	 * Log an unexpected failure and report it without leaking internals to the client.
+	 */
+	private function unexpectedError(string $message, Throwable $e): JSONResponse {
+		$this->logger->error($message, ['exception' => $e]);
 
-	public function createbuilding() {
-		$params = $this->request->getParams();
-		$name = $params['name'] ?? '';
-		$address = $params['address'] ?? '';
-		if (!$name) {
-			return new JSONResponse(['success' => false, 'error' => 'Name is missing'], 400);
-		}
-		$building = new \OCA\CalendarResourceManagement\Db\BuildingModel();
-		$building->setDisplayName($name);
-		$building->setAddress($address);
-		$building = $this->buildingMapper->insert($building);
-		return new JSONResponse(['success' => true, 'id' => $building->getId(), 'name' => $building->getDisplayName()]);
-	}
-
-	public function createstory() {
-		$params = $this->request->getParams();
-		$name = $params['name'] ?? '';
-		$buildingId = (int)($params['buildingId'] ?? 0);
-		if (!$name || !$buildingId) {
-			return new JSONResponse(['success' => false, 'error' => 'Name or Building ID is missing'], 400);
-		}
-
-		// Check if building exists
-		try {
-			$this->buildingMapper->find($buildingId);
-		} catch (\Exception $e) {
-			return new JSONResponse(['success' => false, 'error' => 'The specified building does not exist'], 400);
-		}
-
-		try {
-			$story = new \OCA\CalendarResourceManagement\Db\StoryModel();
-			$story->setDisplayName($name);
-			$story->setBuildingId($buildingId);
-			$story = $this->storyMapper->insert($story);
-			return new JSONResponse(['success' => true, 'id' => $story->getId(), 'name' => $story->getDisplayName()]);
-		} catch (\Exception $e) {
-			return new JSONResponse(['success' => false, 'error' => 'Error creating story: ' . $e->getMessage()], 500);
-		}
-	}
-
-	public function deletebuilding(int $id) {
-		try {
-			$building = $this->buildingMapper->find($id);
-			$this->buildingMapper->delete($building);
-			return new JSONResponse(['success' => true]);
-		} catch (\Exception $e) {
-			return new JSONResponse(['success' => false, 'error' => $e->getMessage()], 500);
-		}
-	}
-
-	public function deletestory(int $id) {
-		try {
-			$story = $this->storyMapper->find($id);
-			$this->storyMapper->delete($story);
-			return new JSONResponse(['success' => true]);
-		} catch (\Exception $e) {
-			return new JSONResponse(['success' => false, 'error' => $e->getMessage()], 500);
-		}
+		return $this->error($message, Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
 }

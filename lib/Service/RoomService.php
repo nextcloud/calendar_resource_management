@@ -10,30 +10,25 @@ namespace OCA\CalendarResourceManagement\Service;
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Db\RoomMapper;
 use OCA\CalendarResourceManagement\Db\RoomModel;
+use OCA\CalendarResourceManagement\Db\StoryMapper;
+use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\Security\ISecureRandom;
 
 class RoomService {
-	/** @var RoomMapper */
-	private $roomMapper;
-
-	/** @var RestrictionMapper */
-	private $restrictionMapper;
-
 	/** @var string[] */
 	private const ALLOWED_ORDER_BY = [
 		'display_name',
 		// ...
 	];
 
-	/**
-	 * ResourceService constructor.
-	 * @param RoomMapper $roomMapper
-	 * @param RestrictionMapper $restrictionMapper
-	 */
-	public function __construct(RoomMapper $roomMapper,
-		RestrictionMapper $restrictionMapper) {
-		$this->roomMapper = $roomMapper;
-		$this->restrictionMapper = $restrictionMapper;
+	public function __construct(
+		private RoomMapper $roomMapper,
+		private RestrictionMapper $restrictionMapper,
+		private StoryMapper $storyMapper,
+		private ISecureRandom $secureRandom,
+	) {
 	}
+
 	/**
 	 * List all rooms
 	 */
@@ -43,12 +38,14 @@ class RoomService {
 
 	/**
 	 * Create a room
+	 *
+	 * @throws DoesNotExistException If the story does not exist.
 	 */
 	public function createRoom(
 		string $name,
+		int $storyId,
 		string $email = '',
 		string $roomType = 'default',
-		int $storyId = 1,
 		string $roomNumber = '',
 		string $contactPersonUserId = '',
 		?int $capacity = null,
@@ -59,8 +56,11 @@ class RoomService {
 		bool $hasWhiteboard = false,
 		bool $wheelchairAccessible = false,
 	): RoomModel {
+		// A room without an existing story cannot be resolved by the calendar backend
+		$this->storyMapper->find($storyId);
+
 		$room = new RoomModel();
-		$room->setUid(bin2hex(random_bytes(16)));
+		$room->setUid($this->secureRandom->generate(32, ISecureRandom::CHAR_LOWER . ISecureRandom::CHAR_DIGITS));
 		$room->setDisplayName($name);
 		$room->setEmail($email);
 		$room->setRoomType($roomType);
@@ -81,6 +81,8 @@ class RoomService {
 
 	/**
 	 * Delete a room
+	 *
+	 * @throws DoesNotExistException If the room does not exist.
 	 */
 	public function deleteRoom(int $id): void {
 		$room = $this->roomMapper->find($id);
