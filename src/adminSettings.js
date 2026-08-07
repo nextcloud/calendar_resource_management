@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-import { createApp, h } from 'vue'
+import { createApp } from 'vue'
+import CalendarResourceAdmin from './CalendarResourceAdmin.vue'
 
-// TODO: replaced by the real admin settings app in the follow-up feature PR
-createApp({ render: () => h('p', 'Coming soon') }).mount('#calendar-resource-admin')
+createApp(CalendarResourceAdmin).mount('#calendar-resource-admin')
