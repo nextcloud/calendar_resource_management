@@ -8,8 +8,9 @@
     "dev": "vite build --mode development",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "stylelint": "stylelint \"src/**/*.vue\" \"src/**/*.scss\" \"src/**/*.css\" --allow-empty-input",
-    "stylelint:fix": "stylelint \"src/**/*.vue\" \"src/**/*.scss\" \"src/**/*.css\" --fix --allow-empty-input",
+    "stylelint": "stylelint \"src/**/*.vue\" \"src/**/*.scss\" \"src/**/*.css\"",
+    "stylelint:fix": "stylelint \"src/**/*.vue\" \"src/**/*.scss\" \"src/**/*.css\" --fix",
+    "typecheck": "vue-tsc --noEmit",
     "watch": "vite build --mode development --watch"
   },
   "browserslist": [
@@ -34,7 +35,9 @@
     "stylelint": "^17.14.1",
     "stylelint-config-recommended-scss": "^17.0.1",
     "stylelint-config-recommended-vue": "^1.6.1",
-    "vite": "^7.3.5"
+    "typescript": "^6.0.3",
+    "vite": "^7.3.1",
+    "vue-tsc": "^3.3.9"
   },
   "engines": {
     "node": "^24.0.0",

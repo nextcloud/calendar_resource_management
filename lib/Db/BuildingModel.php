@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Db;
 
+use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
 /**
@@ -24,7 +25,7 @@ use OCP\AppFramework\Db\Entity;
  * @method string getIsWheelchairAccessible()
  * @method void setIsWheelchairAccessible(bool $IsWheelchairAccessible)
  */
-class BuildingModel extends Entity {
+class BuildingModel extends Entity implements JsonSerializable {
 	/** @var string */
 	public $displayName;
 
@@ -45,5 +46,18 @@ class BuildingModel extends Entity {
 		$this->addType('description', 'string');
 		$this->addType('address', 'string');
 		$this->addType('isWheelchairAccessible', 'boolean');
+	}
+
+	/**
+	 * @return array{id: int, name: ?string, description: ?string, address: ?string, isWheelchairAccessible: bool}
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->getId(),
+			'name' => $this->getDisplayName(),
+			'description' => $this->getDescription(),
+			'address' => $this->getAddress(),
+			'isWheelchairAccessible' => (bool)$this->getIsWheelchairAccessible(),
+		];
 	}
 }
