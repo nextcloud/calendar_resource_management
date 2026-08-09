@@ -5,6 +5,7 @@ declare(strict_types=1);
  * SPDX-FileCopyrightText: 2020 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
+
 namespace OCA\CalendarResourceManagement\Db;
 
 use OCP\DB\QueryBuilder\IQueryBuilder;
@@ -85,7 +86,6 @@ class RoomMapper extends AMapper {
 			)
 			->orderBy('r.' . $orderBy, $ascending ? 'ASC' : 'DESC');
 
-
 		if ($limit !== null) {
 			$qb->setMaxResults($limit);
 		}
@@ -144,7 +144,6 @@ class RoomMapper extends AMapper {
 				$qb->expr()->eq('r.room_type', $qb->createNamedParameter($roomType, IQueryBuilder::PARAM_STR))
 			)
 			->orderBy('r.' . $orderBy, $ascending ? 'ASC' : 'DESC');
-
 
 		if ($limit !== null) {
 			$qb->setMaxResults($limit);

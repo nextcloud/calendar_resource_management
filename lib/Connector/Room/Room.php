@@ -5,6 +5,7 @@ declare(strict_types=1);
  * SPDX-FileCopyrightText: 2020 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
+
 namespace OCA\CalendarResourceManagement\Connector\Room;
 
 use OCA\CalendarResourceManagement\Db;
@@ -122,22 +123,16 @@ class Room implements IRoom, IMetadataProvider {
 		switch ($key) {
 			case IRoomMetadata::ROOM_TYPE:
 				return $this->entity->getRoomType();
-
 			case IRoomMetadata::CAPACITY:
 				return (string)$this->entity->getCapacity();
-
 			case IRoomMetadata::BUILDING_ROOM_NUMBER:
 				return $this->entity->getRoomNumber();
-
 			case IRoomMetadata::BUILDING_ADDRESS:
 				return $this->buildingEntity->getAddress();
-
 			case IRoomMetadata::BUILDING_STORY:
 				return $this->storyEntity->getDisplayName();
-
 			case IRoomMetadata::FEATURES:
 				return $this->getFeatures();
-
 			default:
 				return null;
 		}

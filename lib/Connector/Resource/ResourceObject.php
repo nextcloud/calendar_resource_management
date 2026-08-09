@@ -5,6 +5,7 @@ declare(strict_types=1);
  * SPDX-FileCopyrightText: 2020 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
+
 namespace OCA\CalendarResourceManagement\Connector\Resource;
 
 use OCA\CalendarResourceManagement\Db;
@@ -106,10 +107,8 @@ class ResourceObject implements IResource, IMetadataProvider {
 		switch ($key) {
 			case IResourceMetadata::RESOURCE_TYPE:
 				return $this->entity->getResourceType();
-
 			case IResourceMetadata::CONTACT_PERSON:
 				return $this->entity->getContactPersonUserId();
-
 			default:
 				return null;
 		}
