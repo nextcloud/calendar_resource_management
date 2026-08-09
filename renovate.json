@@ -5,20 +5,18 @@
 		"helpers:pinGitHubActionDigests",
 		":dependencyDashboard",
 		":semanticCommits",
-		":gitSignOff",
-		":enableCodeOwners"
+		":gitSignOff"
 	],
+	"assigneesFromCodeOwners": true,
+	"expandCodeOwnersGroups": true,
 	"timezone": "Europe/Berlin",
 	"schedule": [
-		"before 5am on monday"
+		"before 5am on wednesday"
 	],
 	"labels": [
 		"dependencies",
 		"3. to review"
 	],
-	"commitMessageAction": "Bump",
-	"commitMessageTopic": "{{depName}}",
-	"commitMessageExtra": "from {{currentVersion}} to {{#if isPinDigest}}{{{newDigestShort}}}{{else}}{{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}{{/if}}",
 	"rangeStrategy": "bump",
 	"rebaseWhen": "conflicted",
 	"ignoreUnstable": false,
@@ -36,24 +34,15 @@
 	"packageRules": [
 		{
 			"description": "Request PHP reviews",
-			"matchManagers": [
-				"composer"
-			]
+			"matchManagers": ["composer"]
 		},
 		{
 			"description": "Bump Github actions monthly and request reviews",
-			"matchManagers": [
-				"github-actions"
-			],
-			"extends": [
-				"schedule:monthly"
-			]
+			"matchManagers": ["github-actions"],
+			"extends": ["schedule:monthly"]
 		},
 		{
-			"matchUpdateTypes": [
-				"minor",
-				"patch"
-			],
+			"matchUpdateTypes": ["minor", "patch"],
 			"matchCurrentVersion": "!/^0/",
 			"automerge": true,
 			"automergeType": "pr",
@@ -66,9 +55,7 @@
 		},
 		{
 			"description": "Only automerge packages that follow semver",
-			"matchPackageNames": [
-				"friendsofphp/php-cs-fixer"
-			],
+			"matchPackageNames": ["@nextcloud/vue", "friendsofphp/php-cs-fixer"],
 			"automerge": false,
 			"labels": [
 				"dependencies",
@@ -80,15 +67,9 @@
 			"matchBaseBranches": "/^stable(.)+/"
 		},
 		{
-			"matchBaseBranches": [
-				"main"
-			],
-			"matchDepTypes": [
-				"devDependencies"
-			],
-			"extends": [
-				"schedule:monthly"
-			]
+			"matchBaseBranches": ["main"],
+			"matchDepTypes": ["devDependencies"],
+			"extends": ["schedule:monthly"]
 		}
 	],
 	"vulnerabilityAlerts": {
