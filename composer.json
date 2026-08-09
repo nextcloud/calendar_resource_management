@@ -20,17 +20,25 @@
 		"bamarni/composer-bin-plugin": "^1.9.1"
 	},
 	"require-dev": {
-		"nextcloud/coding-standard": "^1.4.0",
 		"roave/security-advisories": "dev-master"
 	},
 	"scripts": {
-		"post-install-cmd": [
-			"@composer bin all install --ansi"
-		],
 		"cs:check": "php-cs-fixer fix --dry-run --diff",
 		"cs:fix": "php-cs-fixer fix",
 		"lint": "find . -name \\*.php -not -path './vendor/*' -exec php -l \"{}\" \\;",
 		"test:unit": "phpunit -c tests/phpunit.xml",
-		"phpstan": "phpstan analyse -c phpstan.neon"
+		"phpstan": "phpstan analyse -c phpstan.neon",
+		"post-install-cmd": [
+			"@composer bin all install --ansi"
+		],
+		"post-update-cmd": [
+			"@composer bin all update --ansi"
+		]
+	},
+	"extra": {
+		"bamarni-bin": {
+			"bin-links": true,
+			"forward-command": false
+		}
 	}
 }
