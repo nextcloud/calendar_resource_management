@@ -34,7 +34,7 @@
     "stylelint": "^17.14.1",
     "stylelint-config-recommended-scss": "^17.0.1",
     "stylelint-config-recommended-vue": "^1.6.1",
-    "vite": "^7.3.1"
+    "vite": "^7.3.5"
   },
   "engines": {
     "node": "^24.0.0",
