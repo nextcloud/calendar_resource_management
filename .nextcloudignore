@@ -18,3 +18,8 @@
 /vendor/bin
 /vendor-bin
 /.git-blame-ignore-revs
+/node_modules
+/src
+/package.json
+/package-lock.json
+/vite.config.mjs
