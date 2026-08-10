@@ -3,6 +3,66 @@ SPDX-FileCopyrightText: 2026 Nextcloud GmbH and Nextcloud contributors
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
+<script setup lang="ts">
+import type { Building, NewResource, Resource } from '../services/adminService.ts'
+import type { SelectOption } from '../utils/entities.ts'
+
+import { mdiDelete, mdiPlus } from '@mdi/js'
+import { translate as t } from '@nextcloud/l10n'
+import { computed, ref } from 'vue'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
+import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
+import NcTextField from '@nextcloud/vue/components/NcTextField'
+import { nameById, optionId, selectOptions } from '../utils/entities.ts'
+
+const props = defineProps<{
+	buildings: Building[]
+	resources: Resource[]
+	loading?: boolean
+}>()
+
+const emit = defineEmits<{
+	create: [resource: NewResource]
+	delete: [id: number]
+}>()
+
+const name = ref('')
+const email = ref('')
+const resourceType = ref('default')
+const building = ref<SelectOption | null>(null)
+
+const buildingOptions = computed(() => selectOptions(props.buildings))
+
+const canSubmit = computed(() => name.value.trim() !== '' && optionId(building.value) !== null)
+
+/**
+ * Clear the form. Called by the parent once the resource was created.
+ */
+function reset(): void {
+	name.value = ''
+	email.value = ''
+	resourceType.value = 'default'
+	building.value = null
+}
+
+defineExpose({ reset })
+
+/**
+ * Hand the entered resource over to the parent.
+ */
+function submit(): void {
+	emit('create', {
+		name: name.value.trim(),
+		email: email.value.trim(),
+		resourceType: resourceType.value.trim(),
+		buildingId: optionId(building.value),
+	})
+}
+</script>
+
 <template>
 	<NcSettingsSection
 		:description="t('calendar_resource_management', 'Resources are bookable in the calendar and belong to a building.')"
@@ -28,7 +88,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 							<NcButton
 								:aria-label="t('calendar_resource_management', 'Delete resource {name}', { name: resource.name })"
 								variant="tertiary"
-								@click="$emit('delete', resource.id)">
+								@click="emit('delete', resource.id)">
 								<template #icon>
 									<NcIconSvgWrapper :path="mdiDelete" />
 								</template>
@@ -78,92 +138,3 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 		</NcButton>
 	</NcSettingsSection>
 </template>
-
-<script>
-import { mdiDelete, mdiPlus } from '@mdi/js'
-import { translate as t } from '@nextcloud/l10n'
-import NcButton from '@nextcloud/vue/components/NcButton'
-import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
-import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
-import NcSelect from '@nextcloud/vue/components/NcSelect'
-import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
-import { nameById, optionId, selectOptions } from '../utils/entities.js'
-
-export default {
-	name: 'ResourcesSection',
-
-	components: {
-		NcButton,
-		NcSelect,
-		NcIconSvgWrapper,
-		NcLoadingIcon,
-		NcSettingsSection,
-		NcTextField,
-	},
-
-	props: {
-		buildings: {
-			type: Array,
-			required: true,
-		},
-
-		resources: {
-			type: Array,
-			required: true,
-		},
-
-		loading: {
-			type: Boolean,
-			default: false,
-		},
-	},
-
-	emits: ['create', 'delete'],
-
-	data() {
-		return {
-			mdiDelete,
-			mdiPlus,
-			name: '',
-			email: '',
-			resourceType: 'default',
-			building: null,
-		}
-	},
-
-	computed: {
-		buildingOptions() {
-			return selectOptions(this.buildings)
-		},
-
-		canSubmit() {
-			return this.name.trim() !== '' && optionId(this.building) !== null
-		},
-	},
-
-	methods: {
-		t,
-		nameById,
-
-		submit() {
-			this.$emit('create', {
-				name: this.name.trim(),
-				email: this.email.trim(),
-				resourceType: this.resourceType.trim(),
-				buildingId: optionId(this.building),
-			})
-		},
-
-		/**
-		 * Clear the form. Called by the parent once the resource was created.
-		 */
-		reset() {
-			this.name = ''
-			this.email = ''
-			this.resourceType = 'default'
-			this.building = null
-		},
-	},
-}
-</script>

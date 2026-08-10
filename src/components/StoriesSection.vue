@@ -3,6 +3,60 @@ SPDX-FileCopyrightText: 2026 Nextcloud GmbH and Nextcloud contributors
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
+<script setup lang="ts">
+import type { Building, NewStory, Story } from '../services/adminService.ts'
+import type { SelectOption } from '../utils/entities.ts'
+
+import { mdiDelete, mdiPlus } from '@mdi/js'
+import { translate as t } from '@nextcloud/l10n'
+import { computed, ref } from 'vue'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
+import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
+import NcTextField from '@nextcloud/vue/components/NcTextField'
+import { nameById, optionId, selectOptions } from '../utils/entities.ts'
+
+const props = defineProps<{
+	buildings: Building[]
+	stories: Story[]
+	loading?: boolean
+}>()
+
+const emit = defineEmits<{
+	create: [story: NewStory]
+	delete: [id: number]
+}>()
+
+const name = ref('')
+const building = ref<SelectOption | null>(null)
+
+const buildingOptions = computed(() => selectOptions(props.buildings))
+
+const canSubmit = computed(() => name.value.trim() !== '' && optionId(building.value) !== null)
+
+/**
+ * Clear the form. Called by the parent once the story was created.
+ */
+function reset(): void {
+	name.value = ''
+	building.value = null
+}
+
+defineExpose({ reset })
+
+/**
+ * Hand the entered story over to the parent.
+ */
+function submit(): void {
+	emit('create', {
+		name: name.value.trim(),
+		buildingId: optionId(building.value),
+	})
+}
+</script>
+
 <template>
 	<NcSettingsSection
 		:description="t('calendar_resource_management', 'Floors are the levels of a building.')"
@@ -24,7 +78,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 							<NcButton
 								:aria-label="t('calendar_resource_management', 'Delete floor {name}', { name: story.name })"
 								variant="tertiary"
-								@click="$emit('delete', story.id)">
+								@click="emit('delete', story.id)">
 								<template #icon>
 									<NcIconSvgWrapper :path="mdiDelete" />
 								</template>
@@ -62,86 +116,3 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 		</NcButton>
 	</NcSettingsSection>
 </template>
-
-<script>
-import { mdiDelete, mdiPlus } from '@mdi/js'
-import { translate as t } from '@nextcloud/l10n'
-import NcButton from '@nextcloud/vue/components/NcButton'
-import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
-import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
-import NcSelect from '@nextcloud/vue/components/NcSelect'
-import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
-import { nameById, optionId, selectOptions } from '../utils/entities.js'
-
-export default {
-	name: 'StoriesSection',
-
-	components: {
-		NcButton,
-		NcSelect,
-		NcIconSvgWrapper,
-		NcLoadingIcon,
-		NcSettingsSection,
-		NcTextField,
-	},
-
-	props: {
-		buildings: {
-			type: Array,
-			required: true,
-		},
-
-		stories: {
-			type: Array,
-			required: true,
-		},
-
-		loading: {
-			type: Boolean,
-			default: false,
-		},
-	},
-
-	emits: ['create', 'delete'],
-
-	data() {
-		return {
-			mdiDelete,
-			mdiPlus,
-			name: '',
-			building: null,
-		}
-	},
-
-	computed: {
-		buildingOptions() {
-			return selectOptions(this.buildings)
-		},
-
-		canSubmit() {
-			return this.name.trim() !== '' && optionId(this.building) !== null
-		},
-	},
-
-	methods: {
-		t,
-		nameById,
-
-		submit() {
-			this.$emit('create', {
-				name: this.name.trim(),
-				buildingId: optionId(this.building),
-			})
-		},
-
-		/**
-		 * Clear the form. Called by the parent once the story was created.
-		 */
-		reset() {
-			this.name = ''
-			this.building = null
-		},
-	},
-}
-</script>

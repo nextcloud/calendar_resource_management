@@ -6,7 +6,7 @@ import { createAppConfig } from '@nextcloud/vite-config'
 import path from 'path'
 
 export default createAppConfig({
-	'admin-settings': path.join(__dirname, 'src', 'adminSettings.js'),
+	'admin-settings': path.join(__dirname, 'src', 'adminSettings.ts'),
 }, {
 	inlineCSS: true,
 	extractLicenseInformation: false,

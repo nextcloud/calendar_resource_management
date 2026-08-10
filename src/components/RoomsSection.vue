@@ -3,6 +3,197 @@ SPDX-FileCopyrightText: 2026 Nextcloud GmbH and Nextcloud contributors
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
+<script setup lang="ts">
+import type { Building, EquipmentKey, NewRoom, Room, Story, User } from '../services/adminService.ts'
+import type { SelectOption } from '../utils/entities.ts'
+
+import { mdiDelete, mdiPlus } from '@mdi/js'
+import { translate as t } from '@nextcloud/l10n'
+import { computed, onMounted, ref, watch } from 'vue'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
+import NcSelectUsers from '@nextcloud/vue/components/NcSelectUsers'
+import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
+import NcTextField from '@nextcloud/vue/components/NcTextField'
+import { fetchUsers } from '../services/adminService.ts'
+import { nameById, optionId, selectOptions } from '../utils/entities.ts'
+
+const props = defineProps<{
+	buildings: Building[]
+	rooms: Room[]
+	stories: Story[]
+	loading?: boolean
+}>()
+
+const emit = defineEmits<{
+	create: [room: NewRoom]
+	delete: [id: number]
+}>()
+
+/**
+ * Equipment flags of a room. `payloadKey` is what the create endpoint expects,
+ * `responseKey` what the listing returns.
+ */
+const EQUIPMENT_TYPES: Array<{
+	payloadKey: EquipmentKey
+	responseKey: keyof Room
+	label: () => string
+}> = [
+	{
+		payloadKey: 'hasPhone',
+		responseKey: 'hasPhone',
+		label: () => t('calendar_resource_management', 'Phone'),
+	},
+	{
+		payloadKey: 'hasVideo',
+		responseKey: 'hasVideoConferencing',
+		label: () => t('calendar_resource_management', 'Video conferencing'),
+	},
+	{
+		payloadKey: 'hasTv',
+		responseKey: 'hasTv',
+		label: () => t('calendar_resource_management', 'TV'),
+	},
+	{
+		payloadKey: 'hasProjector',
+		responseKey: 'hasProjector',
+		label: () => t('calendar_resource_management', 'Projector'),
+	},
+	{
+		payloadKey: 'hasWhiteboard',
+		responseKey: 'hasWhiteboard',
+		label: () => t('calendar_resource_management', 'Whiteboard'),
+	},
+	{
+		payloadKey: 'wheelchairAccessible',
+		responseKey: 'isWheelchairAccessible',
+		label: () => t('calendar_resource_management', 'Wheelchair accessible'),
+	},
+]
+
+/**
+ * All equipment flags switched off.
+ *
+ * @return Equipment payload keys mapped to false
+ */
+function noEquipment(): Record<EquipmentKey, boolean> {
+	return Object.fromEntries(EQUIPMENT_TYPES.map((item) => [item.payloadKey, false])) as Record<EquipmentKey, boolean>
+}
+
+const name = ref('')
+const email = ref('')
+const roomType = ref('default')
+const roomNumber = ref('')
+// NcSelectUsers clears to undefined, it does not accept null
+const contactPerson = ref<User | undefined>()
+const users = ref<User[]>([])
+const loadingUsers = ref(false)
+const capacity = ref('')
+const building = ref<SelectOption | null>(null)
+const story = ref<SelectOption | null>(null)
+const equipment = ref(noEquipment())
+
+const buildingOptions = computed(() => selectOptions(props.buildings))
+
+const storyOptions = computed(() => {
+	const buildingId = optionId(building.value)
+	if (buildingId === null) {
+		return []
+	}
+
+	return selectOptions(props.stories.filter((candidate) => candidate.buildingId === buildingId))
+})
+
+const canSubmit = computed(() => name.value.trim() !== '' && optionId(story.value) !== null)
+
+watch(building, () => {
+	// The story belongs to the previously selected building
+	story.value = null
+})
+
+/**
+ * Load the accounts to pick the contact person from. The endpoint limits the
+ * result, so filtering happens server side instead of in the dropdown.
+ *
+ * @param search Filter for the display name
+ */
+async function searchUsers(search = ''): Promise<void> {
+	loadingUsers.value = true
+	try {
+		users.value = await fetchUsers(search)
+	} catch {
+		// Without accounts the dropdown stays empty, there is nothing to pick
+		users.value = []
+	} finally {
+		loadingUsers.value = false
+	}
+}
+
+onMounted(searchUsers)
+
+/**
+ * Name of the building a room is located in.
+ *
+ * @param storyId The story the room is located on
+ * @return The building name
+ */
+function buildingName(storyId: number): string {
+	const candidate = props.stories.find((entity) => entity.id === storyId)
+
+	return nameById(props.buildings, candidate?.buildingId)
+}
+
+/**
+ * Translated list of the equipment a room provides.
+ *
+ * @param room The room
+ * @return Comma separated equipment names
+ */
+function equipmentSummary(room: Room): string {
+	const available = EQUIPMENT_TYPES
+		.filter((item) => room[item.responseKey])
+		.map((item) => item.label())
+
+	return available.length ? available.join(', ') : '-'
+}
+
+/**
+ * Clear the form. Called by the parent once the room was created.
+ */
+function reset(): void {
+	name.value = ''
+	email.value = ''
+	roomType.value = 'default'
+	roomNumber.value = ''
+	contactPerson.value = undefined
+	capacity.value = ''
+	building.value = null
+	story.value = null
+	equipment.value = noEquipment()
+}
+
+defineExpose({ reset })
+
+/**
+ * Hand the entered room over to the parent.
+ */
+function submit(): void {
+	emit('create', {
+		name: name.value.trim(),
+		email: email.value.trim(),
+		roomType: roomType.value.trim(),
+		roomNumber: roomNumber.value.trim(),
+		contactPersonUserId: optionId(contactPerson.value) ?? '',
+		capacity: capacity.value === '' ? null : Number.parseInt(capacity.value, 10),
+		storyId: optionId(story.value),
+		...equipment.value,
+	})
+}
+</script>
+
 <template>
 	<NcSettingsSection
 		:description="t('calendar_resource_management', 'Rooms are bookable in the calendar and are located on a floor of a building.')"
@@ -36,7 +227,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 							<NcButton
 								:aria-label="t('calendar_resource_management', 'Delete room {name}', { name: room.name })"
 								variant="tertiary"
-								@click="$emit('delete', room.id)">
+								@click="emit('delete', room.id)">
 								<template #icon>
 									<NcIconSvgWrapper :path="mdiDelete" />
 								</template>
@@ -106,7 +297,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 		<fieldset class="crm-equipment">
 			<legend>{{ t('calendar_resource_management', 'Equipment') }}</legend>
 			<NcCheckboxRadioSwitch
-				v-for="item in equipmentTypes"
+				v-for="item in EQUIPMENT_TYPES"
 				:key="item.payloadKey"
 				v-model="equipment[item.payloadKey]"
 				type="switch">
@@ -128,232 +319,3 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 		</NcButton>
 	</NcSettingsSection>
 </template>
-
-<script>
-import { mdiDelete, mdiPlus } from '@mdi/js'
-import { translate as t } from '@nextcloud/l10n'
-import NcButton from '@nextcloud/vue/components/NcButton'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
-import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
-import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
-import NcSelect from '@nextcloud/vue/components/NcSelect'
-import NcSelectUsers from '@nextcloud/vue/components/NcSelectUsers'
-import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
-import { fetchUsers } from '../services/adminService.js'
-import { nameById, optionId, selectOptions } from '../utils/entities.js'
-
-/**
- * Equipment flags of a room. `payloadKey` is what the create endpoint expects,
- * `responseKey` what the listing returns.
- */
-const EQUIPMENT_TYPES = [
-	{
-		payloadKey: 'hasPhone',
-		responseKey: 'hasPhone',
-		label: () => t('calendar_resource_management', 'Phone'),
-	},
-	{
-		payloadKey: 'hasVideo',
-		responseKey: 'hasVideoConferencing',
-		label: () => t('calendar_resource_management', 'Video conferencing'),
-	},
-	{
-		payloadKey: 'hasTv',
-		responseKey: 'hasTv',
-		label: () => t('calendar_resource_management', 'TV'),
-	},
-	{
-		payloadKey: 'hasProjector',
-		responseKey: 'hasProjector',
-		label: () => t('calendar_resource_management', 'Projector'),
-	},
-	{
-		payloadKey: 'hasWhiteboard',
-		responseKey: 'hasWhiteboard',
-		label: () => t('calendar_resource_management', 'Whiteboard'),
-	},
-	{
-		payloadKey: 'wheelchairAccessible',
-		responseKey: 'isWheelchairAccessible',
-		label: () => t('calendar_resource_management', 'Wheelchair accessible'),
-	},
-]
-
-/**
- * All equipment flags switched off.
- *
- * @return {object} Equipment payload keys mapped to false
- */
-function noEquipment() {
-	return Object.fromEntries(EQUIPMENT_TYPES.map((item) => [item.payloadKey, false]))
-}
-
-export default {
-	name: 'RoomsSection',
-
-	components: {
-		NcButton,
-		NcCheckboxRadioSwitch,
-		NcSelect,
-		NcIconSvgWrapper,
-		NcLoadingIcon,
-		NcSelectUsers,
-		NcSettingsSection,
-		NcTextField,
-	},
-
-	props: {
-		buildings: {
-			type: Array,
-			required: true,
-		},
-
-		rooms: {
-			type: Array,
-			required: true,
-		},
-
-		stories: {
-			type: Array,
-			required: true,
-		},
-
-		loading: {
-			type: Boolean,
-			default: false,
-		},
-	},
-
-	emits: ['create', 'delete'],
-
-	data() {
-		return {
-			mdiDelete,
-			mdiPlus,
-			name: '',
-			email: '',
-			roomType: 'default',
-			roomNumber: '',
-			contactPerson: null,
-			users: [],
-			loadingUsers: false,
-			capacity: '',
-			building: null,
-			story: null,
-			equipment: noEquipment(),
-		}
-	},
-
-	computed: {
-		equipmentTypes() {
-			return EQUIPMENT_TYPES
-		},
-
-		buildingOptions() {
-			return selectOptions(this.buildings)
-		},
-
-		storyOptions() {
-			const buildingId = optionId(this.building)
-			if (buildingId === null) {
-				return []
-			}
-
-			return selectOptions(this.stories.filter((story) => story.buildingId === buildingId))
-		},
-
-		canSubmit() {
-			return this.name.trim() !== '' && optionId(this.story) !== null
-		},
-	},
-
-	watch: {
-		building() {
-			// The story belongs to the previously selected building
-			this.story = null
-		},
-	},
-
-	async mounted() {
-		await this.searchUsers()
-	},
-
-	methods: {
-		t,
-		nameById,
-
-		/**
-		 * Load the accounts to pick the contact person from. The endpoint limits the
-		 * result, so filtering happens server side instead of in the dropdown.
-		 *
-		 * @param {string} search Filter for the display name
-		 */
-		async searchUsers(search = '') {
-			this.loadingUsers = true
-			try {
-				this.users = await fetchUsers(search)
-			} catch {
-				// Without accounts the dropdown stays empty, there is nothing to pick
-				this.users = []
-			} finally {
-				this.loadingUsers = false
-			}
-		},
-
-		/**
-		 * Name of the building a room is located in.
-		 *
-		 * @param {number} storyId The story the room is located on
-		 * @return {string} The building name
-		 */
-		buildingName(storyId) {
-			const story = this.stories.find((candidate) => candidate.id === storyId)
-
-			return nameById(this.buildings, story?.buildingId)
-		},
-
-		/**
-		 * Translated list of the equipment a room provides.
-		 *
-		 * @param {object} room The room
-		 * @return {string} Comma separated equipment names
-		 */
-		equipmentSummary(room) {
-			const available = EQUIPMENT_TYPES
-				.filter((item) => room[item.responseKey])
-				.map((item) => item.label())
-
-			return available.length ? available.join(', ') : '-'
-		},
-
-		submit() {
-			this.$emit('create', {
-				name: this.name.trim(),
-				email: this.email.trim(),
-				roomType: this.roomType.trim(),
-				roomNumber: this.roomNumber.trim(),
-				contactPersonUserId: optionId(this.contactPerson) ?? '',
-				capacity: this.capacity === '' ? null : Number.parseInt(this.capacity, 10),
-				storyId: optionId(this.story),
-				...this.equipment,
-			})
-		},
-
-		/**
-		 * Clear the form. Called by the parent once the room was created.
-		 */
-		reset() {
-			this.name = ''
-			this.email = ''
-			this.roomType = 'default'
-			this.roomNumber = ''
-			this.contactPerson = null
-			this.capacity = ''
-			this.building = null
-			this.story = null
-			this.equipment = noEquipment()
-		},
-	},
-}
-</script>

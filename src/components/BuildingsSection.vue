@@ -3,6 +3,54 @@ SPDX-FileCopyrightText: 2026 Nextcloud GmbH and Nextcloud contributors
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
+<script setup lang="ts">
+import type { Building, NewBuilding } from '../services/adminService.ts'
+
+import { mdiDelete, mdiPlus } from '@mdi/js'
+import { translate as t } from '@nextcloud/l10n'
+import { computed, ref } from 'vue'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
+import NcTextField from '@nextcloud/vue/components/NcTextField'
+
+defineProps<{
+	buildings: Building[]
+	loading?: boolean
+}>()
+
+const emit = defineEmits<{
+	create: [building: NewBuilding]
+	delete: [id: number]
+}>()
+
+const name = ref('')
+const address = ref('')
+
+const canSubmit = computed(() => name.value.trim() !== '')
+
+/**
+ * Clear the form. Called by the parent once the building was created.
+ */
+function reset(): void {
+	name.value = ''
+	address.value = ''
+}
+
+defineExpose({ reset })
+
+/**
+ * Hand the entered building over to the parent.
+ */
+function submit(): void {
+	emit('create', {
+		name: name.value.trim(),
+		address: address.value.trim(),
+	})
+}
+</script>
+
 <template>
 	<NcSettingsSection
 		:description="t('calendar_resource_management', 'Buildings group the floors that rooms are located on.')"
@@ -24,7 +72,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 							<NcButton
 								:aria-label="t('calendar_resource_management', 'Delete building {name}', { name: building.name })"
 								variant="tertiary"
-								@click="$emit('delete', building.id)">
+								@click="emit('delete', building.id)">
 								<template #icon>
 									<NcIconSvgWrapper :path="mdiDelete" />
 								</template>
@@ -60,73 +108,3 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 		</NcButton>
 	</NcSettingsSection>
 </template>
-
-<script>
-import { mdiDelete, mdiPlus } from '@mdi/js'
-import { translate as t } from '@nextcloud/l10n'
-import NcButton from '@nextcloud/vue/components/NcButton'
-import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
-import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
-import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
-
-export default {
-	name: 'BuildingsSection',
-
-	components: {
-		NcButton,
-		NcIconSvgWrapper,
-		NcLoadingIcon,
-		NcSettingsSection,
-		NcTextField,
-	},
-
-	props: {
-		buildings: {
-			type: Array,
-			required: true,
-		},
-
-		loading: {
-			type: Boolean,
-			default: false,
-		},
-	},
-
-	emits: ['create', 'delete'],
-
-	data() {
-		return {
-			mdiDelete,
-			mdiPlus,
-			name: '',
-			address: '',
-		}
-	},
-
-	computed: {
-		canSubmit() {
-			return this.name.trim() !== ''
-		},
-	},
-
-	methods: {
-		t,
-
-		submit() {
-			this.$emit('create', {
-				name: this.name.trim(),
-				address: this.address.trim(),
-			})
-		},
-
-		/**
-		 * Clear the form. Called by the parent once the building was created.
-		 */
-		reset() {
-			this.name = ''
-			this.address = ''
-		},
-	},
-}
-</script>
