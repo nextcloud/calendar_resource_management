@@ -57,12 +57,8 @@ jobs:
         php-versions: [ '8.3', '8.4', '8.5' ]
         server-versions: [ 'master' ]
         include:
-          - php-versions: '8.5'
+          - php-versions: '8.4'
             server-versions: 'stable34'
-          - php-versions: '8.5'
-            server-versions: 'stable33'
-          - php-versions: '8.3'
-            server-versions: 'stable32'
 
     name: SQLite PHP ${{ matrix.php-versions }} Nextcloud ${{ matrix.server-versions }}
 
