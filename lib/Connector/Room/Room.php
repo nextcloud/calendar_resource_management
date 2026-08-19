@@ -106,6 +106,7 @@ class Room implements IRoom, IMetadataProvider {
 		if ($this->entity->getRoomNumber()) {
 			$keys[] = IRoomMetadata::BUILDING_ROOM_NUMBER;
 		}
+		$keys[] = IRoomMetadata::BUILDING_NAME;
 		$keys[] = IRoomMetadata::BUILDING_ADDRESS;
 		$keys[] = IRoomMetadata::BUILDING_STORY;
 		if ($this->getFeatures() !== '') {
@@ -127,6 +128,8 @@ class Room implements IRoom, IMetadataProvider {
 				return (string)$this->entity->getCapacity();
 			case IRoomMetadata::BUILDING_ROOM_NUMBER:
 				return $this->entity->getRoomNumber();
+			case IRoomMetadata::BUILDING_NAME:
+				return $this->buildingEntity->getDisplayName();
 			case IRoomMetadata::BUILDING_ADDRESS:
 				return $this->buildingEntity->getAddress();
 			case IRoomMetadata::BUILDING_STORY:
