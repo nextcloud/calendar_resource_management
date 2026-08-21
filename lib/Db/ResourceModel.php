@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Db;
 
+use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
 /**
@@ -31,7 +32,7 @@ use OCP\AppFramework\Db\Entity;
  * @method void setContactPersonUserId(string $contactPersonUserId)
  * @method void setRestricted(bool $restricted)
  */
-class ResourceModel extends Entity {
+class ResourceModel extends Entity implements JsonSerializable {
 	/** @var string */
 	protected $uid;
 
@@ -68,5 +69,21 @@ class ResourceModel extends Entity {
 
 	public function isRestricted(): bool {
 		return $this->restricted ?? false;
+	}
+
+	/**
+	 * @return array{id: int, uid: ?string, name: ?string, email: ?string, resourceType: ?string, buildingId: ?int, contactPersonUserId: ?string, restricted: bool}
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->getId(),
+			'uid' => $this->getUid(),
+			'name' => $this->getDisplayName(),
+			'email' => $this->getEmail(),
+			'resourceType' => $this->getResourceType(),
+			'buildingId' => $this->getBuildingId(),
+			'contactPersonUserId' => $this->getContactPersonUserId(),
+			'restricted' => $this->isRestricted(),
+		];
 	}
 }

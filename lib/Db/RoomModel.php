@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Db;
 
+use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
 /**
@@ -45,7 +46,7 @@ use OCP\AppFramework\Db\Entity;
  * @method void setIsWheelchairAccessible(bool $isWheelchairAccessible)
  * @method void setRestricted(bool $restricted)
  */
-class RoomModel extends Entity {
+class RoomModel extends Entity implements JsonSerializable {
 	/** @var integer */
 	protected $storyId;
 
@@ -114,5 +115,29 @@ class RoomModel extends Entity {
 
 	public function isRestricted(): bool {
 		return $this->restricted ?? false;
+	}
+
+	/**
+	 * @return array{id: int, uid: ?string, name: ?string, email: ?string, roomType: ?string, storyId: ?int, roomNumber: ?string, contactPersonUserId: ?string, capacity: ?int, hasPhone: bool, hasVideoConferencing: bool, hasTv: bool, hasProjector: bool, hasWhiteboard: bool, isWheelchairAccessible: bool, restricted: bool}
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->getId(),
+			'uid' => $this->getUid(),
+			'name' => $this->getDisplayName(),
+			'email' => $this->getEmail(),
+			'roomType' => $this->getRoomType(),
+			'storyId' => $this->getStoryId(),
+			'roomNumber' => $this->getRoomNumber(),
+			'contactPersonUserId' => $this->getContactPersonUserId(),
+			'capacity' => $this->getCapacity(),
+			'hasPhone' => (bool)$this->getHasPhone(),
+			'hasVideoConferencing' => (bool)$this->getHasVideoConferencing(),
+			'hasTv' => (bool)$this->getHasTv(),
+			'hasProjector' => (bool)$this->getHasProjector(),
+			'hasWhiteboard' => (bool)$this->getHasWhiteboard(),
+			'isWheelchairAccessible' => (bool)$this->getIsWheelchairAccessible(),
+			'restricted' => $this->isRestricted(),
+		];
 	}
 }

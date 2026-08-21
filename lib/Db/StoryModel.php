@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Db;
 
+use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
 /**
@@ -20,7 +21,7 @@ use OCP\AppFramework\Db\Entity;
  * @method string getDisplayName()
  * @method void setDisplayName(string $displayName)
  */
-class StoryModel extends Entity {
+class StoryModel extends Entity implements JsonSerializable {
 	/** @var integer */
 	protected $buildingId;
 
@@ -33,5 +34,16 @@ class StoryModel extends Entity {
 	public function __construct() {
 		$this->addType('buildingId', 'integer');
 		$this->addType('displayName', 'string');
+	}
+
+	/**
+	 * @return array{id: int, name: ?string, buildingId: ?int}
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->getId(),
+			'name' => $this->getDisplayName(),
+			'buildingId' => $this->getBuildingId(),
+		];
 	}
 }

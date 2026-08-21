@@ -57,6 +57,24 @@ abstract class AMapper extends QBMapper {
 	}
 
 	/**
+	 * @param string $email
+	 * @return T
+	 * @throws DoesNotExistException
+	 * @throws MultipleObjectsReturnedException
+	 */
+	public function findByEmail(string $email):Entity {
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select('*')
+			->from($this->tableName)
+			->where(
+				$qb->expr()->eq('email', $qb->createNamedParameter($email, IQueryBuilder::PARAM_STR))
+			);
+
+		return $this->findEntity($qb);
+	}
+
+	/**
 	 * @param string $orderBy
 	 * @param bool $ascending
 	 * @param int|null $limit

@@ -9,7 +9,9 @@ declare(strict_types=1);
 namespace OCA\CalendarResourceManagement\Service;
 
 use OCA\CalendarResourceManagement\Db\BuildingMapper;
+use OCA\CalendarResourceManagement\Db\BuildingModel;
 use OCA\CalendarResourceManagement\Db\StoryMapper;
+use OCP\AppFramework\Db\DoesNotExistException;
 
 class BuildingService {
 	/** @var BuildingMapper */
@@ -35,5 +37,32 @@ class BuildingService {
 		StoryMapper $storyMapper) {
 		$this->buildingMapper = $buildingMapper;
 		$this->storyMapper = $storyMapper;
+	}
+
+	/**
+	 * List all buildings
+	 */
+	public function listBuildings(): array {
+		return $this->buildingMapper->findAll();
+	}
+
+	/**
+	 * Create a building
+	 */
+	public function createBuilding(string $name, string $address = ''): BuildingModel {
+		$building = new BuildingModel();
+		$building->setDisplayName($name);
+		$building->setAddress($address);
+		return $this->buildingMapper->insert($building);
+	}
+
+	/**
+	 * Delete a building
+	 *
+	 * @throws DoesNotExistException If the building does not exist.
+	 */
+	public function deleteBuilding(int $id): void {
+		$building = $this->buildingMapper->find($id);
+		$this->buildingMapper->delete($building);
 	}
 }
