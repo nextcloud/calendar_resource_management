@@ -5,6 +5,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.0.0 - 2026-08-24
+### Changes
+- Added support for Nextcloud 35
+- Removed support for Nextcloud 34 and less
+- Added user interface
+
 ## 0.10.0 - 2025-09-01
 ### Added
 - Support for Nextcloud 32
