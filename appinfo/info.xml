@@ -9,7 +9,7 @@
 	<name>Calendar Resource Management</name>
 	<summary>Manage shared resources and find available meeting rooms in Calendar</summary>
 	<description><![CDATA[Manage shared resources—including buildings, floors, meeting rooms, general resources, and vehicles—for use with Nextcloud Calendar. Find available rooms for selected time slots and choose an appropriate location when booking events.]]></description>
-	<version>1.0.0-rc.1</version>
+	<version>1.0.0-rc.2</version>
 	<licence>agpl</licence>
 	<author>Hamza Mahjoubi</author>
 	<author homepage="https://github.com/nextcloud/groupware">Nextcloud Groupware Team</author>
