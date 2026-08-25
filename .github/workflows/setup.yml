@@ -14,6 +14,9 @@ jobs:
         include:
           - php-versions: '8.4'
             db: 'sqlite'
+            nextcloud-versions: stable35
+          - php-versions: '8.3'
+            db: 'sqlite'
             nextcloud-versions: stable34
     name: Nextcloud ${{ matrix.nextcloud-versions }} php${{ matrix.php-versions }} ${{ matrix.db }} setup testing
     services:
