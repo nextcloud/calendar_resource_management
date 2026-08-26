@@ -14,12 +14,6 @@ use OCA\CalendarResourceManagement\Db\StoryMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 class BuildingService {
-	/** @var BuildingMapper */
-	private $buildingMapper;
-
-	/** @var StoryMapper */
-	private $storyMapper;
-
 	/** @var int */
 	private const LIMIT_STORIES_PER_BUILDING = 1000;
 
@@ -33,10 +27,10 @@ class BuildingService {
 	 * @param BuildingMapper $buildingMapper
 	 * @param StoryMapper $storyMapper
 	 */
-	public function __construct(BuildingMapper $buildingMapper,
-		StoryMapper $storyMapper) {
-		$this->buildingMapper = $buildingMapper;
-		$this->storyMapper = $storyMapper;
+	public function __construct(
+		private BuildingMapper $buildingMapper,
+		private StoryMapper $storyMapper,
+	) {
 	}
 
 	/**

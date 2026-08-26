@@ -10,6 +10,11 @@ namespace OCA\CalendarResourceManagement\Connector\Resource;
 
 use OCA\CalendarResourceManagement\Constants;
 use OCA\CalendarResourceManagement\Db;
+use OCA\CalendarResourceManagement\Db\ResourceMapper;
+use OCA\CalendarResourceManagement\Db\ResourceModel;
+use OCA\CalendarResourceManagement\Db\RestrictionMapper;
+use OCA\CalendarResourceManagement\Db\VehicleMapper;
+use OCA\CalendarResourceManagement\Db\VehicleModel;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Calendar\BackendTemporarilyUnavailableException;
 use OCP\Calendar\Resource\IBackend;
@@ -34,9 +39,9 @@ class Backend implements IBackend {
 	 */
 	public function __construct(
 		private string $appName,
-		private Db\ResourceMapper $resourceMapper,
-		private Db\VehicleMapper $vehicleMapper,
-		private Db\RestrictionMapper $restrictionMapper,
+		private ResourceMapper $resourceMapper,
+		private VehicleMapper $vehicleMapper,
+		private RestrictionMapper $restrictionMapper,
 		private LoggerInterface $logger,
 	) {
 	}
@@ -91,7 +96,7 @@ class Backend implements IBackend {
 	 * @return Db\ResourceModel|null
 	 * @throws BackendTemporarilyUnavailableException
 	 */
-	private function getResourceEntity($uid):?Db\ResourceModel {
+	private function getResourceEntity($uid):?ResourceModel {
 		try {
 			return $this->resourceMapper->findByUID($uid);
 		} catch (DoesNotExistException $ex) {
@@ -107,7 +112,7 @@ class Backend implements IBackend {
 	 * @return Db\VehicleModel|null
 	 * @throws BackendTemporarilyUnavailableException
 	 */
-	private function getVehicleEntity($uid):?Db\VehicleModel {
+	private function getVehicleEntity($uid):?VehicleModel {
 		try {
 			return $this->vehicleMapper->findByUID($uid);
 		} catch (DoesNotExistException $ex) {

@@ -28,17 +28,13 @@ class RestrictedResource extends Command {
 	private const ENTITY_ID = 'entity_id';
 	private const RESTRICTED = 'restricted';
 
-	/** @var LoggerInterface */
-	private $logger;
-
 	public function __construct(
-		LoggerInterface $logger,
+		private LoggerInterface $logger,
 		private IDBConnection $db,
 		private IResourceManager $resourceManager,
 		private IRoomManager $roomManager,
 	) {
 		parent::__construct();
-		$this->logger = $logger;
 	}
 
 	/**

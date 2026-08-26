@@ -33,21 +33,13 @@ class CreateVehicle extends Command {
 	private const RANGE = 'range';
 	private const SEATING_CAPACITY = 'seating-capacity';
 
-	/** @var LoggerInterface */
-	private $logger;
-
-	/** @var VehicleMapper */
-	private $vehicleMapper;
-
 	public function __construct(
-		LoggerInterface $logger,
-		VehicleMapper $vehicleMapper,
+		private LoggerInterface $logger,
+		private VehicleMapper $vehicleMapper,
 		private IResourceManager $resourceManager,
 		private UidValidationService $uidValidationService,
 	) {
 		parent::__construct();
-		$this->logger = $logger;
-		$this->vehicleMapper = $vehicleMapper;
 	}
 
 	/**

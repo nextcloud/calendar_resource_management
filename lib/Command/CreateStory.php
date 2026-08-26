@@ -24,20 +24,12 @@ class CreateStory extends Command {
 	private const DISPLAY_NAME = 'display_name';
 	private const BUILDING_ID = 'building_id';
 
-	/** @var LoggerInterface */
-	private $logger;
-
-	/** @var StoryMapper */
-	private $storyMapper;
-
-	/** @var BuildingMapper */
-	private $buildingMapper;
-
-	public function __construct(LoggerInterface $logger, StoryMapper $storyMapper, BuildingMapper $buildingMapper) {
+	public function __construct(
+		private LoggerInterface $logger,
+		private StoryMapper $storyMapper,
+		private BuildingMapper $buildingMapper,
+	) {
 		parent::__construct();
-		$this->logger = $logger;
-		$this->storyMapper = $storyMapper;
-		$this->buildingMapper = $buildingMapper;
 	}
 
 	/**

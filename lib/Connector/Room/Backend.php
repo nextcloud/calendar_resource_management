@@ -10,6 +10,10 @@ namespace OCA\CalendarResourceManagement\Connector\Room;
 
 use OCA\CalendarResourceManagement\Constants;
 use OCA\CalendarResourceManagement\Db;
+use OCA\CalendarResourceManagement\Db\BuildingMapper;
+use OCA\CalendarResourceManagement\Db\RestrictionMapper;
+use OCA\CalendarResourceManagement\Db\RoomMapper;
+use OCA\CalendarResourceManagement\Db\StoryMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Calendar\BackendTemporarilyUnavailableException;
 use OCP\Calendar\Room\IBackend;
@@ -35,10 +39,10 @@ class Backend implements IBackend {
 	 */
 	public function __construct(
 		private string $appName,
-		private Db\RoomMapper $mapper,
-		private Db\RestrictionMapper $restrictionMapper,
-		private Db\StoryMapper $storyMapper,
-		private Db\BuildingMapper $buildingMapper,
+		private RoomMapper $mapper,
+		private RestrictionMapper $restrictionMapper,
+		private StoryMapper $storyMapper,
+		private BuildingMapper $buildingMapper,
 		private LoggerInterface $logger,
 	) {
 	}

@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace OCA\CalendarResourceManagement\AppInfo;
 
 use OCA\CalendarResourceManagement\Connector;
+use OCA\CalendarResourceManagement\Connector\Resource\Backend;
 use OCA\CalendarResourceManagement\Listener\GroupDeletedListener;
 use OCA\CalendarResourceManagement\Listener\UserDeletedListener;
 use OCP\AppFramework\App;
@@ -37,7 +38,7 @@ class Application extends App implements IBootstrap {
 	 * @inheritDoc
 	 */
 	public function register(IRegistrationContext $context): void {
-		$context->registerCalendarResourceBackend(Connector\Resource\Backend::class);
+		$context->registerCalendarResourceBackend(Backend::class);
 		$context->registerCalendarRoomBackend(Connector\Room\Backend::class);
 		$context->registerEventListener(GroupDeletedEvent::class, GroupDeletedListener::class);
 		$context->registerEventListener(UserDeletedEvent::class, UserDeletedListener::class);

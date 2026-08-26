@@ -19,16 +19,14 @@ use OCP\Group\Events\GroupDeletedEvent;
  * @package OCA\CalendarResourceManagement\Listener
  */
 class GroupDeletedListener implements IEventListener {
-	/** @var RestrictionMapper */
-	private $mapper;
-
 	/**
 	 * GroupDeletedListener constructor.
 	 *
 	 * @param RestrictionMapper $mapper
 	 */
-	public function __construct(RestrictionMapper $mapper) {
-		$this->mapper = $mapper;
+	public function __construct(
+		private RestrictionMapper $mapper,
+	) {
 	}
 
 	/**

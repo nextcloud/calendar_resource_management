@@ -12,12 +12,6 @@ use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Db\VehicleMapper;
 
 class VehicleService {
-	/** @var VehicleMapper */
-	private $vehicleMapper;
-
-	/** @var RestrictionMapper */
-	private $restrictionMapper;
-
 	/** @var string[] */
 	private const ALLOWED_ORDER_BY = [
 		'display_name',
@@ -29,9 +23,9 @@ class VehicleService {
 	 * @param VehicleMapper $vehicleMapper
 	 * @param RestrictionMapper $restrictionMapper
 	 */
-	public function __construct(VehicleMapper $vehicleMapper,
-		RestrictionMapper $restrictionMapper) {
-		$this->vehicleMapper = $vehicleMapper;
-		$this->restrictionMapper = $restrictionMapper;
+	public function __construct(
+		private VehicleMapper $vehicleMapper,
+		private RestrictionMapper $restrictionMapper,
+	) {
 	}
 }

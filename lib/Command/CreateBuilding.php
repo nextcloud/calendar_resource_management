@@ -25,16 +25,11 @@ class CreateBuilding extends Command {
 	private const ADDRESS = 'address';
 	private const WHEELCHAIR = 'wheelchair-accessible';
 
-	/** @var LoggerInterface */
-	private $logger;
-
-	/** @var BuildingMapper */
-	private $buildingMapper;
-
-	public function __construct(LoggerInterface $logger, BuildingMapper $buildingMapper) {
+	public function __construct(
+		private LoggerInterface $logger,
+		private BuildingMapper $buildingMapper,
+	) {
 		parent::__construct();
-		$this->logger = $logger;
-		$this->buildingMapper = $buildingMapper;
 	}
 
 	/**

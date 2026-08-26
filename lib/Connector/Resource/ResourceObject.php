@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace OCA\CalendarResourceManagement\Connector\Resource;
 
 use OCA\CalendarResourceManagement\Db;
+use OCA\CalendarResourceManagement\Db\ResourceModel;
 use OCP\Calendar\IMetadataProvider;
 use OCP\Calendar\Resource\IBackend;
 use OCP\Calendar\Resource\IResource;
@@ -24,15 +25,6 @@ use OCP\Calendar\Resource\IResourceMetadata;
  * @package OCA\CalendarResourceManagement\Connector\Resource
  */
 class ResourceObject implements IResource, IMetadataProvider {
-	/** @var Db\ResourceModel */
-	protected $entity;
-
-	/** @var array */
-	private $restrictions;
-
-	/** @var Backend */
-	private $backend;
-
 	/**
 	 * Resource constructor.
 	 *
@@ -40,12 +32,11 @@ class ResourceObject implements IResource, IMetadataProvider {
 	 * @param array $restrictions
 	 * @param Backend $backend
 	 */
-	public function __construct(Db\ResourceModel $entity,
-		array $restrictions,
-		Backend $backend) {
-		$this->entity = $entity;
-		$this->restrictions = $restrictions;
-		$this->backend = $backend;
+	public function __construct(
+		protected ResourceModel $entity,
+		private array $restrictions,
+		private Backend $backend,
+	) {
 	}
 
 	/**
