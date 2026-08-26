@@ -26,6 +26,8 @@
 		"cs:check": "php-cs-fixer fix --dry-run --diff",
 		"cs:fix": "php-cs-fixer fix",
 		"lint": "find . -name \\*.php -not -path './vendor/*' -exec php -l \"{}\" \\;",
+		"rector:apply": "rector && composer cs:fix",
+        "rector:check": "rector --dry-run",
 		"test:unit": "phpunit -c tests/phpunit.xml",
 		"phpstan": "phpstan analyse -c phpstan.neon",
 		"post-install-cmd": [
