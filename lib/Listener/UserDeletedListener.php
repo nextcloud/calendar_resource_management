@@ -21,26 +21,16 @@ use OCP\User\Events\UserDeletedEvent;
  * @package OCA\CalendarResourceManagement\Listener
  */
 class UserDeletedListener implements IEventListener {
-	/** @var ResourceMapper */
-	private $resourceMapper;
-
-	/** @var RoomMapper */
-	private $roomMapper;
-
-	/** @var VehicleMapper */
-	private $vehicleMapper;
-
 	/**
 	 * @param ResourceMapper $resourceMapper
 	 * @param RoomMapper $roomMapper
 	 * @param VehicleMapper $vehicleMapper
 	 */
-	public function __construct(ResourceMapper $resourceMapper,
-		RoomMapper $roomMapper,
-		VehicleMapper $vehicleMapper) {
-		$this->resourceMapper = $resourceMapper;
-		$this->roomMapper = $roomMapper;
-		$this->vehicleMapper = $vehicleMapper;
+	public function __construct(
+		private ResourceMapper $resourceMapper,
+		private RoomMapper $roomMapper,
+		private VehicleMapper $vehicleMapper,
+	) {
 	}
 
 	/**

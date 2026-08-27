@@ -27,22 +27,14 @@ class DeleteResource extends Command {
 	private const TYPE = 'type';
 	private const ID = 'resource_id';
 
-	/** @var LoggerInterface */
-	private $logger;
-
-	/** @var IDBConnection */
-	private $connection;
-
 	public function __construct(
-		LoggerInterface $logger,
-		IDBConnection $connection,
+		private LoggerInterface $logger,
+		private IDBConnection $connection,
 		private IResourceManager $resourceManager,
 		private IRoomManager $roomManager,
 		private readonly RestrictionMapper $restrictionMapper,
 	) {
 		parent::__construct();
-		$this->logger = $logger;
-		$this->connection = $connection;
 	}
 
 	/**

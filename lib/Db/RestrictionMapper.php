@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Db;
 
+use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
@@ -31,8 +33,8 @@ class RestrictionMapper extends QBMapper {
 	/**
 	 * @param int $id
 	 * @return RestrictionModel
-	 * @throws \OCP\AppFramework\Db\DoesNotExistException if not found
-	 * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException if more than one result
+	 * @throws DoesNotExistException if not found
+	 * @throws MultipleObjectsReturnedException if more than one result
 	 */
 	public function find(int $id):RestrictionModel {
 		$qb = $this->db->getQueryBuilder();

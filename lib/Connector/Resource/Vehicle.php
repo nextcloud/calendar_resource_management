@@ -8,13 +8,14 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Connector\Resource;
 
+use OCA\CalendarResourceManagement\Db\VehicleModel;
 use OCP\Calendar\Resource\IResourceMetadata;
 
 /**
  * Class Vehicle
  *
  * @package OCA\CalendarResourceManagement\Connector\Resource
- * @property \OCA\CalendarResourceManagement\Db\VehicleModel $entity
+ * @property VehicleModel $entity
  */
 class Vehicle extends ResourceObject {
 	/**

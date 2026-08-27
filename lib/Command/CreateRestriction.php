@@ -31,22 +31,14 @@ class CreateRestriction extends Command {
 	private const ENTITY_ID = 'entity_id';
 	private const GROUP_ID = 'group_id';
 
-	/** @var LoggerInterface */
-	private $logger;
-
-	/** @var RestrictionMapper */
-	private $restrictionMapper;
-
 	public function __construct(
-		LoggerInterface $logger,
-		RestrictionMapper $restrictionMapper,
+		private LoggerInterface $logger,
+		private RestrictionMapper $restrictionMapper,
 		private IDBConnection $db,
 		private IResourceManager $resourceManager,
 		private IRoomManager $roomManager,
 	) {
 		parent::__construct();
-		$this->logger = $logger;
-		$this->restrictionMapper = $restrictionMapper;
 	}
 
 	/**

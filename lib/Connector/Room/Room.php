@@ -9,6 +9,9 @@ declare(strict_types=1);
 namespace OCA\CalendarResourceManagement\Connector\Room;
 
 use OCA\CalendarResourceManagement\Db;
+use OCA\CalendarResourceManagement\Db\BuildingModel;
+use OCA\CalendarResourceManagement\Db\RoomModel;
+use OCA\CalendarResourceManagement\Db\StoryModel;
 use OCP\Calendar\IMetadataProvider;
 use OCP\Calendar\Room\IBackend;
 use OCP\Calendar\Room\IRoom;
@@ -20,21 +23,6 @@ use OCP\Calendar\Room\IRoomMetadata;
  * @package OCA\CalendarResourceManagement\Connector\Room
  */
 class Room implements IRoom, IMetadataProvider {
-	/** @var Db\RoomModel */
-	protected $entity;
-
-	/** @var Db\StoryModel */
-	protected $storyEntity;
-
-	/** @var Db\BuildingModel */
-	protected $buildingEntity;
-
-	/** @var array */
-	private $restrictions;
-
-	/** @var Backend */
-	private $backend;
-
 	/**
 	 * Room constructor.
 	 *
@@ -44,16 +32,13 @@ class Room implements IRoom, IMetadataProvider {
 	 * @param array $restrictions
 	 * @param Backend $backend
 	 */
-	public function __construct(Db\RoomModel $entity,
-		Db\StoryModel $storyEntity,
-		Db\BuildingModel $buildingEntity,
-		array $restrictions,
-		Backend $backend) {
-		$this->entity = $entity;
-		$this->storyEntity = $storyEntity;
-		$this->buildingEntity = $buildingEntity;
-		$this->restrictions = $restrictions;
-		$this->backend = $backend;
+	public function __construct(
+		protected RoomModel $entity,
+		protected StoryModel $storyEntity,
+		protected BuildingModel $buildingEntity,
+		private array $restrictions,
+		private Backend $backend,
+	) {
 	}
 
 	/**

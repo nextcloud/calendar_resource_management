@@ -39,22 +39,14 @@ class CreateRoom extends Command {
 	private const HAS_WHITEBOARD = 'has-whiteboard';
 	private const IS_WHEELCHAIR_ACCESSIBLE = 'wheelchair-accessible';
 
-	/** @var LoggerInterface */
-	private $logger;
-
-	/** @var RoomMapper */
-	private $roomMapper;
-
 	public function __construct(
-		LoggerInterface $logger,
-		RoomMapper $roomMapper,
+		private LoggerInterface $logger,
+		private RoomMapper $roomMapper,
 		private IRoomManager $roomManager,
 		private UidValidationService $uidValidationService,
 		private StoryMapper $storyMapper,
 	) {
 		parent::__construct();
-		$this->logger = $logger;
-		$this->roomMapper = $roomMapper;
 	}
 
 	/**

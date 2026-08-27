@@ -14,6 +14,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\Exception;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\IDBConnection;
 
 /**
  * @template T of Entity
@@ -291,10 +292,10 @@ abstract class AMapper extends QBMapper {
 
 	/**
 	 * @param string $type
-	 * @param \OCP\IDBConnection $db
+	 * @param IDBConnection $db
 	 * @return BuildingMapper|ResourceMapper|RestrictionMapper|RoomMapper|StoryMapper|VehicleMapper|null
 	 */
-	public static function getMapper(string $type, \OCP\IDBConnection $db) {
+	public static function getMapper(string $type, IDBConnection $db) {
 		$type = strtolower($type);
 		$mapper = null;
 		switch ($type) {

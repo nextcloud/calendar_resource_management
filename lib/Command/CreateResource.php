@@ -29,21 +29,13 @@ class CreateResource extends Command {
 	private const TYPE = 'resource_type';
 	private const CONTACT = 'contact-person-user-id';
 
-	/** @var LoggerInterface */
-	private $logger;
-
-	/** @var ResourceMapper */
-	private $resourceMapper;
-
 	public function __construct(
-		LoggerInterface $logger,
-		ResourceMapper $resourceMapper,
+		private LoggerInterface $logger,
+		private ResourceMapper $resourceMapper,
 		private IResourceManager $resourceManager,
 		private UidValidationService $uidValidationService,
 	) {
 		parent::__construct();
-		$this->logger = $logger;
-		$this->resourceMapper = $resourceMapper;
 	}
 
 	/**
