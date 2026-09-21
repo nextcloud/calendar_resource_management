@@ -1,6 +1,6 @@
 {
     "require-dev": {
-        "phpstan/phpstan": "^2.2.12",
+        "phpstan/phpstan": "^2.2.14",
 		"nextcloud/ocp": "dev-master"
     }
 }
