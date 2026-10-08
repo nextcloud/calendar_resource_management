@@ -4,20 +4,18 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <script setup lang="ts">
-import type { Building, NewStory, SelectOption, Story } from '../types/types.ts'
+import type { Building, NewStory, Story } from '../types/types.ts'
 
-import { mdiDelete, mdiPlus } from '@mdi/js'
+import { mdiDelete, mdiPencil, mdiPlus } from '@mdi/js'
 import { translate as t } from '@nextcloud/l10n'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
-import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
-import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
-import { nameById, optionId, selectOptions } from '../utils/entities.ts'
+import StoryDialog from './dialogs/StoryDialog.vue'
+import { nameById } from '../utils/entities.ts'
 
-const props = defineProps<{
+defineProps<{
 	buildings: Building[]
 	stories: Story[]
 	loading?: boolean
@@ -25,34 +23,43 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	create: [story: NewStory]
+	update: [id: number, story: NewStory]
 	delete: [id: number]
 }>()
 
-const name = ref('')
-const building = ref<SelectOption | null>(null)
-
-const buildingOptions = computed(() => selectOptions(props.buildings))
-
-const canSubmit = computed(() => name.value.trim() !== '' && optionId(building.value) !== null)
+const dialogOpen = ref(false)
+const editing = ref<Story | null>(null)
 
 /**
- * Clear the form. Called by the parent once the story was created.
+ * Open the dialog to create a floor, or to edit the given one.
+ *
+ * @param story The floor to edit
  */
-function reset(): void {
-	name.value = ''
-	building.value = null
+function openDialog(story: Story | null = null): void {
+	editing.value = story
+	dialogOpen.value = true
 }
 
-defineExpose({ reset })
+/**
+ * Close the dialog. Called by the parent once the floor was saved.
+ */
+function close(): void {
+	dialogOpen.value = false
+}
+
+defineExpose({ close })
 
 /**
- * Hand the entered story over to the parent.
+ * Hand the entered floor over to the parent.
+ *
+ * @param story The entered floor
  */
-function submit(): void {
-	emit('create', {
-		name: name.value.trim(),
-		buildingId: optionId(building.value),
-	})
+function submit(story: NewStory): void {
+	if (editing.value) {
+		emit('update', editing.value.id, story)
+	} else {
+		emit('create', story)
+	}
 }
 </script>
 
@@ -60,6 +67,13 @@ function submit(): void {
 	<NcSettingsSection
 		:description="t('calendar_resource_management', 'Floors are the levels of a building.')"
 		:name="t('calendar_resource_management', 'Floors')">
+		<NcButton class="crm-add" @click="openDialog()">
+			<template #icon>
+				<NcIconSvgWrapper :path="mdiPlus" />
+			</template>
+			{{ t('calendar_resource_management', 'Add floor') }}
+		</NcButton>
+
 		<div v-if="stories.length" class="crm-table-wrapper">
 			<table class="crm-table">
 				<thead>
@@ -74,44 +88,35 @@ function submit(): void {
 						<td>{{ story.name }}</td>
 						<td>{{ nameById(buildings, story.buildingId) }}</td>
 						<td>
-							<NcButton
-								:aria-label="t('calendar_resource_management', 'Delete floor {name}', { name: story.name })"
-								variant="tertiary"
-								@click="emit('delete', story.id)">
-								<template #icon>
-									<NcIconSvgWrapper :path="mdiDelete" />
-								</template>
-							</NcButton>
+							<div class="crm-table__actions">
+								<NcButton
+									:aria-label="t('calendar_resource_management', 'Edit floor {name}', { name: story.name })"
+									variant="tertiary"
+									@click="openDialog(story)">
+									<template #icon>
+										<NcIconSvgWrapper :path="mdiPencil" />
+									</template>
+								</NcButton>
+								<NcButton
+									:aria-label="t('calendar_resource_management', 'Delete floor {name}', { name: story.name })"
+									variant="tertiary"
+									@click="emit('delete', story.id)">
+									<template #icon>
+										<NcIconSvgWrapper :path="mdiDelete" />
+									</template>
+								</NcButton>
+							</div>
 						</td>
 					</tr>
 				</tbody>
 			</table>
 		</div>
 
-		<NcTextField
-			v-model="name"
-			class="crm-field"
-			:label="t('calendar_resource_management', 'Floor name')"
-			:placeholder="t('calendar_resource_management', 'Required')" />
-
-		<NcSelect
-			v-model="building"
-			class="crm-field"
-			:inputLabel="t('calendar_resource_management', 'Building')"
-			:options="buildingOptions"
-			:placeholder="t('calendar_resource_management', 'Please select a building')" />
-
-		<NcButton
-			class="crm-field"
-			:disabled="!canSubmit || loading"
-			variant="primary"
-			wide
-			@click="submit">
-			<template #icon>
-				<NcLoadingIcon v-if="loading" />
-				<NcIconSvgWrapper v-else :path="mdiPlus" />
-			</template>
-			{{ t('calendar_resource_management', 'Add floor') }}
-		</NcButton>
+		<StoryDialog
+			v-model:open="dialogOpen"
+			:buildings="buildings"
+			:loading="loading"
+			:story="editing"
+			@submit="submit" />
 	</NcSettingsSection>
 </template>

@@ -74,7 +74,7 @@ export interface NewStory {
 	buildingId: number | null
 }
 
-/** Equipment flags as the create endpoint expects them, they differ from the listing */
+/** Equipment flags as the create and update endpoints expect them, they differ from the listing */
 export type EquipmentKey = 'hasPhone' | 'hasVideo' | 'hasTv' | 'hasProjector' | 'hasWhiteboard' | 'wheelchairAccessible'
 
 export type NewRoom = Record<EquipmentKey, boolean> & {

@@ -13,8 +13,10 @@ use OCA\CalendarResourceManagement\Db\ResourceMapper;
 use OCA\CalendarResourceManagement\Db\ResourceModel;
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Exception\EmailAlreadyUsedException;
+use OCA\CalendarResourceManagement\Exception\ServiceException;
 use OCA\CalendarResourceManagement\Service\ResourceService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Http;
 use OCP\Security\ISecureRandom;
 use PHPUnit\Framework\MockObject\MockObject;
 use Test\TestCase;
@@ -90,5 +92,56 @@ class ResourceServiceTest extends TestCase {
 		$this->resourceMapper->expects(self::once())->method('delete')->with($resource);
 
 		$this->service->deleteResource(4);
+	}
+
+	public function testUpdateResourceRejectsUnknownBuilding(): void {
+		$this->resourceMapper->method('find')->willReturn(new ResourceModel());
+		$this->buildingMapper->method('find')->willThrowException(new DoesNotExistException('nope'));
+		$this->resourceMapper->expects(self::never())->method('update');
+
+		try {
+			$this->service->updateResource(4, 'Beamer', 404);
+			self::fail('Expected a service exception');
+		} catch (ServiceException $e) {
+			self::assertSame('The selected building does not exist', $e->getMessage());
+			self::assertSame(Http::STATUS_BAD_REQUEST, $e->getHttpCode());
+		}
+	}
+
+	public function testUpdateResourceRejectsAnEmailUsedByAnotherResource(): void {
+		$resource = new ResourceModel();
+		$resource->setId(4);
+		$other = new ResourceModel();
+		$other->setId(5);
+		$this->resourceMapper->method('find')->willReturn($resource);
+		$this->resourceMapper->method('findByEmail')->with('beamer@example.com')->willReturn($other);
+		$this->resourceMapper->expects(self::never())->method('update');
+
+		$this->expectException(EmailAlreadyUsedException::class);
+
+		$this->service->updateResource(4, 'Beamer', 1, 'beamer@example.com');
+	}
+
+	public function testUpdateResourcePersistsAllProperties(): void {
+		$resource = new ResourceModel();
+		$resource->setId(4);
+		$resource->setUid('original');
+		$this->resourceMapper->method('find')->with(4)->willReturn($resource);
+		$this->resourceMapper->method('findByEmail')
+			->willThrowException(new DoesNotExistException('nope'));
+		$this->resourceMapper->expects(self::once())
+			->method('update')
+			->willReturnCallback(static function (ResourceModel $updated) use ($resource): ResourceModel {
+				self::assertSame($resource, $updated);
+				self::assertSame('original', $updated->getUid());
+				self::assertSame('Beamer', $updated->getDisplayName());
+				self::assertSame('beamer@example.com', $updated->getEmail());
+				self::assertSame('projector', $updated->getResourceType());
+				self::assertSame(2, $updated->getBuildingId());
+
+				return $updated;
+			});
+
+		$this->service->updateResource(4, 'Beamer', 2, 'beamer@example.com', 'projector');
 	}
 }

@@ -13,7 +13,9 @@ use OCA\CalendarResourceManagement\Db\RoomMapper;
 use OCA\CalendarResourceManagement\Db\RoomModel;
 use OCA\CalendarResourceManagement\Db\StoryMapper;
 use OCA\CalendarResourceManagement\Exception\EmailAlreadyUsedException;
+use OCA\CalendarResourceManagement\Exception\ServiceException;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Http;
 use OCP\Security\ISecureRandom;
 
 class RoomService {
@@ -87,6 +89,61 @@ class RoomService {
 		$room->setHasWhiteboard($hasWhiteboard);
 		$room->setIsWheelchairAccessible($wheelchairAccessible);
 		return $this->roomMapper->insert($room);
+	}
+
+	/**
+	 * Update a room
+	 *
+	 * @throws DoesNotExistException If the room does not exist.
+	 * @throws ServiceException If the story does not exist.
+	 * @throws EmailAlreadyUsedException If another room already uses the email address.
+	 */
+	public function updateRoom(
+		int $id,
+		string $name,
+		int $storyId,
+		string $email = '',
+		string $roomType = 'default',
+		string $roomNumber = '',
+		string $contactPersonUserId = '',
+		?int $capacity = null,
+		bool $hasPhone = false,
+		bool $hasVideo = false,
+		bool $hasTv = false,
+		bool $hasProjector = false,
+		bool $hasWhiteboard = false,
+		bool $wheelchairAccessible = false,
+	): RoomModel {
+		$room = $this->roomMapper->find($id);
+		try {
+			$this->storyMapper->find($storyId);
+		} catch (DoesNotExistException $e) {
+			throw new ServiceException('The selected story does not exist', previous: $e, httpCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$existing = $this->roomMapper->findByEmail($email);
+			if ($existing->getId() !== $id) {
+				throw new EmailAlreadyUsedException('A room with this email address already exists');
+			}
+		} catch (DoesNotExistException) {
+			// The email address is still free
+		}
+
+		$room->setDisplayName($name);
+		$room->setEmail($email);
+		$room->setRoomType($roomType);
+		$room->setStoryId($storyId);
+		$room->setRoomNumber($roomNumber);
+		$room->setContactPersonUserId($contactPersonUserId);
+		$room->setCapacity($capacity);
+		$room->setHasPhone($hasPhone);
+		$room->setHasVideoConferencing($hasVideo);
+		$room->setHasTv($hasTv);
+		$room->setHasProjector($hasProjector);
+		$room->setHasWhiteboard($hasWhiteboard);
+		$room->setIsWheelchairAccessible($wheelchairAccessible);
+		return $this->roomMapper->update($room);
 	}
 
 	/**
