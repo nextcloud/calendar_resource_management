@@ -11,7 +11,9 @@ namespace OCA\CalendarResourceManagement\Service;
 use OCA\CalendarResourceManagement\Db\BuildingMapper;
 use OCA\CalendarResourceManagement\Db\StoryMapper;
 use OCA\CalendarResourceManagement\Db\StoryModel;
+use OCA\CalendarResourceManagement\Exception\ServiceException;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Http;
 
 /**
  * A story is a floor of a building.
@@ -49,6 +51,25 @@ class StoryService {
 		$story->setDisplayName($name);
 		$story->setBuildingId($buildingId);
 		return $this->storyMapper->insert($story);
+	}
+
+	/**
+	 * Update a story
+	 *
+	 * @throws DoesNotExistException If the story does not exist.
+	 * @throws ServiceException If the building does not exist.
+	 */
+	public function updateStory(int $id, string $name, int $buildingId): StoryModel {
+		$story = $this->storyMapper->find($id);
+		try {
+			$this->buildingMapper->find($buildingId);
+		} catch (DoesNotExistException $e) {
+			throw new ServiceException('The selected building does not exist', previous: $e, httpCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		$story->setDisplayName($name);
+		$story->setBuildingId($buildingId);
+		return $this->storyMapper->update($story);
 	}
 
 	/**

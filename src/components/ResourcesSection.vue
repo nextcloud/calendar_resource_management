@@ -4,20 +4,18 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <script setup lang="ts">
-import type { Building, NewResource, Resource, SelectOption } from '../types/types.ts'
+import type { Building, NewResource, Resource } from '../types/types.ts'
 
-import { mdiDelete, mdiPlus } from '@mdi/js'
+import { mdiDelete, mdiPencil, mdiPlus } from '@mdi/js'
 import { translate as t } from '@nextcloud/l10n'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
-import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
-import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
-import { nameById, optionId, selectOptions } from '../utils/entities.ts'
+import ResourceDialog from './dialogs/ResourceDialog.vue'
+import { nameById } from '../utils/entities.ts'
 
-const props = defineProps<{
+defineProps<{
 	buildings: Building[]
 	resources: Resource[]
 	loading?: boolean
@@ -25,40 +23,43 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	create: [resource: NewResource]
+	update: [id: number, resource: NewResource]
 	delete: [id: number]
 }>()
 
-const name = ref('')
-const email = ref('')
-const resourceType = ref('default')
-const building = ref<SelectOption | null>(null)
-
-const buildingOptions = computed(() => selectOptions(props.buildings))
-
-const canSubmit = computed(() => name.value.trim() !== '' && email.value.trim() !== '' && optionId(building.value) !== null)
+const dialogOpen = ref(false)
+const editing = ref<Resource | null>(null)
 
 /**
- * Clear the form. Called by the parent once the resource was created.
+ * Open the dialog to create a resource, or to edit the given one.
+ *
+ * @param resource The resource to edit
  */
-function reset(): void {
-	name.value = ''
-	email.value = ''
-	resourceType.value = 'default'
-	building.value = null
+function openDialog(resource: Resource | null = null): void {
+	editing.value = resource
+	dialogOpen.value = true
 }
 
-defineExpose({ reset })
+/**
+ * Close the dialog. Called by the parent once the resource was saved.
+ */
+function close(): void {
+	dialogOpen.value = false
+}
+
+defineExpose({ close })
 
 /**
  * Hand the entered resource over to the parent.
+ *
+ * @param resource The entered resource
  */
-function submit(): void {
-	emit('create', {
-		name: name.value.trim(),
-		email: email.value.trim(),
-		resourceType: resourceType.value.trim(),
-		buildingId: optionId(building.value),
-	})
+function submit(resource: NewResource): void {
+	if (editing.value) {
+		emit('update', editing.value.id, resource)
+	} else {
+		emit('create', resource)
+	}
 }
 </script>
 
@@ -66,6 +67,13 @@ function submit(): void {
 	<NcSettingsSection
 		:description="t('calendar_resource_management', 'Resources are bookable in the calendar and belong to a building.')"
 		:name="t('calendar_resource_management', 'Resources')">
+		<NcButton class="crm-add" @click="openDialog()">
+			<template #icon>
+				<NcIconSvgWrapper :path="mdiPlus" />
+			</template>
+			{{ t('calendar_resource_management', 'Add resource') }}
+		</NcButton>
+
 		<div v-if="resources.length" class="crm-table-wrapper">
 			<table class="crm-table">
 				<thead>
@@ -84,57 +92,35 @@ function submit(): void {
 						<td>{{ resource.resourceType || '-' }}</td>
 						<td>{{ nameById(buildings, resource.buildingId) }}</td>
 						<td>
-							<NcButton
-								:aria-label="t('calendar_resource_management', 'Delete resource {name}', { name: resource.name })"
-								variant="tertiary"
-								@click="emit('delete', resource.id)">
-								<template #icon>
-									<NcIconSvgWrapper :path="mdiDelete" />
-								</template>
-							</NcButton>
+							<div class="crm-table__actions">
+								<NcButton
+									:aria-label="t('calendar_resource_management', 'Edit resource {name}', { name: resource.name })"
+									variant="tertiary"
+									@click="openDialog(resource)">
+									<template #icon>
+										<NcIconSvgWrapper :path="mdiPencil" />
+									</template>
+								</NcButton>
+								<NcButton
+									:aria-label="t('calendar_resource_management', 'Delete resource {name}', { name: resource.name })"
+									variant="tertiary"
+									@click="emit('delete', resource.id)">
+									<template #icon>
+										<NcIconSvgWrapper :path="mdiDelete" />
+									</template>
+								</NcButton>
+							</div>
 						</td>
 					</tr>
 				</tbody>
 			</table>
 		</div>
 
-		<NcTextField
-			v-model="name"
-			class="crm-field"
-			:label="t('calendar_resource_management', 'Resource name')"
-			:placeholder="t('calendar_resource_management', 'Required')" />
-
-		<NcTextField
-			v-model="email"
-			class="crm-field"
-			:label="t('calendar_resource_management', 'Email')"
-			:placeholder="t('calendar_resource_management', 'Required')"
-			type="email" />
-
-		<NcTextField
-			v-model="resourceType"
-			class="crm-field"
-			:label="t('calendar_resource_management', 'Resource type')"
-			:placeholder="t('calendar_resource_management', 'e.g. projector')" />
-
-		<NcSelect
-			v-model="building"
-			class="crm-field"
-			:inputLabel="t('calendar_resource_management', 'Building')"
-			:options="buildingOptions"
-			:placeholder="t('calendar_resource_management', 'Please select a building')" />
-
-		<NcButton
-			class="crm-field"
-			:disabled="!canSubmit || loading"
-			variant="primary"
-			wide
-			@click="submit">
-			<template #icon>
-				<NcLoadingIcon v-if="loading" />
-				<NcIconSvgWrapper v-else :path="mdiPlus" />
-			</template>
-			{{ t('calendar_resource_management', 'Add resource') }}
-		</NcButton>
+		<ResourceDialog
+			v-model:open="dialogOpen"
+			:buildings="buildings"
+			:loading="loading"
+			:resource="editing"
+			@submit="submit" />
 	</NcSettingsSection>
 </template>

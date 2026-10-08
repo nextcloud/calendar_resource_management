@@ -35,8 +35,8 @@ const stories = ref<Story[]>([])
 const rooms = ref<Room[]>([])
 const resources = ref<Resource[]>([])
 
-// Blocks the submit buttons while a create request is running
-const creating = ref({
+// Blocks the dialog submit buttons while a create or update request is running
+const saving = ref({
 	building: false,
 	story: false,
 	room: false,
@@ -107,6 +107,18 @@ function addSorted<T extends NamedEntity>(list: Ref<T[]>, entity: T): void {
 }
 
 /**
+ * Replace an updated entity in a list, keeping the name order the endpoints list in.
+ *
+ * @param list The list holding the entity
+ * @param entity The updated entity
+ */
+function replaceSorted<T extends NamedEntity>(list: Ref<T[]>, entity: T): void {
+	list.value = list.value
+		.map((candidate) => candidate.id === entity.id ? entity : candidate)
+		.sort((a, b) => a.name.localeCompare(b.name))
+}
+
+/**
  * Reload the buildings.
  */
 async function loadBuildings(): Promise<void> {
@@ -173,18 +185,18 @@ onMounted(async () => {
  * @param building The building to create
  */
 async function createBuilding(building: NewBuilding): Promise<void> {
-	creating.value.building = true
+	saving.value.building = true
 	try {
 		const created = await request(
 			() => api.createBuilding(building.name, building.address),
 			t('calendar_resource_management', 'Could not create building'),
 		)
 		if (created !== null) {
-			buildingsSection.value?.reset()
+			buildingsSection.value?.close()
 			addSorted(buildings, created)
 		}
 	} finally {
-		creating.value.building = false
+		saving.value.building = false
 	}
 }
 
@@ -194,18 +206,18 @@ async function createBuilding(building: NewBuilding): Promise<void> {
  * @param story The floor to create
  */
 async function createStory(story: NewStory): Promise<void> {
-	creating.value.story = true
+	saving.value.story = true
 	try {
 		const created = await request(
 			() => api.createStory(story.name, story.buildingId),
 			t('calendar_resource_management', 'Could not create floor'),
 		)
 		if (created !== null) {
-			storiesSection.value?.reset()
+			storiesSection.value?.close()
 			addSorted(stories, created)
 		}
 	} finally {
-		creating.value.story = false
+		saving.value.story = false
 	}
 }
 
@@ -215,18 +227,18 @@ async function createStory(story: NewStory): Promise<void> {
  * @param room The room to create
  */
 async function createRoom(room: NewRoom): Promise<void> {
-	creating.value.room = true
+	saving.value.room = true
 	try {
 		const created = await request(
 			() => api.createRoom(room),
 			t('calendar_resource_management', 'Could not create room'),
 		)
 		if (created !== null) {
-			roomsSection.value?.reset()
+			roomsSection.value?.close()
 			addSorted(rooms, created)
 		}
 	} finally {
-		creating.value.room = false
+		saving.value.room = false
 	}
 }
 
@@ -236,18 +248,40 @@ async function createRoom(room: NewRoom): Promise<void> {
  * @param resource The resource to create
  */
 async function createResource(resource: NewResource): Promise<void> {
-	creating.value.resource = true
+	saving.value.resource = true
 	try {
 		const created = await request(
 			() => api.createResource(resource),
 			t('calendar_resource_management', 'Could not create resource'),
 		)
 		if (created !== null) {
-			resourcesSection.value?.reset()
+			resourcesSection.value?.close()
 			addSorted(resources, created)
 		}
 	} finally {
-		creating.value.resource = false
+		saving.value.resource = false
+	}
+}
+
+/**
+ * Save the changes to a building edited in the buildings section.
+ *
+ * @param id The building to update
+ * @param building The entered building
+ */
+async function updateBuilding(id: number, building: NewBuilding): Promise<void> {
+	saving.value.building = true
+	try {
+		const updated = await request(
+			() => api.updateBuilding(id, building.name, building.address),
+			t('calendar_resource_management', 'Could not update building'),
+		)
+		if (updated !== null) {
+			buildingsSection.value?.close()
+			replaceSorted(buildings, updated)
+		}
+	} finally {
+		saving.value.building = false
 	}
 }
 
@@ -278,6 +312,28 @@ function confirmDeleteBuilding(id: number): void {
 }
 
 /**
+ * Save the changes to a floor edited in the floors section.
+ *
+ * @param id The floor to update
+ * @param story The entered floor
+ */
+async function updateStory(id: number, story: NewStory): Promise<void> {
+	saving.value.story = true
+	try {
+		const updated = await request(
+			() => api.updateStory(id, story.name, story.buildingId),
+			t('calendar_resource_management', 'Could not update floor'),
+		)
+		if (updated !== null) {
+			storiesSection.value?.close()
+			replaceSorted(stories, updated)
+		}
+	} finally {
+		saving.value.story = false
+	}
+}
+
+/**
  * Ask for confirmation before deleting a floor.
  *
  * @param id The floor to delete
@@ -302,6 +358,28 @@ function confirmDeleteStory(id: number): void {
 }
 
 /**
+ * Save the changes to a room edited in the rooms section.
+ *
+ * @param id The room to update
+ * @param room The entered room
+ */
+async function updateRoom(id: number, room: NewRoom): Promise<void> {
+	saving.value.room = true
+	try {
+		const updated = await request(
+			() => api.updateRoom(id, room),
+			t('calendar_resource_management', 'Could not update room'),
+		)
+		if (updated !== null) {
+			roomsSection.value?.close()
+			replaceSorted(rooms, updated)
+		}
+	} finally {
+		saving.value.room = false
+	}
+}
+
+/**
  * Ask for confirmation before deleting a room.
  *
  * @param id The room to delete
@@ -319,6 +397,28 @@ function confirmDeleteRoom(id: number): void {
 				rooms.value = rooms.value.filter((room) => room.id !== id)
 			}
 		},
+	}
+}
+
+/**
+ * Save the changes to a resource edited in the resources section.
+ *
+ * @param id The resource to update
+ * @param resource The entered resource
+ */
+async function updateResource(id: number, resource: NewResource): Promise<void> {
+	saving.value.resource = true
+	try {
+		const updated = await request(
+			() => api.updateResource(id, resource),
+			t('calendar_resource_management', 'Could not update resource'),
+		)
+		if (updated !== null) {
+			resourcesSection.value?.close()
+			replaceSorted(resources, updated)
+		}
+	} finally {
+		saving.value.resource = false
 	}
 }
 
@@ -416,8 +516,9 @@ function onDeleteDialogToggle(open: boolean): void {
 			<BuildingsSection
 				ref="buildings"
 				:buildings="buildings"
-				:loading="creating.building"
+				:loading="saving.building"
 				@create="createBuilding"
+				@update="updateBuilding"
 				@delete="confirmDeleteBuilding" />
 		</div>
 
@@ -429,9 +530,10 @@ function onDeleteDialogToggle(open: boolean): void {
 			<StoriesSection
 				ref="stories"
 				:buildings="buildings"
-				:loading="creating.story"
+				:loading="saving.story"
 				:stories="stories"
 				@create="createStory"
+				@update="updateStory"
 				@delete="confirmDeleteStory" />
 		</div>
 
@@ -443,10 +545,11 @@ function onDeleteDialogToggle(open: boolean): void {
 			<RoomsSection
 				ref="rooms"
 				:buildings="buildings"
-				:loading="creating.room"
+				:loading="saving.room"
 				:rooms="rooms"
 				:stories="stories"
 				@create="createRoom"
+				@update="updateRoom"
 				@delete="confirmDeleteRoom" />
 		</div>
 
@@ -458,9 +561,10 @@ function onDeleteDialogToggle(open: boolean): void {
 			<ResourcesSection
 				ref="resources"
 				:buildings="buildings"
-				:loading="creating.resource"
+				:loading="saving.resource"
 				:resources="resources"
 				@create="createResource"
+				@update="updateResource"
 				@delete="confirmDeleteResource" />
 		</div>
 
@@ -475,7 +579,7 @@ function onDeleteDialogToggle(open: boolean): void {
 
 <style lang="scss" scoped>
 .crm-admin {
-	// Every form field and table of all sections shares this width
+	// Every table of all sections shares this width
 	--crm-content-max-width: 700px;
 
 	.crm-tabs {
@@ -518,21 +622,8 @@ function onDeleteDialogToggle(open: boolean): void {
 		}
 	}
 
-	// Text fields, selects and the submit button all line up on the same edges
-	:deep(.crm-field) {
-		margin-block-end: calc(2 * var(--default-grid-baseline));
-		max-width: var(--crm-content-max-width);
-		min-width: 0;
-		width: 100%;
-	}
-
-	:deep(.crm-equipment) {
-		margin-block: calc(2 * var(--default-grid-baseline));
-		max-width: var(--crm-content-max-width);
-
-		legend {
-			font-weight: bold;
-		}
+	:deep(.crm-add) {
+		margin-block-end: calc(4 * var(--default-grid-baseline));
 	}
 
 	:deep(.crm-table) {
@@ -546,6 +637,11 @@ function onDeleteDialogToggle(open: boolean): void {
 			// Leaves 4px above and below the delete buttons
 			padding: var(--default-grid-baseline) calc(2 * var(--default-grid-baseline));
 			text-align: start;
+		}
+
+		.crm-table__actions {
+			display: flex;
+			gap: var(--default-grid-baseline);
 		}
 
 		th {

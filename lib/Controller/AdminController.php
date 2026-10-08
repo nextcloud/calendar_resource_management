@@ -84,6 +84,27 @@ class AdminController extends Controller {
 	}
 
 	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'PUT', url: '/admin/buildings/{id}')]
+	public function updateBuilding(int $id, string $name = '', string $address = ''): JSONResponse {
+		if (trim($name) === '') {
+			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$building = $this->buildingService->updateBuilding($id, $name, $address);
+		} catch (DoesNotExistException) {
+			return $this->error('The building does not exist', Http::STATUS_NOT_FOUND);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not update building', $e);
+		}
+
+		// Rooms expose the building name and address in their metadata
+		$this->roomManager->update();
+
+		return new JSONResponse($building);
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
 	#[FrontpageRoute(verb: 'DELETE', url: '/admin/buildings/{id}')]
 	public function deleteBuilding(int $id): JSONResponse {
 		try {
@@ -122,6 +143,32 @@ class AdminController extends Controller {
 		}
 
 		return new JSONResponse($story, Http::STATUS_CREATED);
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'PUT', url: '/admin/stories/{id}')]
+	public function updateStory(int $id, string $name = '', ?int $buildingId = null): JSONResponse {
+		if (trim($name) === '') {
+			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+		}
+		if ($buildingId === null) {
+			return $this->error('A building has to be selected', Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$story = $this->storyService->updateStory($id, $name, $buildingId);
+		} catch (DoesNotExistException) {
+			return $this->error('The story does not exist', Http::STATUS_NOT_FOUND);
+		} catch (ServiceException $e) {
+			return $this->serviceError('Could not update story', $e);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not update story', $e);
+		}
+
+		// Rooms expose the story name and their building in their metadata
+		$this->roomManager->update();
+
+		return new JSONResponse($story);
 	}
 
 	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
@@ -201,6 +248,64 @@ class AdminController extends Controller {
 	}
 
 	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'PUT', url: '/admin/rooms/{id}')]
+	public function updateRoom(
+		int $id,
+		string $name = '',
+		?int $storyId = null,
+		string $email = '',
+		string $roomType = 'default',
+		string $roomNumber = '',
+		string $contactPersonUserId = '',
+		?int $capacity = null,
+		bool $hasPhone = false,
+		bool $hasVideo = false,
+		bool $hasTv = false,
+		bool $hasProjector = false,
+		bool $hasWhiteboard = false,
+		bool $wheelchairAccessible = false,
+	): JSONResponse {
+		if (trim($name) === '') {
+			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+		}
+		if ($storyId === null) {
+			return $this->error('A story has to be selected', Http::STATUS_BAD_REQUEST);
+		}
+		if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+			return $this->error('A valid email address is required', Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$room = $this->roomService->updateRoom(
+				$id,
+				$name,
+				$storyId,
+				$email,
+				$roomType,
+				$roomNumber,
+				$contactPersonUserId,
+				$capacity,
+				$hasPhone,
+				$hasVideo,
+				$hasTv,
+				$hasProjector,
+				$hasWhiteboard,
+				$wheelchairAccessible,
+			);
+		} catch (DoesNotExistException) {
+			return $this->error('The room does not exist', Http::STATUS_NOT_FOUND);
+		} catch (ServiceException $e) {
+			return $this->serviceError('Could not update room', $e);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not update room', $e);
+		}
+
+		$this->roomManager->update();
+
+		return new JSONResponse($room);
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
 	#[FrontpageRoute(verb: 'DELETE', url: '/admin/rooms/{id}')]
 	public function deleteRoom(int $id): JSONResponse {
 		try {
@@ -248,6 +353,34 @@ class AdminController extends Controller {
 		$this->resourceManager->update();
 
 		return new JSONResponse($resource, Http::STATUS_CREATED);
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'PUT', url: '/admin/resources/{id}')]
+	public function updateResource(int $id, string $name = '', ?int $buildingId = null, string $email = '', string $resourceType = 'default'): JSONResponse {
+		if (trim($name) === '') {
+			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+		}
+		if ($buildingId === null) {
+			return $this->error('A building has to be selected', Http::STATUS_BAD_REQUEST);
+		}
+		if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+			return $this->error('A valid email address is required', Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$resource = $this->resourceService->updateResource($id, $name, $buildingId, $email, $resourceType);
+		} catch (DoesNotExistException) {
+			return $this->error('The resource does not exist', Http::STATUS_NOT_FOUND);
+		} catch (ServiceException $e) {
+			return $this->serviceError('Could not update resource', $e);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not update resource', $e);
+		}
+
+		$this->resourceManager->update();
+
+		return new JSONResponse($resource);
 	}
 
 	#[AuthorizedAdminSetting(settings: AdminSettings::class)]

@@ -333,4 +333,166 @@ class AdminControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
 		self::assertSame(['error' => 'Could not create building'], $response->getData());
 	}
+
+	public function testUpdateBuildingRejectsBlankName(): void {
+		$this->buildingService->expects(self::never())->method('updateBuilding');
+
+		$response = $this->controller->updateBuilding(3, '   ');
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame(['error' => 'A name is required'], $response->getData());
+	}
+
+	public function testUpdateBuildingReportsUnknownBuilding(): void {
+		$this->buildingService->method('updateBuilding')
+			->willThrowException(new DoesNotExistException('nope'));
+		$this->roomManager->expects(self::never())->method('update');
+
+		$response = $this->controller->updateBuilding(404, 'Headquarters');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame(['error' => 'The building does not exist'], $response->getData());
+	}
+
+	public function testUpdateBuildingReturnsTheEntityAndUpdatesTheRoomBackend(): void {
+		$building = new BuildingModel();
+		$building->setId(3);
+		$this->buildingService->expects(self::once())
+			->method('updateBuilding')
+			->with(3, 'Headquarters', 'Somewhere 2')
+			->willReturn($building);
+		$this->roomManager->expects(self::once())->method('update');
+
+		$response = $this->controller->updateBuilding(3, 'Headquarters', 'Somewhere 2');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($building, $response->getData());
+	}
+
+	public function testUpdateStoryRejectsMissingBuilding(): void {
+		$this->storyService->expects(self::never())->method('updateStory');
+
+		$response = $this->controller->updateStory(11, 'First floor', null);
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame(['error' => 'A building has to be selected'], $response->getData());
+	}
+
+	public function testUpdateStoryReportsUnknownStory(): void {
+		$this->storyService->method('updateStory')
+			->willThrowException(new DoesNotExistException('nope'));
+		$this->roomManager->expects(self::never())->method('update');
+
+		$response = $this->controller->updateStory(404, 'First floor', 5);
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame(['error' => 'The story does not exist'], $response->getData());
+	}
+
+	public function testUpdateStoryReportsUnknownBuilding(): void {
+		$this->storyService->method('updateStory')
+			->willThrowException(new ServiceException('The selected building does not exist', httpCode: Http::STATUS_BAD_REQUEST));
+		$this->roomManager->expects(self::never())->method('update');
+
+		$response = $this->controller->updateStory(11, 'First floor', 404);
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame(['error' => 'The selected building does not exist'], $response->getData());
+	}
+
+	public function testUpdateStoryReturnsTheEntityAndUpdatesTheRoomBackend(): void {
+		$story = new StoryModel();
+		$story->setId(11);
+		$this->storyService->expects(self::once())
+			->method('updateStory')
+			->with(11, 'Second floor', 6)
+			->willReturn($story);
+		$this->roomManager->expects(self::once())->method('update');
+
+		$response = $this->controller->updateStory(11, 'Second floor', 6);
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($story, $response->getData());
+	}
+
+	public function testUpdateRoomRejectsMissingEmail(): void {
+		$this->roomService->expects(self::never())->method('updateRoom');
+
+		$response = $this->controller->updateRoom(9, 'Meeting room', 2);
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame(['error' => 'A valid email address is required'], $response->getData());
+	}
+
+	public function testUpdateRoomReportsUnknownRoom(): void {
+		$this->roomService->method('updateRoom')
+			->willThrowException(new DoesNotExistException('nope'));
+		$this->roomManager->expects(self::never())->method('update');
+
+		$response = $this->controller->updateRoom(404, 'Meeting room', 2, 'room@example.com');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame(['error' => 'The room does not exist'], $response->getData());
+	}
+
+	public function testUpdateRoomReportsADuplicateEmail(): void {
+		$this->roomService->method('updateRoom')
+			->willThrowException(new EmailAlreadyUsedException('A room with this email address already exists'));
+		$this->roomManager->expects(self::never())->method('update');
+
+		$response = $this->controller->updateRoom(9, 'Meeting room', 2, 'room@example.com');
+
+		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		self::assertSame(['error' => 'A room with this email address already exists'], $response->getData());
+	}
+
+	public function testUpdateRoomPassesAllPropertiesAndUpdatesTheBackend(): void {
+		$room = new RoomModel();
+		$room->setId(9);
+		$this->roomService->expects(self::once())
+			->method('updateRoom')
+			->with(9, 'Meeting room', 2, 'room@example.com', 'meeting-room', '1.23', 'admin', 12, true, true, false, false, false, true)
+			->willReturn($room);
+		$this->roomManager->expects(self::once())->method('update');
+
+		$response = $this->controller->updateRoom(9, 'Meeting room', 2, 'room@example.com', 'meeting-room', '1.23', 'admin', 12, true, true, false, false, false, true);
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($room, $response->getData());
+	}
+
+	public function testUpdateResourceRejectsMissingBuilding(): void {
+		$this->resourceService->expects(self::never())->method('updateResource');
+
+		$response = $this->controller->updateResource(4, 'Beamer', null, 'beamer@example.com');
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame(['error' => 'A building has to be selected'], $response->getData());
+	}
+
+	public function testUpdateResourceReportsUnknownResource(): void {
+		$this->resourceService->method('updateResource')
+			->willThrowException(new DoesNotExistException('nope'));
+		$this->resourceManager->expects(self::never())->method('update');
+
+		$response = $this->controller->updateResource(404, 'Beamer', 1, 'beamer@example.com');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame(['error' => 'The resource does not exist'], $response->getData());
+	}
+
+	public function testUpdateResourceReturnsTheEntityAndUpdatesTheBackend(): void {
+		$resource = new ResourceModel();
+		$resource->setId(4);
+		$this->resourceService->expects(self::once())
+			->method('updateResource')
+			->with(4, 'Beamer', 1, 'beamer@example.com', 'projector')
+			->willReturn($resource);
+		$this->resourceManager->expects(self::once())->method('update');
+
+		$response = $this->controller->updateResource(4, 'Beamer', 1, 'beamer@example.com', 'projector');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($resource, $response->getData());
+	}
 }

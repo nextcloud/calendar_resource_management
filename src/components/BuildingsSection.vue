@@ -6,14 +6,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <script setup lang="ts">
 import type { Building, NewBuilding } from '../types/types.ts'
 
-import { mdiDelete, mdiPlus } from '@mdi/js'
+import { mdiDelete, mdiPencil, mdiPlus } from '@mdi/js'
 import { translate as t } from '@nextcloud/l10n'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
-import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
+import BuildingDialog from './dialogs/BuildingDialog.vue'
 
 defineProps<{
 	buildings: Building[]
@@ -22,32 +21,43 @@ defineProps<{
 
 const emit = defineEmits<{
 	create: [building: NewBuilding]
+	update: [id: number, building: NewBuilding]
 	delete: [id: number]
 }>()
 
-const name = ref('')
-const address = ref('')
-
-const canSubmit = computed(() => name.value.trim() !== '')
+const dialogOpen = ref(false)
+const editing = ref<Building | null>(null)
 
 /**
- * Clear the form. Called by the parent once the building was created.
+ * Open the dialog to create a building, or to edit the given one.
+ *
+ * @param building The building to edit
  */
-function reset(): void {
-	name.value = ''
-	address.value = ''
+function openDialog(building: Building | null = null): void {
+	editing.value = building
+	dialogOpen.value = true
 }
 
-defineExpose({ reset })
+/**
+ * Close the dialog. Called by the parent once the building was saved.
+ */
+function close(): void {
+	dialogOpen.value = false
+}
+
+defineExpose({ close })
 
 /**
  * Hand the entered building over to the parent.
+ *
+ * @param building The entered building
  */
-function submit(): void {
-	emit('create', {
-		name: name.value.trim(),
-		address: address.value.trim(),
-	})
+function submit(building: NewBuilding): void {
+	if (editing.value) {
+		emit('update', editing.value.id, building)
+	} else {
+		emit('create', building)
+	}
 }
 </script>
 
@@ -55,6 +65,13 @@ function submit(): void {
 	<NcSettingsSection
 		:description="t('calendar_resource_management', 'Buildings group the floors that rooms are located on.')"
 		:name="t('calendar_resource_management', 'Buildings')">
+		<NcButton class="crm-add" @click="openDialog()">
+			<template #icon>
+				<NcIconSvgWrapper :path="mdiPlus" />
+			</template>
+			{{ t('calendar_resource_management', 'Add building') }}
+		</NcButton>
+
 		<div v-if="buildings.length" class="crm-table-wrapper">
 			<table class="crm-table">
 				<thead>
@@ -69,42 +86,34 @@ function submit(): void {
 						<td>{{ building.name }}</td>
 						<td>{{ building.address || '-' }}</td>
 						<td>
-							<NcButton
-								:aria-label="t('calendar_resource_management', 'Delete building {name}', { name: building.name })"
-								variant="tertiary"
-								@click="emit('delete', building.id)">
-								<template #icon>
-									<NcIconSvgWrapper :path="mdiDelete" />
-								</template>
-							</NcButton>
+							<div class="crm-table__actions">
+								<NcButton
+									:aria-label="t('calendar_resource_management', 'Edit building {name}', { name: building.name })"
+									variant="tertiary"
+									@click="openDialog(building)">
+									<template #icon>
+										<NcIconSvgWrapper :path="mdiPencil" />
+									</template>
+								</NcButton>
+								<NcButton
+									:aria-label="t('calendar_resource_management', 'Delete building {name}', { name: building.name })"
+									variant="tertiary"
+									@click="emit('delete', building.id)">
+									<template #icon>
+										<NcIconSvgWrapper :path="mdiDelete" />
+									</template>
+								</NcButton>
+							</div>
 						</td>
 					</tr>
 				</tbody>
 			</table>
 		</div>
 
-		<NcTextField
-			v-model="name"
-			class="crm-field"
-			:label="t('calendar_resource_management', 'Building name')"
-			:placeholder="t('calendar_resource_management', 'Required')" />
-
-		<NcTextField
-			v-model="address"
-			class="crm-field"
-			:label="t('calendar_resource_management', 'Address')" />
-
-		<NcButton
-			class="crm-field"
-			:disabled="!canSubmit || loading"
-			variant="primary"
-			wide
-			@click="submit">
-			<template #icon>
-				<NcLoadingIcon v-if="loading" />
-				<NcIconSvgWrapper v-else :path="mdiPlus" />
-			</template>
-			{{ t('calendar_resource_management', 'Add building') }}
-		</NcButton>
+		<BuildingDialog
+			v-model:open="dialogOpen"
+			:building="editing"
+			:loading="loading"
+			@submit="submit" />
 	</NcSettingsSection>
 </template>
