@@ -57,6 +57,22 @@ export async function createBuilding(name: string, address: string): Promise<Bui
 }
 
 /**
+ * Update a building
+ *
+ * @param id Building ID
+ * @param name Building name
+ * @param address Building address
+ * @return Updated building
+ */
+export async function updateBuilding(id: number, name: string, address: string): Promise<Building> {
+	const response = await axios.put(generateUrl(`${baseUrl}/buildings/${id}`), {
+		name,
+		address,
+	})
+	return response.data
+}
+
+/**
  * Delete a building
  *
  * @param id Building ID
@@ -84,6 +100,22 @@ export async function fetchStories(): Promise<Story[]> {
  */
 export async function createStory(name: string, buildingId: number | null): Promise<Story> {
 	const response = await axios.post(generateUrl(`${baseUrl}/stories`), {
+		name,
+		buildingId,
+	})
+	return response.data
+}
+
+/**
+ * Update a story
+ *
+ * @param id Story ID
+ * @param name Story name
+ * @param buildingId Building ID
+ * @return Updated story
+ */
+export async function updateStory(id: number, name: string, buildingId: number | null): Promise<Story> {
+	const response = await axios.put(generateUrl(`${baseUrl}/stories/${id}`), {
 		name,
 		buildingId,
 	})
@@ -121,6 +153,18 @@ export async function createRoom(data: NewRoom): Promise<Room> {
 }
 
 /**
+ * Update a room
+ *
+ * @param id Room ID
+ * @param data Room data
+ * @return Updated room
+ */
+export async function updateRoom(id: number, data: NewRoom): Promise<Room> {
+	const response = await axios.put(generateUrl(`${baseUrl}/rooms/${id}`), data)
+	return response.data
+}
+
+/**
  * Delete a room
  *
  * @param id Room ID
@@ -147,6 +191,18 @@ export async function fetchResources(): Promise<Resource[]> {
  */
 export async function createResource(data: NewResource): Promise<Resource> {
 	const response = await axios.post(generateUrl(`${baseUrl}/resources`), data)
+	return response.data
+}
+
+/**
+ * Update a resource
+ *
+ * @param id Resource ID
+ * @param data Resource data
+ * @return Updated resource
+ */
+export async function updateResource(id: number, data: NewResource): Promise<Resource> {
+	const response = await axios.put(generateUrl(`${baseUrl}/resources/${id}`), data)
 	return response.data
 }
 
