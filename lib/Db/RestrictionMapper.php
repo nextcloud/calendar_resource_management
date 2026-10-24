@@ -104,6 +104,33 @@ class RestrictionMapper extends QBMapper {
 	}
 
 	/**
+	 * The restrictions of several entities of one type, in one query.
+	 *
+	 * @param string $entityType
+	 * @param int[] $entityIds
+	 * @return RestrictionModel[]
+	 */
+	public function findAllByEntityTypeAndIds(string $entityType, array $entityIds): array {
+		if ($entityIds === []) {
+			return [];
+		}
+
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select('*')
+			->from($this->tableName)
+			->where(
+				$qb->expr()->eq('entity_type', $qb->createNamedParameter($entityType, IQueryBuilder::PARAM_STR))
+			)
+			->andWhere(
+				$qb->expr()->in('entity_id', $qb->createNamedParameter($entityIds, IQueryBuilder::PARAM_INT_ARRAY))
+			)
+			->orderBy('group_id', 'ASC');
+
+		return $this->findEntities($qb);
+	}
+
+	/**
 	 * @param string $entityType
 	 * @param int $entityId
 	 */

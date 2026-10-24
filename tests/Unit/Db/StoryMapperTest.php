@@ -10,9 +10,11 @@ namespace OCA\CalendarResourceManagement\Tests\Unit\Db;
 
 use OCA\CalendarResourceManagement\Db\BuildingMapper;
 use OCA\CalendarResourceManagement\Db\BuildingModel;
+use OCA\CalendarResourceManagement\Db\Criterion;
 use OCA\CalendarResourceManagement\Db\StoryMapper;
 use OCA\CalendarResourceManagement\Db\StoryModel;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use Test\TestCase;
 
 class StoryMapperTest extends TestCase {
@@ -76,6 +78,31 @@ class StoryMapperTest extends TestCase {
 		$this->assertEquals(1, $allStories[4]->getBuildingId());
 	}
 
+	/**
+	 * StoryMapper gets the filter engine from the trait, not AMapper.
+	 */
+	public function testFindAllFilteredByBuildingId(): void {
+		$stories = $this->mapper->findAllFiltered([
+			new Criterion('building_id', Criterion::OP_EQ, 1, IQueryBuilder::PARAM_INT),
+		]);
+
+		$this->assertEquals(
+			array_map(static fn ($story) => $story->getDisplayName(), $this->mapper->findAllByBuilding(1)),
+			array_map(static fn ($story) => $story->getDisplayName(), $stories)
+		);
+	}
+
+	public function testFindAllFilteredMatchesTextCaseInsensitively(): void {
+		$stories = $this->mapper->findAllFiltered([
+			new Criterion('display_name', Criterion::OP_LIKE, 'GROUND', IQueryBuilder::PARAM_STR),
+		]);
+
+		$this->assertNotEmpty($stories);
+		foreach ($stories as $story) {
+			$this->assertStringContainsStringIgnoringCase('ground', $story->getDisplayName());
+		}
+	}
+
 	public function testFindAllByBuildings(): void {
 		$allStories = $this->mapper->findAllByBuildings([1, 2]);
 
@@ -103,6 +130,63 @@ class StoryMapperTest extends TestCase {
 
 		$allStories = $this->mapper->findAllByBuildings([1, 2]);
 		$this->assertCount(1, $allStories);
+	}
+
+	public function testCountAllFilteredMatchesTheFilteredTotal(): void {
+		$this->assertSame(8, $this->mapper->countAllFiltered([]));
+
+		$criteria = [new Criterion('building_id', Criterion::OP_EQ, 1, IQueryBuilder::PARAM_INT)];
+		$this->assertSame(5, $this->mapper->countAllFiltered($criteria));
+		$this->assertSame(
+			count($this->mapper->findAllFiltered($criteria)),
+			$this->mapper->countAllFiltered($criteria)
+		);
+
+		$this->assertSame(0, $this->mapper->countAllFiltered([
+			new Criterion('building_id', Criterion::OP_EQ, 4711, IQueryBuilder::PARAM_INT),
+		]));
+	}
+
+	/**
+	 * The id tiebreaker keeps pages stable across repeated display names.
+	 */
+	public function testFindAllFilteredOrdersStablyAcrossPages(): void {
+		$expected = array_map(
+			static fn ($story) => $story->getId(),
+			$this->mapper->findAllFiltered([])
+		);
+		$this->assertCount(8, $expected);
+
+		$paged = [];
+		for ($offset = 0; $offset < 8; $offset += 3) {
+			foreach ($this->mapper->findAllFiltered([], 'display_name', true, 3, $offset) as $story) {
+				$paged[] = $story->getId();
+			}
+		}
+
+		$this->assertSame($expected, $paged);
+		// No row on two pages, and none skipped.
+		$this->assertSame($paged, array_values(array_unique($paged)));
+	}
+
+	public function testFindAllFilteredWindowsTheResultSet(): void {
+		$page = $this->mapper->findAllFiltered([], 'display_name', true, 3, 3);
+
+		$this->assertCount(3, $page);
+		$this->assertSame(
+			['Floor 3', 'Floor 4', 'Ground-floor'],
+			array_map(static fn ($story) => $story->getDisplayName(), $page)
+		);
+	}
+
+	/**
+	 * Repeated story names are offered once.
+	 */
+	public function testDistinctValuesCollapsesRepeatedValues(): void {
+		$this->assertSame(
+			['Floor 1', 'Floor 2', 'Floor 3', 'Floor 4', 'Ground-floor'],
+			$this->mapper->distinctValues('display_name')
+		);
 	}
 
 	protected function getSampleBuildings(): array {

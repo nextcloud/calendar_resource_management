@@ -36,14 +36,11 @@ class StoryModel extends Entity implements JsonSerializable {
 		$this->addType('displayName', 'string');
 	}
 
-	/**
-	 * @return array{id: int, name: ?string, buildingId: ?int}
-	 */
 	public function jsonSerialize(): array {
 		return [
 			'id' => $this->getId(),
-			'name' => $this->getDisplayName(),
 			'buildingId' => $this->getBuildingId(),
+			'displayName' => $this->getDisplayName(),
 		];
 	}
 }

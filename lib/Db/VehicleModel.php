@@ -57,4 +57,15 @@ class VehicleModel extends ResourceModel {
 		$this->addType('range', 'integer');
 		$this->addType('seatingCapacity', 'integer');
 	}
+
+	public function jsonSerialize(): array {
+		return array_merge(parent::jsonSerialize(), [
+			'vehicleType' => $this->getVehicleType(),
+			'vehicleMake' => $this->getVehicleMake(),
+			'vehicleModel' => $this->getVehicleModel(),
+			'isElectric' => $this->getIsElectric(),
+			'range' => $this->getRange(),
+			'seatingCapacity' => $this->getSeatingCapacity(),
+		]);
+	}
 }

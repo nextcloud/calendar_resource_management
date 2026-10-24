@@ -11,12 +11,15 @@ namespace OCA\CalendarResourceManagement\Tests\Unit\Db;
 use OCA\CalendarResourceManagement\Constants;
 use OCA\CalendarResourceManagement\Db\BuildingMapper;
 use OCA\CalendarResourceManagement\Db\BuildingModel;
+use OCA\CalendarResourceManagement\Db\Criterion;
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Db\RestrictionModel;
 use OCA\CalendarResourceManagement\Db\RoomMapper;
 use OCA\CalendarResourceManagement\Db\RoomModel;
+use OCA\CalendarResourceManagement\Schema\Entities\Rooms;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\IL10N;
 use Test\TestCase;
 
 class RoomMapperTest extends TestCase {
@@ -27,8 +30,14 @@ class RoomMapperTest extends TestCase {
 
 	private RestrictionMapper $restrictionMapper;
 
+	private Rooms $rooms;
+
 	protected function setUp(): void {
 		parent::setUp();
+
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnArgument(0);
+		$this->rooms = new Rooms($l10n);
 
 		// make sure that DB is empty
 		$qb = self::$realDatabase->getQueryBuilder();
@@ -143,6 +152,119 @@ class RoomMapperTest extends TestCase {
 		$this->assertEquals('Room 3', $rooms[0]->getDisplayName());
 	}
 
+	public function testFindAllFilteredWithoutCriteriaReturnsEverything(): void {
+		$this->assertCount(10, $this->mapper->findAllFiltered([]));
+	}
+
+	public function testFindAllFilteredMatchesTextCaseInsensitively(): void {
+		$rooms = $this->mapper->findAllFiltered([
+			new Criterion('display_name', Criterion::OP_LIKE, 'rOoM 7', IQueryBuilder::PARAM_STR),
+		]);
+
+		$this->assertCount(1, $rooms);
+		$this->assertEquals('Room 7', $rooms[0]->getDisplayName());
+	}
+
+	public function testFindAllFilteredEscapesLikeWildcards(): void {
+		// Escaped, % and _ are literals no room contains.
+		$this->assertCount(0, $this->mapper->findAllFiltered([
+			new Criterion('display_name', Criterion::OP_LIKE, 'Room%', IQueryBuilder::PARAM_STR),
+		]));
+		$this->assertCount(0, $this->mapper->findAllFiltered([
+			new Criterion('display_name', Criterion::OP_LIKE, 'Room_', IQueryBuilder::PARAM_STR),
+		]));
+	}
+
+	public function testFindAllFilteredByBooleanFalseAlsoMatchesNull(): void {
+		// Only rooms 6 and 7 are accessible; 8 is false, the rest unset.
+		$rooms = $this->mapper->findAllFiltered([
+			new Criterion('is_wheelchair_accessible', Criterion::OP_EQ, false, IQueryBuilder::PARAM_BOOL),
+		]);
+
+		$this->assertCount(8, $rooms);
+		$this->assertNotContains('Room 6', array_map(static fn ($room) => $room->getDisplayName(), $rooms));
+	}
+
+	public function testFindAllFilteredByBooleanTrue(): void {
+		$rooms = $this->mapper->findAllFiltered([
+			new Criterion('has_tv', Criterion::OP_EQ, true, IQueryBuilder::PARAM_BOOL),
+		]);
+
+		$this->assertCount(1, $rooms);
+		$this->assertEquals('Room 7', $rooms[0]->getDisplayName());
+	}
+
+	public function testFindAllFilteredByRangeIsInclusive(): void {
+		// Room 7 is the only room with a capacity, and it is exactly 50.
+		$this->assertCount(1, $this->mapper->findAllFiltered([
+			new Criterion('capacity', Criterion::OP_GTE, 50, IQueryBuilder::PARAM_INT),
+		]));
+		$this->assertCount(1, $this->mapper->findAllFiltered([
+			new Criterion('capacity', Criterion::OP_LTE, 50, IQueryBuilder::PARAM_INT),
+		]));
+		$this->assertCount(0, $this->mapper->findAllFiltered([
+			new Criterion('capacity', Criterion::OP_GTE, 51, IQueryBuilder::PARAM_INT),
+		]));
+	}
+
+	public function testFindAllFilteredCombinesCriteriaWithAnd(): void {
+		$rooms = $this->mapper->findAllFiltered([
+			new Criterion('room_type', Criterion::OP_EQ, 'room_type_4', IQueryBuilder::PARAM_STR),
+			new Criterion('has_tv', Criterion::OP_EQ, true, IQueryBuilder::PARAM_BOOL),
+		]);
+
+		// Rooms 6 and 7 are both room_type_4, but only room 7 has a TV.
+		$this->assertCount(1, $rooms);
+		$this->assertEquals('Room 7', $rooms[0]->getDisplayName());
+	}
+
+	/**
+	 * Filtering by building joins through the story table.
+	 */
+	public function testFindAllFilteredByBuildingJoinsTheStoryTable(): void {
+		$rooms = $this->mapper->findAllFiltered($this->rooms->criteria(['buildingId' => 1]));
+
+		$this->assertEquals(
+			['Room 0', 'Room 1', 'Room 2', 'Room 5', 'Room 6'],
+			array_map(static fn ($room) => $room->getDisplayName(), $rooms)
+		);
+	}
+
+	public function testFindAllFilteredByBuildingAppliesTheOtherCriteriaToo(): void {
+		$rooms = $this->mapper->findAllFiltered($this->rooms->criteria([
+			'buildingId' => 2,
+			'roomType' => 'room_type_5',
+		]));
+
+		$this->assertEquals(
+			['Room 8', 'Room 9'],
+			array_map(static fn ($room) => $room->getDisplayName(), $rooms)
+		);
+	}
+
+	/**
+	 * Both filters need the story table, which must not be joined twice.
+	 */
+	public function testFindAllFilteredByBuildingAndStorySharesTheJoin(): void {
+		$rooms = $this->mapper->findAllFiltered($this->rooms->criteria([
+			'buildingId' => 1,
+			'storyId' => 1,
+		]));
+
+		$this->assertEquals(
+			['Room 5', 'Room 6'],
+			array_map(static fn ($room) => $room->getDisplayName(), $rooms)
+		);
+	}
+
+	public function testFindAllFilteredByAnotherBuildingsStoryMatchesNothing(): void {
+		// Story 1 belongs to building 1, so this contradicts itself.
+		$this->assertCount(0, $this->mapper->findAllFiltered($this->rooms->criteria([
+			'buildingId' => 2,
+			'storyId' => 1,
+		])));
+	}
+
 	public function testUpdateRestricted(): void {
 		$room = $this->mapper->findByUID('uid0');
 		$this->assertFalse($room->isRestricted());
@@ -181,6 +303,114 @@ class RoomMapperTest extends TestCase {
 			'uid8',
 			'uid9',
 		], $this->mapper->findAllVisibleUIDs(Constants::ROOM));
+	}
+
+	public function testCountAllFilteredMatchesTheFilteredTotal(): void {
+		$this->assertSame(10, $this->mapper->countAllFiltered([]));
+
+		$criteria = [new Criterion('room_type', Criterion::OP_EQ, 'room_type_1', IQueryBuilder::PARAM_STR)];
+		$this->assertSame(2, $this->mapper->countAllFiltered($criteria));
+		$this->assertSame(
+			count($this->mapper->findAllFiltered($criteria)),
+			$this->mapper->countAllFiltered($criteria)
+		);
+
+		$this->assertSame(0, $this->mapper->countAllFiltered([
+			new Criterion('room_type', Criterion::OP_EQ, 'nope', IQueryBuilder::PARAM_STR),
+		]));
+	}
+
+	/**
+	 * The building filter's story join does not inflate the count.
+	 */
+	public function testCountAllFilteredCountsAJoinedFilterOnce(): void {
+		$criteria = $this->rooms->criteria(['buildingId' => 1]);
+
+		$this->assertSame(5, $this->mapper->countAllFiltered($criteria));
+		$this->assertSame(
+			count($this->mapper->findAllFiltered($criteria)),
+			$this->mapper->countAllFiltered($criteria)
+		);
+	}
+
+	/**
+	 * Two filters sharing the story join do not double the count.
+	 */
+	public function testCountAllFilteredCountsASharedJoinOnce(): void {
+		$criteria = $this->rooms->criteria(['buildingId' => 1, 'storyId' => 1]);
+
+		$this->assertSame(2, $this->mapper->countAllFiltered($criteria));
+	}
+
+	/**
+	 * The count describes the whole filtered set, not the page taken from it.
+	 */
+	public function testCountAllFilteredIgnoresTheWindow(): void {
+		$this->assertCount(4, $this->mapper->findAllFiltered([], 'display_name', true, 4, 0));
+		$this->assertSame(10, $this->mapper->countAllFiltered([]));
+	}
+
+	public function testFindAllFilteredWindowsTheResultSet(): void {
+		$names = static fn (array $rooms) => array_map(
+			static fn ($room) => $room->getDisplayName(),
+			$rooms
+		);
+
+		$this->assertSame(
+			['Room 0', 'Room 1', 'Room 2', 'Room 3'],
+			$names($this->mapper->findAllFiltered([], 'display_name', true, 4, 0))
+		);
+		$this->assertSame(
+			['Room 4', 'Room 5', 'Room 6', 'Room 7'],
+			$names($this->mapper->findAllFiltered([], 'display_name', true, 4, 4))
+		);
+		$this->assertSame(
+			['Room 8', 'Room 9'],
+			$names($this->mapper->findAllFiltered([], 'display_name', true, 4, 8))
+		);
+		$this->assertSame([], $names($this->mapper->findAllFiltered([], 'display_name', true, 4, 12)));
+	}
+
+	/**
+	 * The window applies to the filtered set, not to the table.
+	 */
+	public function testFindAllFilteredWindowsWhatTheCriteriaMatched(): void {
+		$criteria = $this->rooms->criteria(['buildingId' => 1]);
+
+		$this->assertSame(
+			['Room 2', 'Room 5'],
+			array_map(
+				static fn ($room) => $room->getDisplayName(),
+				$this->mapper->findAllFiltered($criteria, 'display_name', true, 2, 2)
+			)
+		);
+	}
+
+	/**
+	 * Pages follow one stable order, so no row repeats or is skipped.
+	 */
+	public function testFindAllFilteredOrdersStablyAcrossPages(): void {
+		$expected = array_map(static fn ($room) => $room->getId(), $this->mapper->findAllFiltered([]));
+
+		$paged = [];
+		for ($offset = 0; $offset < 10; $offset += 3) {
+			foreach ($this->mapper->findAllFiltered([], 'display_name', true, 3, $offset) as $room) {
+				$paged[] = $room->getId();
+			}
+		}
+
+		$this->assertSame($expected, $paged);
+		$this->assertSame($paged, array_values(array_unique($paged)));
+	}
+
+	/**
+	 * Room type options cover the whole table, not just the current page.
+	 */
+	public function testDistinctValuesCollectsEveryRoomType(): void {
+		$this->assertSame(
+			['room_type_1', 'room_type_2', 'room_type_3', 'room_type_4', 'room_type_5'],
+			$this->mapper->distinctValues('room_type')
+		);
 	}
 
 	protected function getSampleBuildings(): array {

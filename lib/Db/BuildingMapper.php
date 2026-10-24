@@ -21,6 +21,8 @@ use OCP\IDBConnection;
  * @template-extends QBMapper<BuildingModel>
  */
 class BuildingMapper extends QBMapper {
+	use FilterableTrait;
+
 	/**
 	 * BuildingMapper constructor.
 	 *

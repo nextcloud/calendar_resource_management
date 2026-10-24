@@ -10,7 +10,9 @@ namespace OCA\CalendarResourceManagement\Tests\Unit\Db;
 
 use OCA\CalendarResourceManagement\Db\BuildingMapper;
 use OCA\CalendarResourceManagement\Db\BuildingModel;
+use OCA\CalendarResourceManagement\Db\Criterion;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use Test\TestCase;
 
 class BuildingMapperTest extends TestCase {
@@ -84,6 +86,70 @@ class BuildingMapperTest extends TestCase {
 		$searchResults = $this->mapper->search('City');
 		$this->assertCount(1, $searchResults);
 		$this->assertEquals('Building 5', $searchResults[0]->getDisplayName());
+	}
+
+	public function testCountAllFilteredMatchesTheFilteredTotal(): void {
+		$this->assertSame(5, $this->mapper->countAllFiltered([]));
+
+		$criteria = [new Criterion('display_name', Criterion::OP_LIKE, 'Building', IQueryBuilder::PARAM_STR)];
+		$this->assertSame(
+			count($this->mapper->findAllFiltered($criteria)),
+			$this->mapper->countAllFiltered($criteria)
+		);
+
+		$criteria = [new Criterion('display_name', Criterion::OP_LIKE, 'Another', IQueryBuilder::PARAM_STR)];
+		$this->assertSame(1, $this->mapper->countAllFiltered($criteria));
+	}
+
+	/**
+	 * The count ignores the page window.
+	 */
+	public function testCountAllFilteredIgnoresTheWindow(): void {
+		$this->assertCount(2, $this->mapper->findAllFiltered([], 'display_name', true, 2, 0));
+		$this->assertSame(5, $this->mapper->countAllFiltered([]));
+	}
+
+	public function testFindAllFilteredWindowsTheResultSet(): void {
+		$names = static fn (array $buildings) => array_map(
+			static fn ($building) => $building->getDisplayName(),
+			$buildings
+		);
+
+		$this->assertSame(
+			['Another Building 4', 'Building 1'],
+			$names($this->mapper->findAllFiltered([], 'display_name', true, 2, 0))
+		);
+		$this->assertSame(
+			['Building 2', 'Building 3'],
+			$names($this->mapper->findAllFiltered([], 'display_name', true, 2, 2))
+		);
+		// A partial last page, not an error.
+		$this->assertSame(
+			['Building 5'],
+			$names($this->mapper->findAllFiltered([], 'display_name', true, 2, 4))
+		);
+		// Past the end is empty rather than a failure.
+		$this->assertSame([], $names($this->mapper->findAllFiltered([], 'display_name', true, 2, 6)));
+	}
+
+	/**
+	 * Filter options skip NULL and empty values.
+	 */
+	public function testDistinctValuesLeavesOutNullAndEmpty(): void {
+		$this->mapper->insert(BuildingModel::fromParams([
+			'displayName' => 'Building 6',
+			'description' => '',
+		]));
+		$this->mapper->insert(BuildingModel::fromParams([
+			'displayName' => 'Building 7',
+			'description' => 'Foo',
+		]));
+
+		// 3 and 4 have no description, 6 an empty one; 'Foo' appears once.
+		$this->assertSame(
+			['Foo', 'Headquarters', 'Small offices'],
+			$this->mapper->distinctValues('description')
+		);
 	}
 
 	protected function getSampleBuildings(): array {

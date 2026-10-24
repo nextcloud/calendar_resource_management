@@ -117,26 +117,23 @@ class RoomModel extends Entity implements JsonSerializable {
 		return $this->restricted ?? false;
 	}
 
-	/**
-	 * @return array{id: int, uid: ?string, name: ?string, email: ?string, roomType: ?string, storyId: ?int, roomNumber: ?string, contactPersonUserId: ?string, capacity: ?int, hasPhone: bool, hasVideoConferencing: bool, hasTv: bool, hasProjector: bool, hasWhiteboard: bool, isWheelchairAccessible: bool, restricted: bool}
-	 */
 	public function jsonSerialize(): array {
 		return [
 			'id' => $this->getId(),
+			'storyId' => $this->getStoryId(),
 			'uid' => $this->getUid(),
-			'name' => $this->getDisplayName(),
+			'displayName' => $this->getDisplayName(),
 			'email' => $this->getEmail(),
 			'roomType' => $this->getRoomType(),
-			'storyId' => $this->getStoryId(),
-			'roomNumber' => $this->getRoomNumber(),
 			'contactPersonUserId' => $this->getContactPersonUserId(),
 			'capacity' => $this->getCapacity(),
-			'hasPhone' => (bool)$this->getHasPhone(),
-			'hasVideoConferencing' => (bool)$this->getHasVideoConferencing(),
-			'hasTv' => (bool)$this->getHasTv(),
-			'hasProjector' => (bool)$this->getHasProjector(),
-			'hasWhiteboard' => (bool)$this->getHasWhiteboard(),
-			'isWheelchairAccessible' => (bool)$this->getIsWheelchairAccessible(),
+			'roomNumber' => $this->getRoomNumber(),
+			'hasPhone' => $this->getHasPhone(),
+			'hasVideoConferencing' => $this->getHasVideoConferencing(),
+			'hasTv' => $this->getHasTv(),
+			'hasProjector' => $this->getHasProjector(),
+			'hasWhiteboard' => $this->getHasWhiteboard(),
+			'isWheelchairAccessible' => $this->getIsWheelchairAccessible(),
 			'restricted' => $this->isRestricted(),
 		];
 	}
