@@ -8,69 +8,185 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Service;
 
-use OCA\CalendarResourceManagement\Db\BuildingMapper;
+use InvalidArgumentException;
+use OCA\CalendarResourceManagement\Constants;
 use OCA\CalendarResourceManagement\Db\ResourceMapper;
 use OCA\CalendarResourceManagement\Db\ResourceModel;
-use OCA\CalendarResourceManagement\Db\RestrictionMapper;
-use OCA\CalendarResourceManagement\Exception\EmailAlreadyUsedException;
+use OCA\CalendarResourceManagement\Schema\Entities\Resources;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\Security\ISecureRandom;
+use OCP\AppFramework\Db\TTransactional;
+use OCP\Calendar\Resource\IManager as IResourceManager;
+use OCP\DB\Exception;
+use OCP\IDBConnection;
 
 class ResourceService {
-	/** @var string[] */
-	private const ALLOWED_ORDER_BY = [
-		'display_name',
-		// ...
-	];
+	use TTransactional;
 
 	public function __construct(
 		private ResourceMapper $resourceMapper,
-		private RestrictionMapper $restrictionMapper,
-		private BuildingMapper $buildingMapper,
-		private ISecureRandom $secureRandom,
+		private UidGenerationService $uidGeneration,
+		private EmailGenerationService $emailGeneration,
+		private FieldValidationService $fieldValidation,
+		private Resources $resources,
+		private IResourceManager $resourceManager,
+		private RestrictionService $restrictions,
+		private IDBConnection $db,
 	) {
 	}
 
 	/**
-	 * List all resources
+	 * @param array<string, mixed> $filters keyed by parameter name
+	 * @param int|null $limit null for all
+	 * @param int|null $offset null for none
+	 * @return ResourceModel[]
 	 */
-	public function listResources(): array {
-		return $this->resourceMapper->findAll();
+	public function findAll(array $filters = [], ?int $limit = null, ?int $offset = null): array {
+		return $this->resourceMapper->findAllFiltered(
+			$this->resources->criteria($filters),
+			limit: $limit,
+			offset: $offset,
+		);
 	}
 
 	/**
-	 * Create a resource
-	 *
-	 * @throws DoesNotExistException If the building does not exist.
-	 * @throws EmailAlreadyUsedException If another resource already uses the email address.
+	 * @param array<string, mixed> $filters keyed by parameter name
+	 * @return int the number of matching rows
+	 * @throws Exception on a database error
 	 */
-	public function createResource(string $name, int $buildingId, string $email = '', string $resourceType = 'default'): ResourceModel {
-		// A resource without an existing building cannot be resolved by the calendar backend
-		$this->buildingMapper->find($buildingId);
+	public function countAll(array $filters = []): int {
+		return $this->resourceMapper->countAllFiltered(
+			$this->resources->criteria($filters)
+		);
+	}
 
-		try {
-			$this->resourceMapper->findByEmail($email);
-			throw new EmailAlreadyUsedException('A resource with this email address already exists');
-		} catch (DoesNotExistException) {
-			// The email address is still free
+	/**
+	 * Distinct resource types in use across the whole table, ascending.
+	 *
+	 * @return string[] the distinct types, non-empty and re-indexed
+	 * @throws Exception on a database error
+	 */
+	public function resourceTypes(): array {
+		$field = $this->resources->field('resourceType');
+		if ($field->column === null) {
+			return [];
 		}
+		return $this->resourceMapper->distinctValues($field->column);
+	}
+
+	/**
+	 * @param string|null $email 
+	 * @param string[] $groupRestrictions only allowed when restricted
+	 * @throws InvalidArgumentException If input is invalid
+	 */
+	public function create(int $buildingId,
+		string $displayName,
+		?string $email,
+		string $resourceType,
+		?string $contactPersonUserId = null,
+		bool $restricted = false,
+		array $groupRestrictions = []): ResourceModel {
+		$uid = $this->uidGeneration->generateUid();
+		$email = $this->emailGeneration->resolveEmail($email, $displayName, Constants::RESOURCE);
+		$groupRestrictions = $this->restrictions->normalize($groupRestrictions);
+		$this->assertValid($buildingId, $displayName, $email, $contactPersonUserId, $restricted, $groupRestrictions);
 
 		$resource = new ResourceModel();
-		$resource->setUid($this->secureRandom->generate(32, ISecureRandom::CHAR_LOWER . ISecureRandom::CHAR_DIGITS));
-		$resource->setDisplayName($name);
+		$resource->setUid($uid);
+		$resource->setBuildingId($buildingId);
+		$resource->setDisplayName($displayName);
 		$resource->setEmail($email);
 		$resource->setResourceType($resourceType);
-		$resource->setBuildingId($buildingId);
-		return $this->resourceMapper->insert($resource);
+		$resource->setContactPersonUserId($contactPersonUserId);
+		$resource->setRestricted($restricted);
+
+		$resource = $this->atomic(function () use ($resource, $groupRestrictions) {
+			$resource = $this->resourceMapper->insert($resource);
+			$this->restrictions->create(Constants::RESOURCE, $resource->getId(), $groupRestrictions);
+			return $resource;
+		}, $this->db);
+		$this->refreshManagers();
+		return $resource;
 	}
 
 	/**
-	 * Delete a resource
-	 *
-	 * @throws DoesNotExistException If the resource does not exist.
+	 * @param string|null $email 
+	 * @param string[]|null $groupRestrictions null to keep current
+	 * @throws DoesNotExistException If there is no such resource.
+	 * @throws InvalidArgumentException If input is invalid 
 	 */
-	public function deleteResource(int $id): void {
+	public function update(int $id,
+		int $buildingId,
+		string $displayName,
+		?string $email,
+		string $resourceType,
+		?string $contactPersonUserId = null,
+		?bool $restricted = null,
+		?array $groupRestrictions = null): ResourceModel {
+
 		$resource = $this->resourceMapper->find($id);
-		$this->resourceMapper->delete($resource);
+		$email = $this->emailGeneration->resolveEmail($email, $displayName, Constants::RESOURCE);
+		$restricted ??= $resource->isRestricted();
+		if ($groupRestrictions !== null) {
+			$groupRestrictions = $this->restrictions->normalize($groupRestrictions);
+		}
+		$this->assertValid($buildingId, $displayName, $email, $contactPersonUserId, $restricted, $groupRestrictions ?? []);
+		if (!$restricted) {
+			$groupRestrictions = [];
+		}
+
+		$resource->setBuildingId($buildingId);
+		$resource->setDisplayName($displayName);
+		$resource->setEmail($email);
+		$resource->setResourceType($resourceType);
+		$resource->setContactPersonUserId($contactPersonUserId);
+		$resource->setRestricted($restricted);
+
+		$resource = $this->atomic(function () use ($resource, $groupRestrictions) {
+			$resource = $this->resourceMapper->update($resource);
+			if ($groupRestrictions !== null) {
+				$this->restrictions->replace(Constants::RESOURCE, $resource->getId(), $groupRestrictions);
+			}
+			return $resource;
+		}, $this->db);
+		$this->refreshManagers();
+		return $resource;
+	}
+
+	/**
+	 * @throws DoesNotExistException If there is no such resource.
+	 */
+	public function delete(int $id): void {
+		$resource = $this->resourceMapper->find($id);
+		$this->atomic(function () use ($resource) {
+			$this->resourceMapper->delete($resource);
+			$this->restrictions->deleteFor(Constants::RESOURCE, $resource->getId());
+		}, $this->db);
+		$this->refreshManagers();
+	}
+
+	/**
+	 * @throws InvalidArgumentException If input is invalid 
+	 */
+	private function assertValid(int $buildingId,
+		string $displayName,
+		string $email,
+		?string $contactPersonUserId,
+		bool $restricted,
+		array $groupRestrictions): void {
+		$this->fieldValidation->assertRequired('Display name', $displayName);
+		$this->fieldValidation->assertRequired('Email', $email);
+		$this->fieldValidation->assertEmail('Email', $email);
+		$this->fieldValidation->assertUserExists('Contact person', $contactPersonUserId);
+		$this->fieldValidation->assertBuildingExists($buildingId);
+		$this->fieldValidation->assertGroupRestrictions($restricted, $groupRestrictions);
+	}
+
+	/**
+	 * Nudge Calendar to re-read what it caches from this app's backends.
+	 */
+	private function refreshManagers(): void {
+		if (method_exists($this->resourceManager, 'update')) {
+			$this->resourceManager->update();
+		}
 	}
 }

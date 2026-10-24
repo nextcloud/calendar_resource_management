@@ -65,6 +65,23 @@ class RestrictionMapperTest extends TestCase {
 		$this->assertEquals('group_99', $allRestrictions[2]->getGroupId());
 	}
 
+	public function testFindAllByEntityTypeAndIds(): void {
+		$restrictions = $this->mapper->findAllByEntityTypeAndIds('type_1', [99, 123]);
+
+		// type_2/123 shares an id with nothing of type_1, so only 99's rows match.
+		$this->assertCount(3, $restrictions);
+		$this->assertEquals(
+			['group_1', 'group_2', 'group_99'],
+			array_map(static fn (RestrictionModel $restriction) => $restriction->getGroupId(), $restrictions),
+		);
+		$this->assertEquals([99], array_values(array_unique(array_map(
+			static fn (RestrictionModel $restriction) => $restriction->getEntityId(),
+			$restrictions,
+		))));
+
+		$this->assertSame([], $this->mapper->findAllByEntityTypeAndIds('type_1', []));
+	}
+
 	public function testDeleteAllByEntityTypeAndId(): void {
 		$allRestrictions = $this->mapper->findAllByEntityTypeAndId('type_1', 99);
 

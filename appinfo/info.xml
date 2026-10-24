@@ -36,7 +36,7 @@
 		<command>OCA\CalendarResourceManagement\Command\RestrictedResource</command>
 	</commands>
 	<settings>
-		<admin>OCA\CalendarResourceManagement\Settings\AdminSettings</admin>
+		<admin>OCA\CalendarResourceManagement\Settings\Admin</admin>
 		<admin-section>OCA\CalendarResourceManagement\Settings\AdminSection</admin-section>
 	</settings>
 </info>

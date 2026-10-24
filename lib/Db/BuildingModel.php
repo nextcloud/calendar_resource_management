@@ -25,7 +25,7 @@ use OCP\AppFramework\Db\Entity;
  * @method string getIsWheelchairAccessible()
  * @method void setIsWheelchairAccessible(bool $IsWheelchairAccessible)
  */
-class BuildingModel extends Entity implements JsonSerializable {
+class BuildingModel extends Entity implements \JsonSerializable {
 	/** @var string */
 	public $displayName;
 
@@ -48,16 +48,13 @@ class BuildingModel extends Entity implements JsonSerializable {
 		$this->addType('isWheelchairAccessible', 'boolean');
 	}
 
-	/**
-	 * @return array{id: int, name: ?string, description: ?string, address: ?string, isWheelchairAccessible: bool}
-	 */
 	public function jsonSerialize(): array {
 		return [
 			'id' => $this->getId(),
-			'name' => $this->getDisplayName(),
+			'displayName' => $this->getDisplayName(),
 			'description' => $this->getDescription(),
 			'address' => $this->getAddress(),
-			'isWheelchairAccessible' => (bool)$this->getIsWheelchairAccessible(),
+			'isWheelchairAccessible' => $this->getIsWheelchairAccessible(),
 		];
 	}
 }

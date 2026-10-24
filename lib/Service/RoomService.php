@@ -8,94 +8,220 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Service;
 
-use OCA\CalendarResourceManagement\Db\RestrictionMapper;
+use InvalidArgumentException;
+use OCA\CalendarResourceManagement\Constants;
 use OCA\CalendarResourceManagement\Db\RoomMapper;
 use OCA\CalendarResourceManagement\Db\RoomModel;
-use OCA\CalendarResourceManagement\Db\StoryMapper;
-use OCA\CalendarResourceManagement\Exception\EmailAlreadyUsedException;
+use OCA\CalendarResourceManagement\Schema\Entities\Rooms;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\Security\ISecureRandom;
+use OCP\AppFramework\Db\TTransactional;
+use OCP\Calendar\Room\IManager as IRoomManager;
+use OCP\DB\Exception;
+use OCP\IDBConnection;
 
 class RoomService {
-	/** @var string[] */
-	private const ALLOWED_ORDER_BY = [
-		'display_name',
-		// ...
-	];
+	use TTransactional;
 
 	public function __construct(
 		private RoomMapper $roomMapper,
-		private RestrictionMapper $restrictionMapper,
-		private StoryMapper $storyMapper,
-		private ISecureRandom $secureRandom,
+		private UidGenerationService $uidGeneration,
+		private EmailGenerationService $emailGeneration,
+		private FieldValidationService $fieldValidation,
+		private Rooms $rooms,
+		private IRoomManager $roomManager,
+		private RestrictionService $restrictions,
+		private IDBConnection $db,
 	) {
 	}
 
 	/**
-	 * List all rooms
+	 * @param array<string, mixed> $filters keyed by parameter name
+	 * @param int|null $limit null for all
+	 * @param int|null $offset null for none
+	 * @return RoomModel[]
 	 */
-	public function listRooms(): array {
-		return $this->roomMapper->findAll();
+	public function findAll(array $filters = [], ?int $limit = null, ?int $offset = null): array {
+		return $this->roomMapper->findAllFiltered(
+			$this->rooms->criteria($filters),
+			limit: $limit,
+			offset: $offset,
+		);
 	}
 
 	/**
-	 * Create a room
-	 *
-	 * @throws DoesNotExistException If the story does not exist.
-	 * @throws EmailAlreadyUsedException If another room already uses the email address.
+	 * @param array<string, mixed> $filters keyed by parameter name
+	 * @return int the number of matching rows
+	 * @throws Exception on a database error
 	 */
-	public function createRoom(
-		string $name,
-		int $storyId,
-		string $email = '',
-		string $roomType = 'default',
-		string $roomNumber = '',
-		string $contactPersonUserId = '',
+	public function countAll(array $filters = []): int {
+		return $this->roomMapper->countAllFiltered(
+			$this->rooms->criteria($filters)
+		);
+	}
+
+	/**
+	 * Distinct room types in use across the whole table, ascending.
+	 *
+	 * @return string[] the distinct types, non-empty and re-indexed
+	 * @throws Exception on a database error
+	 */
+	public function roomTypes(): array {
+		$field = $this->rooms->field('roomType');
+		if ($field->column === null) {
+			return [];
+		}
+		return $this->roomMapper->distinctValues($field->column);
+	}
+
+	/**
+	 * @param string|null $email 
+	 * @param string[] $groupRestrictions only allowed when restricted
+	 * @throws InvalidArgumentException If input is invalid
+	 */
+	public function create(int $storyId,
+		string $displayName,
+		?string $email,
+		string $roomType,
+		?string $contactPersonUserId = null,
 		?int $capacity = null,
+		?string $roomNumber = null,
 		bool $hasPhone = false,
-		bool $hasVideo = false,
+		bool $hasVideoConferencing = false,
 		bool $hasTv = false,
 		bool $hasProjector = false,
 		bool $hasWhiteboard = false,
-		bool $wheelchairAccessible = false,
-	): RoomModel {
-		// A room without an existing story cannot be resolved by the calendar backend
-		$this->storyMapper->find($storyId);
-
-		try {
-			$this->roomMapper->findByEmail($email);
-			throw new EmailAlreadyUsedException('A room with this email address already exists');
-		} catch (DoesNotExistException) {
-			// The email address is still free
-		}
+		bool $isWheelchairAccessible = false,
+		bool $restricted = false,
+		array $groupRestrictions = []): RoomModel {
+		$uid = $this->uidGeneration->generateUid();
+		$email = $this->emailGeneration->resolveEmail($email, $displayName, Constants::ROOM);
+		$groupRestrictions = $this->restrictions->normalize($groupRestrictions);
+		$this->assertValid($storyId, $displayName, $email, $contactPersonUserId, $capacity, $restricted, $groupRestrictions);
 
 		$room = new RoomModel();
-		$room->setUid($this->secureRandom->generate(32, ISecureRandom::CHAR_LOWER . ISecureRandom::CHAR_DIGITS));
-		$room->setDisplayName($name);
+		$room->setStoryId($storyId);
+		$room->setUid($uid);
+		$room->setDisplayName($displayName);
 		$room->setEmail($email);
 		$room->setRoomType($roomType);
-		$room->setStoryId($storyId);
-		$room->setRoomNumber($roomNumber);
 		$room->setContactPersonUserId($contactPersonUserId);
-		if ($capacity !== null) {
-			$room->setCapacity($capacity);
-		}
+		$room->setCapacity($capacity);
+		$room->setRoomNumber($roomNumber);
 		$room->setHasPhone($hasPhone);
-		$room->setHasVideoConferencing($hasVideo);
+		$room->setHasVideoConferencing($hasVideoConferencing);
 		$room->setHasTv($hasTv);
 		$room->setHasProjector($hasProjector);
 		$room->setHasWhiteboard($hasWhiteboard);
-		$room->setIsWheelchairAccessible($wheelchairAccessible);
-		return $this->roomMapper->insert($room);
+		$room->setIsWheelchairAccessible($isWheelchairAccessible);
+		$room->setRestricted($restricted);
+
+		$room = $this->atomic(function () use ($room, $groupRestrictions) {
+			$room = $this->roomMapper->insert($room);
+			$this->restrictions->create(Constants::ROOM, $room->getId(), $groupRestrictions);
+			return $room;
+		}, $this->db);
+		$this->refreshManagers();
+		return $room;
 	}
 
 	/**
-	 * Delete a room
-	 *
-	 * @throws DoesNotExistException If the room does not exist.
+	 * @param string|null $email 
+	 * @param string[]|null $groupRestrictions null to keep current
+	 * @throws DoesNotExistException If there is no such room.
+	 * @throws InvalidArgumentException If input is invalid 
 	 */
-	public function deleteRoom(int $id): void {
+	public function update(int $id,
+		int $storyId,
+		string $displayName,
+		?string $email,
+		string $roomType,
+		?string $contactPersonUserId = null,
+		?int $capacity = null,
+		?string $roomNumber = null,
+		bool $hasPhone = false,
+		bool $hasVideoConferencing = false,
+		bool $hasTv = false,
+		bool $hasProjector = false,
+		bool $hasWhiteboard = false,
+		bool $isWheelchairAccessible = false,
+		?bool $restricted = null,
+		?array $groupRestrictions = null): RoomModel {
+
 		$room = $this->roomMapper->find($id);
-		$this->roomMapper->delete($room);
+		$email = $this->emailGeneration->resolveEmail($email, $displayName, Constants::ROOM);
+		$restricted ??= $room->isRestricted();
+		if ($groupRestrictions !== null) {
+			$groupRestrictions = $this->restrictions->normalize($groupRestrictions);
+		}
+		$this->assertValid($storyId, $displayName, $email, $contactPersonUserId, $capacity, $restricted, $groupRestrictions ?? []);
+		if (!$restricted) {
+			$groupRestrictions = [];
+		}
+
+		$room->setStoryId($storyId);
+		$room->setDisplayName($displayName);
+		$room->setEmail($email);
+		$room->setRoomType($roomType);
+		$room->setContactPersonUserId($contactPersonUserId);
+		$room->setCapacity($capacity);
+		$room->setRoomNumber($roomNumber);
+		$room->setHasPhone($hasPhone);
+		$room->setHasVideoConferencing($hasVideoConferencing);
+		$room->setHasTv($hasTv);
+		$room->setHasProjector($hasProjector);
+		$room->setHasWhiteboard($hasWhiteboard);
+		$room->setIsWheelchairAccessible($isWheelchairAccessible);
+		$room->setRestricted($restricted);
+
+		$room = $this->atomic(function () use ($room, $groupRestrictions) {
+			$room = $this->roomMapper->update($room);
+			if ($groupRestrictions !== null) {
+				$this->restrictions->replace(Constants::ROOM, $room->getId(), $groupRestrictions);
+			}
+			return $room;
+		}, $this->db);
+		$this->refreshManagers();
+		return $room;
+	}
+
+	/**
+	 * @throws DoesNotExistException If there is no such room.
+	 */
+	public function delete(int $id): void {
+		$room = $this->roomMapper->find($id);
+		$this->atomic(function () use ($room) {
+			$this->roomMapper->delete($room);
+			$this->restrictions->deleteFor(Constants::ROOM, $room->getId());
+		}, $this->db);
+		$this->refreshManagers();
+	}
+
+	/**
+	 * @param string[] $groupRestrictions the normalised groups to be saved
+	 * @throws InvalidArgumentException If input is invalid 
+	 */
+	private function assertValid(int $storyId,
+		string $displayName,
+		string $email,
+		?string $contactPersonUserId,
+		?int $capacity,
+		bool $restricted,
+		array $groupRestrictions): void {
+		$this->fieldValidation->assertRequired('Display name', $displayName);
+		$this->fieldValidation->assertRequired('Email', $email);
+		$this->fieldValidation->assertEmail('Email', $email);
+		$this->fieldValidation->assertUserExists('Contact person', $contactPersonUserId);
+		$this->fieldValidation->assertInRange($this->rooms->field('capacity'), $capacity);
+		$this->fieldValidation->assertStoryExists($storyId);
+		$this->fieldValidation->assertGroupRestrictions($restricted, $groupRestrictions);
+	}
+
+	/**
+	 * Nudge Calendar to re-read what it caches from this app's backends.
+	 */
+	private function refreshManagers(): void {
+		if (method_exists($this->roomManager, 'update')) {
+			$this->roomManager->update();
+		}
 	}
 }

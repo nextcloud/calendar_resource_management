@@ -18,6 +18,8 @@ use OCP\IDBConnection;
  * @template-extends AMapper<VehicleModel>
  */
 class VehicleMapper extends AMapper {
+	use FilterableTrait;
+
 	/**
 	 * VehicleMapper constructor.
 	 *

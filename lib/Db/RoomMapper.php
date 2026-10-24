@@ -18,6 +18,8 @@ use OCP\IDBConnection;
  * @template-extends AMapper<RoomModel>
  */
 class RoomMapper extends AMapper {
+	use FilterableTrait;
+
 	/**
 	 * RoomMapper constructor.
 	 *
@@ -136,7 +138,7 @@ class RoomMapper extends AMapper {
 
 		$qb->select('r.*')
 			->from('calresources_rooms', 'r')
-			->join('calresources_stories', 's', $qb->expr()->eq('r.storyId', 's.id'))
+			->join('r', 'calresources_stories', 's', $qb->expr()->eq('r.story_id', 's.id'))
 			->where(
 				$qb->expr()->eq('s.building_id', $qb->createNamedParameter($buildingId, IQueryBuilder::PARAM_INT))
 			)

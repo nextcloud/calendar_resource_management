@@ -11,11 +11,13 @@ namespace OCA\CalendarResourceManagement\Tests\Unit\Db;
 use OCA\CalendarResourceManagement\Constants;
 use OCA\CalendarResourceManagement\Db\BuildingMapper;
 use OCA\CalendarResourceManagement\Db\BuildingModel;
+use OCA\CalendarResourceManagement\Db\Criterion;
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Db\RestrictionModel;
 use OCA\CalendarResourceManagement\Db\VehicleMapper;
 use OCA\CalendarResourceManagement\Db\VehicleModel;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use Test\TestCase;
 
 class VehicleMapperTest extends TestCase {
@@ -176,6 +178,80 @@ class VehicleMapperTest extends TestCase {
 			'uid8',
 			'uid9',
 		], $this->mapper->findAllVisibleUIDs(Constants::VEHICLE));
+	}
+
+	public function testCountAllFilteredMatchesTheFilteredTotal(): void {
+		$this->assertSame(10, $this->mapper->countAllFiltered([]));
+
+		$criteria = [new Criterion('vehicle_type', Criterion::OP_EQ, 'vehicle_type_5', IQueryBuilder::PARAM_STR)];
+		$this->assertSame(2, $this->mapper->countAllFiltered($criteria));
+		$this->assertSame(
+			count($this->mapper->findAllFiltered($criteria)),
+			$this->mapper->countAllFiltered($criteria)
+		);
+
+		$this->assertSame(3, $this->mapper->countAllFiltered([
+			new Criterion('building_id', Criterion::OP_EQ, 3, IQueryBuilder::PARAM_INT),
+		]));
+		$this->assertSame(0, $this->mapper->countAllFiltered([
+			new Criterion('building_id', Criterion::OP_EQ, 4711, IQueryBuilder::PARAM_INT),
+		]));
+	}
+
+	/**
+	 * The count describes the whole filtered set, not the page taken from it.
+	 */
+	public function testCountAllFilteredIgnoresTheWindow(): void {
+		$this->assertCount(4, $this->mapper->findAllFiltered([], 'display_name', true, 4, 0));
+		$this->assertSame(10, $this->mapper->countAllFiltered([]));
+	}
+
+	public function testFindAllFilteredWindowsTheResultSet(): void {
+		$names = static fn (array $records) => array_map(
+			static fn ($record) => $record->getDisplayName(),
+			$records
+		);
+
+		$this->assertSame(
+			['Vehicle 0', 'Vehicle 1', 'Vehicle 2', 'Vehicle 3'],
+			$names($this->mapper->findAllFiltered([], 'display_name', true, 4, 0))
+		);
+		$this->assertSame(
+			['Vehicle 4', 'Vehicle 5', 'Vehicle 6', 'Vehicle 7'],
+			$names($this->mapper->findAllFiltered([], 'display_name', true, 4, 4))
+		);
+		$this->assertSame(
+			['Vehicle 8', 'Vehicle 9'],
+			$names($this->mapper->findAllFiltered([], 'display_name', true, 4, 8))
+		);
+		$this->assertSame([], $names($this->mapper->findAllFiltered([], 'display_name', true, 4, 12)));
+	}
+
+	/**
+	 * Pages follow one stable order, so no row repeats or is skipped.
+	 */
+	public function testFindAllFilteredOrdersStablyAcrossPages(): void {
+		$expected = array_map(static fn ($record) => $record->getId(), $this->mapper->findAllFiltered([]));
+
+		$paged = [];
+		for ($offset = 0; $offset < 10; $offset += 3) {
+			foreach ($this->mapper->findAllFiltered([], 'display_name', true, 3, $offset) as $record) {
+				$paged[] = $record->getId();
+			}
+		}
+
+		$this->assertSame($expected, $paged);
+		$this->assertSame($paged, array_values(array_unique($paged)));
+	}
+
+	/**
+	 * Type options cover the whole table, not just the current page.
+	 */
+	public function testDistinctValuesCollectsEveryType(): void {
+		$this->assertSame(
+			['vehicle_type_1', 'vehicle_type_2', 'vehicle_type_3', 'vehicle_type_4', 'vehicle_type_5'],
+			$this->mapper->distinctValues('vehicle_type')
+		);
 	}
 
 	protected function getSampleBuildings(): array {
