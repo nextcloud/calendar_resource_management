@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Read-only booking calendars of rooms, resources and vehicles that users pick in their personal settings and that show up in every CalDAV app
 - Viewer groups and default groups for booking calendars in the admin settings and as OCC commands
+- Edit rooms and resources in the admin settings, including the groups they are restricted to
+- Show the restriction groups of rooms and resources in the admin settings
 
 ## 1.0.0 - 2026-08-24
 ### Changes

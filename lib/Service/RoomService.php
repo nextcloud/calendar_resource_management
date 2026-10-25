@@ -93,6 +93,69 @@ class RoomService {
 	}
 
 	/**
+	 * Change a room and its restrictions
+	 *
+	 * @param string[] $restrictionGroupIds Without any, a restricted room is hidden from everybody
+	 * @throws DoesNotExistException If the room or the story does not exist.
+	 * @throws EmailAlreadyUsedException If another room already uses the email address.
+	 */
+	public function updateRoom(
+		int $id,
+		string $name,
+		int $storyId,
+		string $email,
+		string $roomType,
+		string $roomNumber,
+		string $contactPersonUserId,
+		?int $capacity,
+		bool $hasPhone,
+		bool $hasVideo,
+		bool $hasTv,
+		bool $hasProjector,
+		bool $hasWhiteboard,
+		bool $wheelchairAccessible,
+		bool $restricted,
+		array $restrictionGroupIds,
+	): RoomModel {
+		$room = $this->roomMapper->find($id);
+		$this->storyMapper->find($storyId);
+
+		try {
+			if ($this->roomMapper->findByEmail($email)->getId() !== $id) {
+				throw new EmailAlreadyUsedException('A room with this email address already exists');
+			}
+		} catch (DoesNotExistException) {
+			// The email address is still free
+		}
+
+		$room->setDisplayName($name);
+		$room->setEmail($email);
+		$room->setRoomType($roomType);
+		$room->setStoryId($storyId);
+		$room->setRoomNumber($roomNumber);
+		$room->setContactPersonUserId($contactPersonUserId);
+		$room->setCapacity($capacity);
+		$room->setHasPhone($hasPhone);
+		$room->setHasVideoConferencing($hasVideo);
+		$room->setHasTv($hasTv);
+		$room->setHasProjector($hasProjector);
+		$room->setHasWhiteboard($hasWhiteboard);
+		$room->setIsWheelchairAccessible($wheelchairAccessible);
+		$room->setRestricted($restricted);
+		$room = $this->roomMapper->update($room);
+		$this->restrictionMapper->setGroupIds(Constants::ROOM, $id, $restricted ? $restrictionGroupIds : []);
+
+		return $room;
+	}
+
+	/**
+	 * @return array<int, string[]> The restriction groups per room id
+	 */
+	public function listRestrictionGroupIds(): array {
+		return $this->restrictionMapper->findGroupIdsByEntityType(Constants::ROOM);
+	}
+
+	/**
 	 * Delete a room
 	 *
 	 * @throws DoesNotExistException If the room does not exist.

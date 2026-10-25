@@ -51,6 +51,8 @@ export interface Room {
 	hasWhiteboard: boolean
 	isWheelchairAccessible: boolean
 	restricted: boolean
+	/** Only members of these groups can book the room if it is restricted */
+	restrictionGroups: Group[]
 }
 
 export interface Resource {
@@ -62,6 +64,8 @@ export interface Resource {
 	buildingId: number
 	contactPersonUserId: string
 	restricted: boolean
+	/** Only members of these groups can book the resource if it is restricted */
+	restrictionGroups: Group[]
 }
 
 export interface NewBuilding {
@@ -93,6 +97,16 @@ export interface NewResource {
 	resourceType: string
 	buildingId: number | null
 }
+
+/** Restricted without groups hides a room or resource from everybody */
+export interface RestrictionInput {
+	restricted: boolean
+	restrictionGroupIds: string[]
+}
+
+export type UpdateRoom = NewRoom & RestrictionInput
+
+export type UpdateResource = NewResource & RestrictionInput
 
 /** Rooms, resources and vehicles have a booking calendar */
 export type BookableType = 'room' | 'resource' | 'vehicle'

@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <script setup lang="ts">
 import type { Ref } from 'vue'
-import type { Building, NamedEntity, NewBuilding, NewResource, NewRoom, NewStory, Resource, Room, Story } from './types/types.ts'
+import type { Building, NamedEntity, NewBuilding, NewResource, NewRoom, NewStory, Resource, Room, Story, UpdateResource, UpdateRoom } from './types/types.ts'
 
 import { showError } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
@@ -14,7 +14,9 @@ import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import BookingCalendarsSection from './components/BookingCalendarsSection.vue'
 import BuildingsSection from './components/BuildingsSection.vue'
+import ResourceEditDialog from './components/ResourceEditDialog.vue'
 import ResourcesSection from './components/ResourcesSection.vue'
+import RoomEditDialog from './components/RoomEditDialog.vue'
 import RoomsSection from './components/RoomsSection.vue'
 import StoriesSection from './components/StoriesSection.vue'
 import * as api from './services/adminService.ts'
@@ -43,6 +45,11 @@ const creating = ref({
 })
 
 const pendingDelete = ref<PendingDelete | null>(null)
+
+// The entity shown in the edit dialog and whether its update request is running
+const editingRoom = ref<Room | null>(null)
+const editingResource = ref<Resource | null>(null)
+const saving = ref(false)
 
 const buildingsSection = useTemplateRef<InstanceType<typeof BuildingsSection>>('buildings')
 const storiesSection = useTemplateRef<InstanceType<typeof StoriesSection>>('stories')
@@ -241,6 +248,54 @@ async function createResource(resource: NewResource): Promise<void> {
 }
 
 /**
+ * Save the room changed in the edit dialog.
+ *
+ * @param id The room
+ * @param room The changed room
+ */
+async function updateRoom(id: number, room: UpdateRoom): Promise<void> {
+	saving.value = true
+	try {
+		const updated = await request(
+			() => api.updateRoom(id, room),
+			t('calendar_resource_management', 'Could not update room'),
+		)
+		if (updated !== null) {
+			rooms.value = rooms.value
+				.map((candidate) => candidate.id === id ? updated : candidate)
+				.sort((a, b) => a.name.localeCompare(b.name))
+			editingRoom.value = null
+		}
+	} finally {
+		saving.value = false
+	}
+}
+
+/**
+ * Save the resource changed in the edit dialog.
+ *
+ * @param id The resource
+ * @param resource The changed resource
+ */
+async function updateResource(id: number, resource: UpdateResource): Promise<void> {
+	saving.value = true
+	try {
+		const updated = await request(
+			() => api.updateResource(id, resource),
+			t('calendar_resource_management', 'Could not update resource'),
+		)
+		if (updated !== null) {
+			resources.value = resources.value
+				.map((candidate) => candidate.id === id ? updated : candidate)
+				.sort((a, b) => a.name.localeCompare(b.name))
+			editingResource.value = null
+		}
+	} finally {
+		saving.value = false
+	}
+}
+
+/**
  * Ask for confirmation before deleting a building.
  *
  * @param id The building to delete
@@ -368,7 +423,8 @@ function onDeleteDialogToggle(open: boolean): void {
 			:rooms="rooms"
 			:stories="stories"
 			@create="createRoom"
-			@delete="confirmDeleteRoom" />
+			@delete="confirmDeleteRoom"
+			@edit="editingRoom = $event" />
 
 		<ResourcesSection
 			ref="resources"
@@ -376,11 +432,27 @@ function onDeleteDialogToggle(open: boolean): void {
 			:loading="creating.resource"
 			:resources="resources"
 			@create="createResource"
-			@delete="confirmDeleteResource" />
+			@delete="confirmDeleteResource"
+			@edit="editingResource = $event" />
 
 		<BookingCalendarsSection
 			:resources="resources"
 			:rooms="rooms" />
+
+		<RoomEditDialog
+			:buildings="buildings"
+			:loading="saving"
+			:room="editingRoom"
+			:stories="stories"
+			@close="editingRoom = null"
+			@save="updateRoom" />
+
+		<ResourceEditDialog
+			:buildings="buildings"
+			:loading="saving"
+			:resource="editingResource"
+			@close="editingResource = null"
+			@save="updateResource" />
 
 		<NcDialog
 			:buttons="deleteDialogButtons"
@@ -439,6 +511,11 @@ function onDeleteDialogToggle(open: boolean): void {
 		tbody tr:hover {
 			background-color: var(--color-background-hover);
 		}
+	}
+
+	// Edit and delete side by side
+	:deep(.crm-actions) {
+		white-space: nowrap;
 	}
 
 	:deep(.crm-table-wrapper) {

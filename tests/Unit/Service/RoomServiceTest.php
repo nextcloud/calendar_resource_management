@@ -24,6 +24,7 @@ class RoomServiceTest extends TestCase {
 	private RoomMapper&MockObject $roomMapper;
 	private StoryMapper&MockObject $storyMapper;
 	private DefaultShareMapper&MockObject $defaultShareMapper;
+	private RestrictionMapper&MockObject $restrictionMapper;
 	private RoomService $service;
 
 	protected function setUp(): void {
@@ -38,7 +39,7 @@ class RoomServiceTest extends TestCase {
 
 		$this->service = new RoomService(
 			$this->roomMapper,
-			$this->createMock(RestrictionMapper::class),
+			$this->restrictionMapper = $this->createMock(RestrictionMapper::class),
 			$this->storyMapper,
 			$secureRandom,
 			$this->defaultShareMapper,
@@ -130,5 +131,55 @@ class RoomServiceTest extends TestCase {
 		$this->defaultShareMapper->expects(self::once())->method('deleteAllByEntityTypeAndId')->with('room', 9);
 
 		$this->service->deleteRoom(9);
+	}
+
+	private function existingRoom(): RoomModel {
+		$room = new RoomModel();
+		$room->setId(9);
+		$room->setUid('room-9');
+		$room->setDisplayName('Old name');
+		$room->setEmail('room@example.com');
+		$this->roomMapper->method('find')->with(9)->willReturn($room);
+		$this->roomMapper->method('update')->willReturnArgument(0);
+		return $room;
+	}
+
+	public function testUpdateRoomKeepsItsOwnEmailAndSavesRestrictions(): void {
+		$room = $this->existingRoom();
+		$this->roomMapper->method('findByEmail')->with('room@example.com')->willReturn($room);
+		$this->restrictionMapper->expects(self::once())
+			->method('setGroupIds')
+			->with('room', 9, ['board']);
+
+		$updated = $this->service->updateRoom(9, 'New name', 3, 'room@example.com', 'meeting-room', '1.23', '', null, true, false, false, false, false, false, true, ['board']);
+
+		self::assertSame('New name', $updated->getDisplayName());
+		self::assertSame('room-9', $updated->getUid());
+		self::assertSame(3, $updated->getStoryId());
+		self::assertNull($updated->getCapacity());
+		self::assertTrue($updated->getHasPhone());
+		self::assertTrue($updated->isRestricted());
+	}
+
+	public function testUpdateRoomRejectsAnEmailOfAnotherRoom(): void {
+		$this->existingRoom();
+		$other = new RoomModel();
+		$other->setId(10);
+		$this->roomMapper->method('findByEmail')->willReturn($other);
+		$this->roomMapper->expects(self::never())->method('update');
+
+		$this->expectException(EmailAlreadyUsedException::class);
+
+		$this->service->updateRoom(9, 'Name', 3, 'taken@example.com', '', '', '', null, false, false, false, false, false, false, false, []);
+	}
+
+	public function testUnrestrictingARoomDropsItsRestrictions(): void {
+		$this->existingRoom();
+		$this->roomMapper->method('findByEmail')->willThrowException(new DoesNotExistException('free'));
+		$this->restrictionMapper->expects(self::once())
+			->method('setGroupIds')
+			->with('room', 9, []);
+
+		$this->service->updateRoom(9, 'Name', 3, 'new@example.com', '', '', '', null, false, false, false, false, false, false, false, ['board']);
 	}
 }

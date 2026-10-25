@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-import type { NamedEntity, SelectOption } from '../types/types.ts'
+import type { Group, NamedEntity, SelectOption } from '../types/types.ts'
 
 import { translate as t } from '@nextcloud/l10n'
 
@@ -45,4 +45,23 @@ export function nameById(entities: NamedEntity[], id: number | undefined): strin
 	const entity = entities.find((candidate) => candidate.id === id)
 
 	return entity ? entity.name : t('calendar_resource_management', 'Unknown')
+}
+
+/**
+ * Describe who can book a room or resource.
+ *
+ * @param entity The room or resource
+ * @param entity.restricted Whether only members of the restriction groups can book it
+ * @param entity.restrictionGroups The groups whose members can book it
+ * @return The group names, or who can book it without groups
+ */
+export function restrictionSummary(entity: { restricted: boolean, restrictionGroups: Group[] }): string {
+	if (!entity.restricted) {
+		return t('calendar_resource_management', 'Everyone')
+	}
+	if (entity.restrictionGroups.length === 0) {
+		return t('calendar_resource_management', 'Nobody (hidden)')
+	}
+
+	return entity.restrictionGroups.map((group) => group.displayName).join(', ')
 }

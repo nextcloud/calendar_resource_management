@@ -13,6 +13,8 @@ import type {
 	Resource,
 	Room,
 	Story,
+	UpdateResource,
+	UpdateRoom,
 	User,
 } from '../types/types.ts'
 
@@ -124,6 +126,18 @@ export async function createRoom(data: NewRoom): Promise<Room> {
 }
 
 /**
+ * Change a room and its restrictions
+ *
+ * @param id Room ID
+ * @param data Room data
+ * @return Updated room
+ */
+export async function updateRoom(id: number, data: UpdateRoom): Promise<Room> {
+	const response = await axios.put(generateUrl(`${baseUrl}/rooms/${id}`), data)
+	return response.data
+}
+
+/**
  * Delete a room
  *
  * @param id Room ID
@@ -150,6 +164,18 @@ export async function fetchResources(): Promise<Resource[]> {
  */
 export async function createResource(data: NewResource): Promise<Resource> {
 	const response = await axios.post(generateUrl(`${baseUrl}/resources`), data)
+	return response.data
+}
+
+/**
+ * Change a resource and its restrictions
+ *
+ * @param id Resource ID
+ * @param data Resource data
+ * @return Updated resource
+ */
+export async function updateResource(id: number, data: UpdateResource): Promise<Resource> {
+	const response = await axios.put(generateUrl(`${baseUrl}/resources/${id}`), data)
 	return response.data
 }
 

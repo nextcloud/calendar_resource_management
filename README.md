@@ -65,6 +65,10 @@ The room email address must be unique. If no real mailbox is required, use a uni
 
 Changes are made available to Nextcloud Calendar through the app’s Calendar integration. Ensure that Nextcloud background jobs are configured correctly.
 
+### Editing in the admin settings
+
+Rooms and resources can be edited in the admin settings, and the tables show who can book them. A room or resource can be restricted to groups there. The admin settings do not hide an entity by restricting it without groups, because the server then deletes its booking calendar with all bookings. `calendar-resource:restrict` still can.
+
 ### Booking calendars
 
 Every room, general resource and vehicle has a booking calendar on the server that holds its accepted bookings. Users can add these calendars read-only to their own calendars. The calendars then show up in Nextcloud Calendar and in every CalDAV app connected to the account. Private events are hidden, and confidential events only show as busy.

@@ -24,6 +24,7 @@ class ResourceServiceTest extends TestCase {
 	private ResourceMapper&MockObject $resourceMapper;
 	private BuildingMapper&MockObject $buildingMapper;
 	private DefaultShareMapper&MockObject $defaultShareMapper;
+	private RestrictionMapper&MockObject $restrictionMapper;
 	private ResourceService $service;
 
 	protected function setUp(): void {
@@ -38,7 +39,7 @@ class ResourceServiceTest extends TestCase {
 
 		$this->service = new ResourceService(
 			$this->resourceMapper,
-			$this->createMock(RestrictionMapper::class),
+			$this->restrictionMapper = $this->createMock(RestrictionMapper::class),
 			$this->buildingMapper,
 			$secureRandom,
 			$this->defaultShareMapper,
@@ -95,5 +96,34 @@ class ResourceServiceTest extends TestCase {
 		$this->defaultShareMapper->expects(self::once())->method('deleteAllByEntityTypeAndId')->with('resource', 4);
 
 		$this->service->deleteResource(4);
+	}
+
+	public function testUpdateResourceSavesFieldsAndRestrictions(): void {
+		$resource = new ResourceModel();
+		$resource->setId(4);
+		$this->resourceMapper->method('find')->with(4)->willReturn($resource);
+		$this->resourceMapper->method('findByEmail')->willThrowException(new DoesNotExistException('free'));
+		$this->resourceMapper->method('update')->willReturnArgument(0);
+		$this->buildingMapper->expects(self::once())->method('find')->with(2);
+		$this->restrictionMapper->expects(self::once())
+			->method('setGroupIds')
+			->with('resource', 4, ['staff']);
+
+		$updated = $this->service->updateResource(4, 'Beamer', 2, 'beamer@example.com', 'projector', true, ['staff']);
+
+		self::assertSame('Beamer', $updated->getDisplayName());
+		self::assertSame(2, $updated->getBuildingId());
+		self::assertSame('projector', $updated->getResourceType());
+		self::assertTrue($updated->isRestricted());
+	}
+
+	public function testUpdateResourceRejectsAnUnknownBuilding(): void {
+		$this->resourceMapper->method('find')->willReturn(new ResourceModel());
+		$this->buildingMapper->method('find')->willThrowException(new DoesNotExistException('nope'));
+		$this->resourceMapper->expects(self::never())->method('update');
+
+		$this->expectException(DoesNotExistException::class);
+
+		$this->service->updateResource(4, 'Beamer', 404, 'beamer@example.com', 'projector', false, []);
 	}
 }

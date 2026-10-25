@@ -24,6 +24,8 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\Calendar\Resource\IManager as IResourceManager;
 use OCP\Calendar\Room\IManager as IRoomManager;
+use OCP\IGroup;
+use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserManager;
@@ -42,6 +44,7 @@ class AdminControllerTest extends TestCase {
 	private IUserManager&MockObject $userManager;
 	private LoggerInterface&MockObject $logger;
 	private BookingCalendarShareService&MockObject $shareService;
+	private IGroupManager&MockObject $groupManager;
 	private AdminController $controller;
 
 	protected function setUp(): void {
@@ -56,6 +59,7 @@ class AdminControllerTest extends TestCase {
 		$this->userManager = $this->createMock(IUserManager::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->shareService = $this->createMock(BookingCalendarShareService::class);
+		$this->groupManager = $this->createMock(IGroupManager::class);
 
 		$this->controller = new AdminController(
 			'calendar_resource_management',
@@ -69,6 +73,7 @@ class AdminControllerTest extends TestCase {
 			$this->userManager,
 			$this->logger,
 			$this->shareService,
+			$this->groupManager,
 		);
 	}
 
@@ -127,13 +132,78 @@ class AdminControllerTest extends TestCase {
 		$room->setIsWheelchairAccessible(true);
 		$this->roomService->method('listRooms')->willReturn([$room]);
 
-		$data = $this->controller->getRooms()->getData()[0]->jsonSerialize();
+		$data = $this->controller->getRooms()->getData()[0];
 
 		self::assertSame(7, $data['id']);
 		self::assertSame(2, $data['storyId']);
 		self::assertTrue($data['hasVideoConferencing']);
 		self::assertTrue($data['isWheelchairAccessible']);
 		self::assertFalse($data['restricted']);
+	}
+
+	public function testListingsNameTheRestrictionGroups(): void {
+		$room = new RoomModel();
+		$room->setId(7);
+		$room->setRestricted(true);
+		$this->roomService->method('listRooms')->willReturn([$room]);
+		$this->roomService->method('listRestrictionGroupIds')->willReturn([7 => ['board', 'gone']]);
+		$board = $this->createMock(IGroup::class);
+		$board->method('getDisplayName')->willReturn('Board members');
+		$this->groupManager->method('get')->willReturnMap([['board', $board], ['gone', null]]);
+
+		$data = $this->controller->getRooms()->getData()[0];
+
+		self::assertTrue($data['restricted']);
+		self::assertSame([
+			['id' => 'board', 'displayName' => 'Board members'],
+			// A group of a vanished user backend keeps its id
+			['id' => 'gone', 'displayName' => 'gone'],
+		], $data['restrictionGroups']);
+	}
+
+	public function testUpdateRoomRejectsUnknownGroups(): void {
+		$this->groupManager->method('groupExists')->willReturn(false);
+		$this->roomService->expects(self::never())->method('updateRoom');
+
+		$response = $this->controller->updateRoom(7, 'Meeting room', 2, 'room@example.com', restricted: true, restrictionGroupIds: ['nope']);
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+	}
+
+	public function testUpdateRoomSavesAndSyncsTheBookingCalendar(): void {
+		$room = new RoomModel();
+		$room->setId(7);
+		$room->setRestricted(true);
+		$this->groupManager->method('groupExists')->willReturn(true);
+		$this->roomService->expects(self::once())
+			->method('updateRoom')
+			->with(7, 'Meeting room', 2, 'room@example.com', 'default', '', '', 4, false, false, false, false, false, false, true, ['board'])
+			->willReturn($room);
+		$this->roomManager->expects(self::once())->method('update');
+		$this->shareService->expects(self::once())->method('syncEntityById')->with('room', 7);
+
+		$response = $this->controller->updateRoom(7, 'Meeting room', 2, 'room@example.com', capacity: 4, restricted: true, restrictionGroupIds: ['board', 'board']);
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame('board', $response->getData()['restrictionGroups'][0]['id']);
+	}
+
+	public function testUpdateResourceReportsUnknownResource(): void {
+		$this->resourceService->method('updateResource')->willThrowException(new DoesNotExistException('nope'));
+		$this->resourceManager->expects(self::never())->method('update');
+
+		$response = $this->controller->updateResource(404, 'Beamer', 1, 'beamer@example.com');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}
+
+	public function testUpdateResourceReportsADuplicateEmail(): void {
+		$this->resourceService->method('updateResource')
+			->willThrowException(new EmailAlreadyUsedException('A resource with this email address already exists'));
+
+		$response = $this->controller->updateResource(4, 'Beamer', 1, 'taken@example.com');
+
+		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
 	}
 
 	public function testCreateBuildingRejectsBlankName(): void {

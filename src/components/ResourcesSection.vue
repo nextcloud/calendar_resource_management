@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <script setup lang="ts">
 import type { Building, NewResource, Resource, SelectOption } from '../types/types.ts'
 
-import { mdiDelete, mdiPlus } from '@mdi/js'
+import { mdiDelete, mdiPencil, mdiPlus } from '@mdi/js'
 import { translate as t } from '@nextcloud/l10n'
 import { computed, ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -15,7 +15,7 @@ import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
-import { nameById, optionId, selectOptions } from '../utils/entities.ts'
+import { nameById, optionId, restrictionSummary, selectOptions } from '../utils/entities.ts'
 
 const props = defineProps<{
 	buildings: Building[]
@@ -25,6 +25,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	create: [resource: NewResource]
+	edit: [resource: Resource]
 	delete: [id: number]
 }>()
 
@@ -74,6 +75,7 @@ function submit(): void {
 						<th>{{ t('calendar_resource_management', 'Email') }}</th>
 						<th>{{ t('calendar_resource_management', 'Resource type') }}</th>
 						<th>{{ t('calendar_resource_management', 'Building') }}</th>
+						<th>{{ t('calendar_resource_management', 'Restricted to') }}</th>
 						<th>{{ t('calendar_resource_management', 'Actions') }}</th>
 					</tr>
 				</thead>
@@ -83,7 +85,16 @@ function submit(): void {
 						<td>{{ resource.email || '-' }}</td>
 						<td>{{ resource.resourceType || '-' }}</td>
 						<td>{{ nameById(buildings, resource.buildingId) }}</td>
-						<td>
+						<td>{{ restrictionSummary(resource) }}</td>
+						<td class="crm-actions">
+							<NcButton
+								:aria-label="t('calendar_resource_management', 'Edit resource {name}', { name: resource.name })"
+								variant="tertiary"
+								@click="emit('edit', resource)">
+								<template #icon>
+									<NcIconSvgWrapper :path="mdiPencil" />
+								</template>
+							</NcButton>
 							<NcButton
 								:aria-label="t('calendar_resource_management', 'Delete resource {name}', { name: resource.name })"
 								variant="tertiary"
