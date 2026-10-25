@@ -52,6 +52,20 @@ class StoryService {
 	}
 
 	/**
+	 * Change a story, moving it to another building moves its rooms along
+	 *
+	 * @throws DoesNotExistException If the story or the building does not exist.
+	 */
+	public function updateStory(int $id, string $name, int $buildingId): StoryModel {
+		$story = $this->storyMapper->find($id);
+		$this->buildingMapper->find($buildingId);
+
+		$story->setDisplayName($name);
+		$story->setBuildingId($buildingId);
+		return $this->storyMapper->update($story);
+	}
+
+	/**
 	 * Delete a story
 	 *
 	 * @throws DoesNotExistException If the story does not exist.

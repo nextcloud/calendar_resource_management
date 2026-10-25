@@ -5,17 +5,24 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <script setup lang="ts">
 import type { Ref } from 'vue'
-import type { Building, NamedEntity, NewBuilding, NewResource, NewRoom, NewStory, Resource, Room, Story } from './types/types.ts'
+import type { Building, NamedEntity, NewBuilding, NewResource, NewRoom, NewStory, NewVehicle, Resource, Room, Story, UpdateBuilding, UpdateResource, UpdateRoom, UpdateStory, UpdateVehicle, Vehicle } from './types/types.ts'
 
 import { showError } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
 import { getLoggerBuilder } from '@nextcloud/logger'
 import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
+import BookingCalendarsSection from './components/BookingCalendarsSection.vue'
+import BuildingEditDialog from './components/BuildingEditDialog.vue'
 import BuildingsSection from './components/BuildingsSection.vue'
+import ResourceEditDialog from './components/ResourceEditDialog.vue'
 import ResourcesSection from './components/ResourcesSection.vue'
+import RoomEditDialog from './components/RoomEditDialog.vue'
 import RoomsSection from './components/RoomsSection.vue'
 import StoriesSection from './components/StoriesSection.vue'
+import StoryEditDialog from './components/StoryEditDialog.vue'
+import VehicleEditDialog from './components/VehicleEditDialog.vue'
+import VehiclesSection from './components/VehiclesSection.vue'
 import * as api from './services/adminService.ts'
 
 interface PendingDelete {
@@ -32,6 +39,7 @@ const buildings = ref<Building[]>([])
 const stories = ref<Story[]>([])
 const rooms = ref<Room[]>([])
 const resources = ref<Resource[]>([])
+const vehicles = ref<Vehicle[]>([])
 
 // Blocks the submit buttons while a create request is running
 const creating = ref({
@@ -39,14 +47,24 @@ const creating = ref({
 	story: false,
 	room: false,
 	resource: false,
+	vehicle: false,
 })
 
 const pendingDelete = ref<PendingDelete | null>(null)
+
+// The entity shown in the edit dialog and whether its update request is running
+const editingBuilding = ref<Building | null>(null)
+const editingStory = ref<Story | null>(null)
+const editingRoom = ref<Room | null>(null)
+const editingResource = ref<Resource | null>(null)
+const editingVehicle = ref<Vehicle | null>(null)
+const saving = ref(false)
 
 const buildingsSection = useTemplateRef<InstanceType<typeof BuildingsSection>>('buildings')
 const storiesSection = useTemplateRef<InstanceType<typeof StoriesSection>>('stories')
 const roomsSection = useTemplateRef<InstanceType<typeof RoomsSection>>('rooms')
 const resourcesSection = useTemplateRef<InstanceType<typeof ResourcesSection>>('resources')
+const vehiclesSection = useTemplateRef<InstanceType<typeof VehiclesSection>>('vehicles')
 
 const deleteDialogButtons = computed(() => [
 	{
@@ -146,12 +164,26 @@ async function loadResources(): Promise<void> {
 	}
 }
 
+/**
+ * Reload the vehicles.
+ */
+async function loadVehicles(): Promise<void> {
+	const loaded = await request(
+		api.fetchVehicles,
+		t('calendar_resource_management', 'Could not load vehicles'),
+	)
+	if (loaded !== null) {
+		vehicles.value = loaded
+	}
+}
+
 onMounted(async () => {
 	await Promise.all([
 		loadBuildings(),
 		loadStories(),
 		loadRooms(),
 		loadResources(),
+		loadVehicles(),
 	])
 })
 
@@ -240,6 +272,124 @@ async function createResource(resource: NewResource): Promise<void> {
 }
 
 /**
+ * Save an entity changed in an edit dialog, replace it in its list and close
+ * the dialog. The dialog stays open if saving fails.
+ *
+ * @param list The list the entity is shown in
+ * @param editing The entity of the open edit dialog
+ * @param call The update request
+ * @param errorMessage Message shown to the user if the request fails
+ * @return Whether the entity was saved
+ */
+async function saveEdit<T extends NamedEntity>(list: Ref<T[]>, editing: Ref<T | null>, call: () => Promise<T>, errorMessage: string): Promise<boolean> {
+	saving.value = true
+	try {
+		const updated = await request(call, errorMessage)
+		if (updated === null) {
+			return false
+		}
+		list.value = list.value
+			.map((candidate) => candidate.id === updated.id ? updated : candidate)
+			.sort((a, b) => a.name.localeCompare(b.name))
+		editing.value = null
+		return true
+	} finally {
+		saving.value = false
+	}
+}
+
+/**
+ * Save the building changed in the edit dialog.
+ *
+ * @param id The building
+ * @param building The changed building
+ */
+async function updateBuilding(id: number, building: UpdateBuilding): Promise<void> {
+	await saveEdit(buildings, editingBuilding, () => api.updateBuilding(id, building), t('calendar_resource_management', 'Could not update building'))
+}
+
+/**
+ * Save the floor changed in the edit dialog.
+ *
+ * @param id The floor
+ * @param story The changed floor
+ */
+async function updateStory(id: number, story: UpdateStory): Promise<void> {
+	await saveEdit(stories, editingStory, () => api.updateStory(id, story), t('calendar_resource_management', 'Could not update floor'))
+}
+
+/**
+ * Save the room changed in the edit dialog.
+ *
+ * @param id The room
+ * @param room The changed room
+ */
+async function updateRoom(id: number, room: UpdateRoom): Promise<void> {
+	await saveEdit(rooms, editingRoom, () => api.updateRoom(id, room), t('calendar_resource_management', 'Could not update room'))
+}
+
+/**
+ * Save the resource changed in the edit dialog.
+ *
+ * @param id The resource
+ * @param resource The changed resource
+ */
+async function updateResource(id: number, resource: UpdateResource): Promise<void> {
+	await saveEdit(resources, editingResource, () => api.updateResource(id, resource), t('calendar_resource_management', 'Could not update resource'))
+}
+
+/**
+ * Save the vehicle changed in the edit dialog.
+ *
+ * @param id The vehicle
+ * @param vehicle The changed vehicle
+ */
+async function updateVehicle(id: number, vehicle: UpdateVehicle): Promise<void> {
+	await saveEdit(vehicles, editingVehicle, () => api.updateVehicle(id, vehicle), t('calendar_resource_management', 'Could not update vehicle'))
+}
+
+/**
+ * Create the vehicle entered in the vehicles section.
+ *
+ * @param vehicle The vehicle to create
+ */
+async function createVehicle(vehicle: NewVehicle): Promise<void> {
+	creating.value.vehicle = true
+	try {
+		const created = await request(
+			() => api.createVehicle(vehicle),
+			t('calendar_resource_management', 'Could not create vehicle'),
+		)
+		if (created !== null) {
+			vehiclesSection.value?.reset()
+			addSorted(vehicles, created)
+		}
+	} finally {
+		creating.value.vehicle = false
+	}
+}
+
+/**
+ * Ask for confirmation before deleting a vehicle.
+ *
+ * @param id The vehicle to delete
+ */
+function confirmDeleteVehicle(id: number): void {
+	pendingDelete.value = {
+		message: t('calendar_resource_management', 'Do you really want to delete this vehicle? Its bookings are deleted as well.'),
+		action: async () => {
+			const deleted = await request(
+				() => api.deleteVehicle(id),
+				t('calendar_resource_management', 'Could not delete vehicle'),
+			)
+			if (deleted !== null) {
+				vehicles.value = vehicles.value.filter((vehicle) => vehicle.id !== id)
+			}
+		},
+	}
+}
+
+/**
  * Ask for confirmation before deleting a building.
  *
  * @param id The building to delete
@@ -253,12 +403,13 @@ function confirmDeleteBuilding(id: number): void {
 				t('calendar_resource_management', 'Could not delete building'),
 			)
 			if (deleted !== null) {
-				// Stories, rooms and resources reference the building
+				// Stories, rooms, resources and vehicles reference the building
 				await Promise.all([
 					loadBuildings(),
 					loadStories(),
 					loadRooms(),
 					loadResources(),
+					loadVehicles(),
 				])
 			}
 		},
@@ -350,7 +501,8 @@ function onDeleteDialogToggle(open: boolean): void {
 			:buildings="buildings"
 			:loading="creating.building"
 			@create="createBuilding"
-			@delete="confirmDeleteBuilding" />
+			@delete="confirmDeleteBuilding"
+			@edit="editingBuilding = $event" />
 
 		<StoriesSection
 			ref="stories"
@@ -358,7 +510,8 @@ function onDeleteDialogToggle(open: boolean): void {
 			:loading="creating.story"
 			:stories="stories"
 			@create="createStory"
-			@delete="confirmDeleteStory" />
+			@delete="confirmDeleteStory"
+			@edit="editingStory = $event" />
 
 		<RoomsSection
 			ref="rooms"
@@ -367,7 +520,8 @@ function onDeleteDialogToggle(open: boolean): void {
 			:rooms="rooms"
 			:stories="stories"
 			@create="createRoom"
-			@delete="confirmDeleteRoom" />
+			@delete="confirmDeleteRoom"
+			@edit="editingRoom = $event" />
 
 		<ResourcesSection
 			ref="resources"
@@ -375,7 +529,57 @@ function onDeleteDialogToggle(open: boolean): void {
 			:loading="creating.resource"
 			:resources="resources"
 			@create="createResource"
-			@delete="confirmDeleteResource" />
+			@delete="confirmDeleteResource"
+			@edit="editingResource = $event" />
+
+		<VehiclesSection
+			ref="vehicles"
+			:buildings="buildings"
+			:loading="creating.vehicle"
+			:vehicles="vehicles"
+			@create="createVehicle"
+			@delete="confirmDeleteVehicle"
+			@edit="editingVehicle = $event" />
+
+		<BookingCalendarsSection
+			:resources="resources"
+			:rooms="rooms"
+			:vehicles="vehicles" />
+
+		<BuildingEditDialog
+			:building="editingBuilding"
+			:loading="saving"
+			@close="editingBuilding = null"
+			@save="updateBuilding" />
+
+		<StoryEditDialog
+			:buildings="buildings"
+			:loading="saving"
+			:story="editingStory"
+			@close="editingStory = null"
+			@save="updateStory" />
+
+		<RoomEditDialog
+			:buildings="buildings"
+			:loading="saving"
+			:room="editingRoom"
+			:stories="stories"
+			@close="editingRoom = null"
+			@save="updateRoom" />
+
+		<ResourceEditDialog
+			:buildings="buildings"
+			:loading="saving"
+			:resource="editingResource"
+			@close="editingResource = null"
+			@save="updateResource" />
+
+		<VehicleEditDialog
+			:buildings="buildings"
+			:loading="saving"
+			:vehicle="editingVehicle"
+			@close="editingVehicle = null"
+			@save="updateVehicle" />
 
 		<NcDialog
 			:buttons="deleteDialogButtons"
@@ -434,6 +638,11 @@ function onDeleteDialogToggle(open: boolean): void {
 		tbody tr:hover {
 			background-color: var(--color-background-hover);
 		}
+	}
+
+	// Edit and delete side by side
+	:deep(.crm-actions) {
+		white-space: nowrap;
 	}
 
 	:deep(.crm-table-wrapper) {

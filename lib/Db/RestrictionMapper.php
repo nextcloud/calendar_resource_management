@@ -122,6 +122,52 @@ class RestrictionMapper extends QBMapper {
 	}
 
 	/**
+	 * @return array<int, string[]> The group ids of the restrictions per entity id
+	 */
+	public function findGroupIdsByEntityType(string $entityType): array {
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select('entity_id', 'group_id')
+			->from($this->tableName)
+			->where(
+				$qb->expr()->eq('entity_type', $qb->createNamedParameter($entityType, IQueryBuilder::PARAM_STR))
+			)
+			->orderBy('group_id', 'ASC');
+
+		$result = $qb->executeQuery();
+		$groupIds = [];
+		while ($row = $result->fetch()) {
+			$groupIds[(int)$row['entity_id']][] = (string)$row['group_id'];
+		}
+		$result->closeCursor();
+
+		return $groupIds;
+	}
+
+	/**
+	 * Replace the restrictions of an entity
+	 *
+	 * @param string[] $groupIds
+	 */
+	public function setGroupIds(string $entityType, int $entityId, array $groupIds): void {
+		$this->db->beginTransaction();
+		try {
+			$this->deleteAllByEntityTypeAndId($entityType, $entityId);
+			foreach (array_unique($groupIds) as $groupId) {
+				$restriction = new RestrictionModel();
+				$restriction->setEntityType($entityType);
+				$restriction->setEntityId($entityId);
+				$restriction->setGroupId($groupId);
+				$this->insert($restriction);
+			}
+			$this->db->commit();
+		} catch (\Throwable $e) {
+			$this->db->rollBack();
+			throw $e;
+		}
+	}
+
+	/**
 	 * @param string $groupId
 	 */
 	public function deleteAllRestrictionsByGroupId(string $groupId):void {

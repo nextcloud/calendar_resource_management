@@ -5,6 +5,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+### Added
+- Read-only booking calendars of rooms, resources and vehicles that users pick in their personal settings and that show up in every CalDAV app
+- Viewer groups and default groups for booking calendars in the admin settings and as OCC commands
+- Edit buildings, floors, rooms, resources and vehicles in the admin settings, including the groups rooms, resources and vehicles are restricted to
+- Create and delete vehicles in the admin settings
+- Show the restriction groups of rooms, resources and vehicles in the admin settings
+- Explain in the personal settings why no booking calendars can be added
+
 ## 1.0.0 - 2026-08-24
 ### Changes
 - Added support for Nextcloud 35

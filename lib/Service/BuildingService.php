@@ -51,6 +51,20 @@ class BuildingService {
 	}
 
 	/**
+	 * Change a building
+	 *
+	 * @throws DoesNotExistException If the building does not exist.
+	 */
+	public function updateBuilding(int $id, string $name, string $address, string $description, bool $wheelchairAccessible): BuildingModel {
+		$building = $this->buildingMapper->find($id);
+		$building->setDisplayName($name);
+		$building->setAddress($address);
+		$building->setDescription($description);
+		$building->setIsWheelchairAccessible($wheelchairAccessible);
+		return $this->buildingMapper->update($building);
+	}
+
+	/**
 	 * Delete a building
 	 *
 	 * @throws DoesNotExistException If the building does not exist.

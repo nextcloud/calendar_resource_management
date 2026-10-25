@@ -51,6 +51,8 @@ export interface Room {
 	hasWhiteboard: boolean
 	isWheelchairAccessible: boolean
 	restricted: boolean
+	/** Only members of these groups can book the room if it is restricted */
+	restrictionGroups: Group[]
 }
 
 export interface Resource {
@@ -62,11 +64,36 @@ export interface Resource {
 	buildingId: number
 	contactPersonUserId: string
 	restricted: boolean
+	/** Only members of these groups can book the resource if it is restricted */
+	restrictionGroups: Group[]
+}
+
+export interface Vehicle {
+	id: number
+	uid: string
+	name: string
+	email: string
+	buildingId: number
+	contactPersonUserId: string
+	vehicleType: string
+	vehicleMake: string
+	vehicleModel: string
+	isElectric: boolean
+	range: number | null
+	seatingCapacity: number | null
+	restricted: boolean
+	/** Only members of these groups can book the vehicle if it is restricted */
+	restrictionGroups: Group[]
 }
 
 export interface NewBuilding {
 	name: string
 	address: string
+}
+
+export interface UpdateBuilding extends NewBuilding {
+	description: string
+	wheelchairAccessible: boolean
 }
 
 export interface NewStory {
@@ -92,4 +119,82 @@ export interface NewResource {
 	email: string
 	resourceType: string
 	buildingId: number | null
+}
+
+/** Restricted without groups hides a room or resource from everybody */
+export interface RestrictionInput {
+	restricted: boolean
+	restrictionGroupIds: string[]
+}
+
+export type UpdateRoom = NewRoom & RestrictionInput
+
+export type UpdateResource = NewResource & RestrictionInput
+
+export type UpdateStory = NewStory
+
+export interface NewVehicle {
+	name: string
+	email: string
+	buildingId: number | null
+	vehicleType: string
+	vehicleMake: string
+	vehicleModel: string
+	isElectric: boolean
+	range: number | null
+	seatingCapacity: number | null
+	contactPersonUserId: string
+}
+
+export type UpdateVehicle = NewVehicle & RestrictionInput
+
+/** Rooms, resources and vehicles have a booking calendar */
+export type BookableType = 'room' | 'resource' | 'vehicle'
+
+export interface Group {
+	id: string
+	displayName: string
+}
+
+export interface GroupOption {
+	id: string
+	label: string
+}
+
+export interface DefaultGroup {
+	entityType: BookableType
+	entityId: number
+	groupId: string
+}
+
+/** A room, resource or vehicle as the booking calendar settings list it */
+export interface BookableEntity {
+	type: BookableType
+	id: number
+	name: string
+	/** Viewer groups that may see the entity, only these can be default groups */
+	allowedGroupIds: string[]
+}
+
+export interface BookingCalendarSettings {
+	viewerGroups: Group[]
+	entities: BookableEntity[]
+	defaultGroups: DefaultGroup[]
+}
+
+/** A booking calendar the current user may add to their calendars */
+export interface BookingCalendar {
+	type: BookableType
+	id: number
+	name: string
+	buildingName: string
+	storyName: string
+	capacity: number | null
+	subscribed: boolean
+	isDefault: boolean
+}
+
+export interface PersonalBookingCalendars {
+	autoSubscribeNew: boolean
+	calendars: BookingCalendar[]
 }

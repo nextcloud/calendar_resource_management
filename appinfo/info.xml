@@ -9,7 +9,7 @@
 	<name>Calendar Resource Management</name>
 	<summary>Manage shared resources and find available meeting rooms in Calendar</summary>
 	<description><![CDATA[Manage shared resources—including buildings, floors, meeting rooms, general resources, and vehicles—for use with Nextcloud Calendar. Find available rooms for selected time slots and choose an appropriate location when booking events.]]></description>
-	<version>1.1.0-dev.1</version>
+	<version>1.1.0-dev.2</version>
 	<licence>agpl</licence>
 	<author>Hamza Mahjoubi</author>
 	<author homepage="https://github.com/nextcloud/groupware">Nextcloud Groupware Team</author>
@@ -24,6 +24,9 @@
 		<php min-version="8.3" max-version="8.5" />
 		<nextcloud min-version="34" max-version="36"/>
 	</dependencies>
+	<background-jobs>
+		<job>OCA\CalendarResourceManagement\BackgroundJob\SyncBookingSharesJob</job>
+	</background-jobs>
 	<commands>
 		<command>OCA\CalendarResourceManagement\Command\CreateBuilding</command>
 		<command>OCA\CalendarResourceManagement\Command\CreateResource</command>
@@ -34,9 +37,14 @@
 		<command>OCA\CalendarResourceManagement\Command\ListResources</command>
 		<command>OCA\CalendarResourceManagement\Command\DeleteResource</command>
 		<command>OCA\CalendarResourceManagement\Command\RestrictedResource</command>
+		<command>OCA\CalendarResourceManagement\Command\BookingCalendarViewerGroups</command>
+		<command>OCA\CalendarResourceManagement\Command\BookingCalendarDefaultGroups</command>
+		<command>OCA\CalendarResourceManagement\Command\BookingCalendarSubscribe</command>
+		<command>OCA\CalendarResourceManagement\Command\BookingCalendarSync</command>
 	</commands>
 	<settings>
 		<admin>OCA\CalendarResourceManagement\Settings\AdminSettings</admin>
 		<admin-section>OCA\CalendarResourceManagement\Settings\AdminSection</admin-section>
+		<personal>OCA\CalendarResourceManagement\Settings\PersonalSettings</personal>
 	</settings>
 </info>

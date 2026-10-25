@@ -10,7 +10,10 @@ declare(strict_types=1);
 namespace OCA\CalendarResourceManagement\Command;
 
 use OCA\CalendarResourceManagement\Db\AMapper;
+use OCA\CalendarResourceManagement\Db\DefaultShareMapper;
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
+use OCA\CalendarResourceManagement\Db\RestrictionModel;
+use OCA\CalendarResourceManagement\Service\BookingCalendarShareService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\Calendar\Resource\IManager as IResourceManager;
@@ -33,6 +36,8 @@ class DeleteResource extends Command {
 		private IResourceManager $resourceManager,
 		private IRoomManager $roomManager,
 		private readonly RestrictionMapper $restrictionMapper,
+		private readonly DefaultShareMapper $defaultShareMapper,
+		private readonly BookingCalendarShareService $shareService,
 	) {
 		parent::__construct();
 	}
@@ -80,6 +85,7 @@ class DeleteResource extends Command {
 		try {
 			$mapper->delete($entity);
 			$this->restrictionMapper->deleteAllByEntityTypeAndId($type, $entity->getId());
+			$this->defaultShareMapper->deleteAllByEntityTypeAndId($type, $entity->getId());
 			$output->writeln('<info>Deleted resource type ' . $type . ' with ID ' . $id . ' and all associated entries.</info>');
 		} catch (Exception $e) {
 			$this->logger->error($e->getMessage(), ['exception' => $e]);
@@ -101,6 +107,15 @@ class DeleteResource extends Command {
 				$this->updateResources();
 				$this->updateRooms();
 				break;
+		}
+
+		// Users of the group lose the booking calendar if the restriction was the only one they had
+		if ($entity instanceof RestrictionModel) {
+			try {
+				$this->shareService->syncEntityById($entity->getEntityType(), $entity->getEntityId());
+			} catch (\Throwable $e) {
+				$output->writeln('<comment>The booking calendar shares could not be updated, the background job retries: ' . $e->getMessage() . '</comment>');
+			}
 		}
 
 		return 0;

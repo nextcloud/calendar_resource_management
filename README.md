@@ -65,6 +65,29 @@ The room email address must be unique. If no real mailbox is required, use a uni
 
 Changes are made available to Nextcloud Calendar through the app’s Calendar integration. Ensure that Nextcloud background jobs are configured correctly.
 
+### Editing in the admin settings
+
+Buildings, floors, rooms, resources and vehicles can be created, edited and deleted in the admin settings, and the tables show who can book each room, resource and vehicle. They can be restricted to groups there. The admin settings do not hide an entity by restricting it without groups, because the server then deletes its booking calendar with all bookings. `calendar-resource:restrict` still can.
+
+### Booking calendars
+
+Every room, general resource and vehicle has a booking calendar on the server that holds its accepted bookings. Users can add these calendars read-only to their own calendars. The calendars then show up in Nextcloud Calendar and in every CalDAV app connected to the account. Private events are hidden, and confidential events only show as busy.
+
+1. An admin picks the **viewer groups**, either in the admin settings under *Booking calendars* or with `calendar-resource:booking-calendars:viewer-groups`. Only members of these groups can add booking calendars. Without viewer groups the feature is off.
+2. Users pick the calendars they want in their personal settings under *Calendar → Resource booking calendars*. A switch there, off by default, adds every new room, resource and vehicle automatically. Users outside the viewer groups get a note there instead, and admins a link to the settings.
+3. An admin can also set **default groups** for each room, resource or vehicle. Members of these groups get the calendar without picking it, but they can still remove it. Default groups have to be viewer groups, and for a restricted item they also have to be one of its restriction groups.
+
+Restricted rooms, resources and vehicles are only offered to members of their restriction groups. Users lose their calendars right away when they leave a group or a group is deleted. Changes to the viewer groups in the admin settings are applied by a background job, and an hourly job catches anything else.
+
+| Command | Purpose |
+|---|---|
+| `calendar-resource:booking-calendars:viewer-groups [group_ids...] [--clear]` | Show or replace the viewer groups. |
+| `calendar-resource:booking-calendars:default-groups <entity_type> <entity_id> [group_ids...] [--clear]` | Show or replace the default groups of a room, resource or vehicle. |
+| `calendar-resource:booking-calendars:subscribe <user_id> <entity_type> <entity_id> [--unsubscribe]` | Add a booking calendar for a user, or remove it. |
+| `calendar-resource:booking-calendars:sync` | Bring all shares in line with the viewer and default groups. |
+
+Sharing must be enabled on the server. If sharing is restricted to group members, the server only changes shares for a logged-in account, so the background jobs and the commands change them as the first enabled member of the `admin` group.
+
 ### Database tables
 
 The following tables store the entities managed by this app. They are implementation details and should not normally be modified directly; use the OCC commands above or the app’s data layer instead.
@@ -77,3 +100,4 @@ The following tables store the entities managed by this app. They are implementa
 | General resources | `calresources_resources` | `calendar-resource:resource:create` |
 | Vehicles | `calresources_vehicles` | `calendar-resource:vehicle:create` |
 | Group restrictions | `calresources_restricts` | `calendar-resource:restriction:create` |
+| Default groups of booking calendars | `calresources_def_shares` | `calendar-resource:booking-calendars:default-groups` |

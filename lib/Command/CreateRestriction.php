@@ -14,6 +14,7 @@ use OCA\CalendarResourceManagement\Db\AMapper;
 use OCA\CalendarResourceManagement\Db\ResourceModel;
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Db\RestrictionModel;
+use OCA\CalendarResourceManagement\Service\BookingCalendarShareService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\Calendar\Resource\IManager as IResourceManager;
@@ -37,6 +38,7 @@ class CreateRestriction extends Command {
 		private IDBConnection $db,
 		private IResourceManager $resourceManager,
 		private IRoomManager $roomManager,
+		private BookingCalendarShareService $shareService,
 	) {
 		parent::__construct();
 	}
@@ -107,6 +109,11 @@ class CreateRestriction extends Command {
 			case Constants::ROOM:
 				$this->roomManager->update();
 				break;
+		}
+		try {
+			$this->shareService->syncEntityById($entityType, $entityId);
+		} catch (\Throwable $e) {
+			$output->writeln('<comment>The booking calendar shares could not be updated, the background job retries: ' . $e->getMessage() . '</comment>');
 		}
 
 		return self::SUCCESS;

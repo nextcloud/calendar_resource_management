@@ -9,8 +9,10 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Command;
 
+use OCA\CalendarResourceManagement\Constants;
 use OCA\CalendarResourceManagement\Db\VehicleMapper;
 use OCA\CalendarResourceManagement\Db\VehicleModel;
+use OCA\CalendarResourceManagement\Service\BookingCalendarShareService;
 use OCA\CalendarResourceManagement\Service\UidValidationService;
 use OCP\Calendar\Resource\IManager as IResourceManager;
 use Psr\Log\LoggerInterface;
@@ -38,6 +40,7 @@ class CreateVehicle extends Command {
 		private VehicleMapper $vehicleMapper,
 		private IResourceManager $resourceManager,
 		private UidValidationService $uidValidationService,
+		private BookingCalendarShareService $shareService,
 	) {
 		parent::__construct();
 	}
@@ -103,6 +106,11 @@ class CreateVehicle extends Command {
 		}
 
 		$this->resourceManager->update();
+		try {
+			$this->shareService->handleCreated(Constants::VEHICLE, $inserted);
+		} catch (\Throwable $e) {
+			$output->writeln('<comment>The booking calendar shares could not be updated, the background job retries: ' . $e->getMessage() . '</comment>');
+		}
 
 		return 0;
 	}

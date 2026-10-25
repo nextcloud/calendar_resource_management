@@ -22,9 +22,9 @@ namespace OCA\CalendarResourceManagement\Db;
  * @method bool getIsElectric()
  * @method void setIsElectric(bool $isElectric)
  * @method int|null getRange()
- * @method void setRange(int $range)
+ * @method void setRange(?int $range)
  * @method int|null getSeatingCapacity()
- * @method void setSeatingCapacity(int $seatingCapacity)
+ * @method void setSeatingCapacity(?int $seatingCapacity)
  */
 class VehicleModel extends ResourceModel {
 	/** @var string */
@@ -56,5 +56,22 @@ class VehicleModel extends ResourceModel {
 		$this->addType('isElectric', 'boolean');
 		$this->addType('range', 'integer');
 		$this->addType('seatingCapacity', 'integer');
+	}
+
+	/**
+	 * @return array{id: int, uid: ?string, name: ?string, email: ?string, resourceType: ?string, buildingId: ?int, contactPersonUserId: ?string, restricted: bool, vehicleType: ?string, vehicleMake: ?string, vehicleModel: ?string, isElectric: bool, range: ?int, seatingCapacity: ?int}
+	 */
+	#[\Override]
+	public function jsonSerialize(): array {
+		return [
+			...parent::jsonSerialize(),
+			'vehicleType' => $this->getVehicleType(),
+			'vehicleMake' => $this->getVehicleMake(),
+			'vehicleModel' => $this->getVehicleModel(),
+			'isElectric' => (bool)$this->getIsElectric(),
+			// The commands store 0 when no value was given
+			'range' => $this->getRange() ?: null,
+			'seatingCapacity' => $this->getSeatingCapacity() ?: null,
+		];
 	}
 }

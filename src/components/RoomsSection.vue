@@ -4,9 +4,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <script setup lang="ts">
-import type { Building, EquipmentKey, NewRoom, Room, SelectOption, Story, User } from '../types/types.ts'
+import type { Building, NewRoom, Room, SelectOption, Story, User } from '../types/types.ts'
 
-import { mdiDelete, mdiPlus } from '@mdi/js'
+import { mdiDelete, mdiPencil, mdiPlus } from '@mdi/js'
 import { translate as t } from '@nextcloud/l10n'
 import { computed, onMounted, ref, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -18,7 +18,8 @@ import NcSelectUsers from '@nextcloud/vue/components/NcSelectUsers'
 import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import { fetchUsers } from '../services/adminService.ts'
-import { nameById, optionId, selectOptions } from '../utils/entities.ts'
+import { nameById, optionId, restrictionSummary, selectOptions } from '../utils/entities.ts'
+import { EQUIPMENT_TYPES, noEquipment } from '../utils/equipment.ts'
 
 const props = defineProps<{
 	buildings: Building[]
@@ -29,58 +30,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	create: [room: NewRoom]
+	edit: [room: Room]
 	delete: [id: number]
 }>()
-
-/**
- * Equipment flags of a room. `payloadKey` is what the create endpoint expects,
- * `responseKey` what the listing returns.
- */
-const EQUIPMENT_TYPES: Array<{
-	payloadKey: EquipmentKey
-	responseKey: keyof Room
-	label: () => string
-}> = [
-	{
-		payloadKey: 'hasPhone',
-		responseKey: 'hasPhone',
-		label: () => t('calendar_resource_management', 'Phone'),
-	},
-	{
-		payloadKey: 'hasVideo',
-		responseKey: 'hasVideoConferencing',
-		label: () => t('calendar_resource_management', 'Video conferencing'),
-	},
-	{
-		payloadKey: 'hasTv',
-		responseKey: 'hasTv',
-		label: () => t('calendar_resource_management', 'TV'),
-	},
-	{
-		payloadKey: 'hasProjector',
-		responseKey: 'hasProjector',
-		label: () => t('calendar_resource_management', 'Projector'),
-	},
-	{
-		payloadKey: 'hasWhiteboard',
-		responseKey: 'hasWhiteboard',
-		label: () => t('calendar_resource_management', 'Whiteboard'),
-	},
-	{
-		payloadKey: 'wheelchairAccessible',
-		responseKey: 'isWheelchairAccessible',
-		label: () => t('calendar_resource_management', 'Wheelchair accessible'),
-	},
-]
-
-/**
- * All equipment flags switched off.
- *
- * @return Equipment payload keys mapped to false
- */
-function noEquipment(): Record<EquipmentKey, boolean> {
-	return Object.fromEntries(EQUIPMENT_TYPES.map((item) => [item.payloadKey, false])) as Record<EquipmentKey, boolean>
-}
 
 const name = ref('')
 const email = ref('')
@@ -209,6 +161,7 @@ function submit(): void {
 						<th>{{ t('calendar_resource_management', 'Equipment') }}</th>
 						<th>{{ t('calendar_resource_management', 'Building') }}</th>
 						<th>{{ t('calendar_resource_management', 'Floor') }}</th>
+						<th>{{ t('calendar_resource_management', 'Restricted to') }}</th>
 						<th>{{ t('calendar_resource_management', 'Actions') }}</th>
 					</tr>
 				</thead>
@@ -222,7 +175,16 @@ function submit(): void {
 						<td>{{ equipmentSummary(room) }}</td>
 						<td>{{ buildingName(room.storyId) }}</td>
 						<td>{{ nameById(stories, room.storyId) }}</td>
-						<td>
+						<td>{{ restrictionSummary(room) }}</td>
+						<td class="crm-actions">
+							<NcButton
+								:aria-label="t('calendar_resource_management', 'Edit room {name}', { name: room.name })"
+								variant="tertiary"
+								@click="emit('edit', room)">
+								<template #icon>
+									<NcIconSvgWrapper :path="mdiPencil" />
+								</template>
+							</NcButton>
 							<NcButton
 								:aria-label="t('calendar_resource_management', 'Delete room {name}', { name: room.name })"
 								variant="tertiary"

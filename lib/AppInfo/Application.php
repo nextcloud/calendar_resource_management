@@ -11,12 +11,15 @@ namespace OCA\CalendarResourceManagement\AppInfo;
 use OCA\CalendarResourceManagement\Connector;
 use OCA\CalendarResourceManagement\Connector\Resource\Backend;
 use OCA\CalendarResourceManagement\Listener\GroupDeletedListener;
+use OCA\CalendarResourceManagement\Listener\GroupMembershipListener;
 use OCA\CalendarResourceManagement\Listener\UserDeletedListener;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\Group\Events\BeforeGroupDeletedEvent;
 use OCP\Group\Events\GroupDeletedEvent;
+use OCP\Group\Events\UserRemovedEvent;
 use OCP\User\Events\UserDeletedEvent;
 
 class Application extends App implements IBootstrap {
@@ -40,7 +43,9 @@ class Application extends App implements IBootstrap {
 	public function register(IRegistrationContext $context): void {
 		$context->registerCalendarResourceBackend(Backend::class);
 		$context->registerCalendarRoomBackend(Connector\Room\Backend::class);
+		$context->registerEventListener(BeforeGroupDeletedEvent::class, GroupDeletedListener::class);
 		$context->registerEventListener(GroupDeletedEvent::class, GroupDeletedListener::class);
+		$context->registerEventListener(UserRemovedEvent::class, GroupMembershipListener::class);
 		$context->registerEventListener(UserDeletedEvent::class, UserDeletedListener::class);
 	}
 

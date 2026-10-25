@@ -7,7 +7,9 @@ import path from 'path'
 
 export default createAppConfig({
 	'admin-settings': path.join(__dirname, 'src', 'adminSettings.ts'),
+	'personal-settings': path.join(__dirname, 'src', 'personalSettings.ts'),
 }, {
-	inlineCSS: true,
+	// Each settings page loads only its own entry, so each entry injects its own styles
+	inlineCSS: { relativeCSSInjection: true },
 	extractLicenseInformation: false,
 })
