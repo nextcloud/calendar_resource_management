@@ -93,3 +93,54 @@ export interface NewResource {
 	resourceType: string
 	buildingId: number | null
 }
+
+/** Rooms, resources and vehicles have a booking calendar */
+export type BookableType = 'room' | 'resource' | 'vehicle'
+
+export interface Group {
+	id: string
+	displayName: string
+}
+
+export interface GroupOption {
+	id: string
+	label: string
+}
+
+export interface DefaultGroup {
+	entityType: BookableType
+	entityId: number
+	groupId: string
+}
+
+/** A room, resource or vehicle as the booking calendar settings list it */
+export interface BookableEntity {
+	type: BookableType
+	id: number
+	name: string
+	/** Viewer groups that may see the entity, only these can be default groups */
+	allowedGroupIds: string[]
+}
+
+export interface BookingCalendarSettings {
+	viewerGroups: Group[]
+	entities: BookableEntity[]
+	defaultGroups: DefaultGroup[]
+}
+
+/** A booking calendar the current user may add to their calendars */
+export interface BookingCalendar {
+	type: BookableType
+	id: number
+	name: string
+	buildingName: string
+	storyName: string
+	capacity: number | null
+	subscribed: boolean
+	isDefault: boolean
+}
+
+export interface PersonalBookingCalendars {
+	autoSubscribeNew: boolean
+	calendars: BookingCalendar[]
+}

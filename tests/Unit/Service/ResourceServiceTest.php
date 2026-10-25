@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace OCA\CalendarResourceManagement\Tests\Unit\Service;
 
 use OCA\CalendarResourceManagement\Db\BuildingMapper;
+use OCA\CalendarResourceManagement\Db\DefaultShareMapper;
 use OCA\CalendarResourceManagement\Db\ResourceMapper;
 use OCA\CalendarResourceManagement\Db\ResourceModel;
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
@@ -22,12 +23,14 @@ use Test\TestCase;
 class ResourceServiceTest extends TestCase {
 	private ResourceMapper&MockObject $resourceMapper;
 	private BuildingMapper&MockObject $buildingMapper;
+	private DefaultShareMapper&MockObject $defaultShareMapper;
 	private ResourceService $service;
 
 	protected function setUp(): void {
 		parent::setUp();
 
 		$this->resourceMapper = $this->createMock(ResourceMapper::class);
+		$this->defaultShareMapper = $this->createMock(DefaultShareMapper::class);
 		$this->buildingMapper = $this->createMock(BuildingMapper::class);
 
 		$secureRandom = $this->createMock(ISecureRandom::class);
@@ -38,6 +41,7 @@ class ResourceServiceTest extends TestCase {
 			$this->createMock(RestrictionMapper::class),
 			$this->buildingMapper,
 			$secureRandom,
+			$this->defaultShareMapper,
 		);
 	}
 
@@ -88,6 +92,7 @@ class ResourceServiceTest extends TestCase {
 		$resource->setId(4);
 		$this->resourceMapper->expects(self::once())->method('find')->with(4)->willReturn($resource);
 		$this->resourceMapper->expects(self::once())->method('delete')->with($resource);
+		$this->defaultShareMapper->expects(self::once())->method('deleteAllByEntityTypeAndId')->with('resource', 4);
 
 		$this->service->deleteResource(4);
 	}

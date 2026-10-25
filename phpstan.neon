@@ -30,6 +30,8 @@ parameters:
 			- lib/Service/ResourceService.php
 			- lib/Service/BuildingService.php
 	scanFiles:
+		- tests/stubs/oca_dav_caldav.php
+		- tests/stubs/sabre_dav_proppatch.php
 		- tests/stubs/doctrine_dbal_arrayparametertype.php
 		- tests/stubs/doctrine_dbal_schema_abstractasset.php
 		- tests/stubs/doctrine_dbal_schema_column.php

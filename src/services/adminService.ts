@@ -4,7 +4,10 @@
  */
 
 import type {
+	BookableType,
+	BookingCalendarSettings,
 	Building,
+	Group,
 	NewResource,
 	NewRoom,
 	Resource,
@@ -157,4 +160,53 @@ export async function createResource(data: NewResource): Promise<Resource> {
  */
 export async function deleteResource(id: number): Promise<void> {
 	await axios.delete(generateUrl(`${baseUrl}/resources/${id}`))
+}
+
+/**
+ * Fetch the groups that can be picked as viewer or default groups
+ *
+ * @param search Filter for the group name
+ * @return List of groups
+ */
+export async function fetchGroups(search = ''): Promise<Group[]> {
+	const response = await axios.get<Group[]>(generateUrl(`${baseUrl}/groups`), {
+		params: { search },
+	})
+	return response.data
+}
+
+/**
+ * Fetch who sees the booking calendars
+ *
+ * @return Viewer groups and default groups
+ */
+export async function fetchBookingCalendarSettings(): Promise<BookingCalendarSettings> {
+	const response = await axios.get<BookingCalendarSettings>(generateUrl(`${baseUrl}/booking-calendars`))
+	return response.data
+}
+
+/**
+ * Replace the groups whose members may add booking calendars
+ *
+ * @param groupIds Group IDs
+ * @return The saved groups
+ */
+export async function saveViewerGroups(groupIds: string[]): Promise<Group[]> {
+	const response = await axios.put<Group[]>(generateUrl(`${baseUrl}/booking-calendars/viewer-groups`), {
+		groupIds,
+	})
+	return response.data
+}
+
+/**
+ * Replace the groups that get a booking calendar without picking it
+ *
+ * @param entityType Type of the room, resource or vehicle
+ * @param entityId ID of the room, resource or vehicle
+ * @param groupIds Group IDs, all of them viewer groups
+ */
+export async function saveDefaultGroups(entityType: BookableType, entityId: number, groupIds: string[]): Promise<void> {
+	await axios.put(generateUrl(`${baseUrl}/booking-calendars/${entityType}/${entityId}/default-groups`), {
+		groupIds,
+	})
 }

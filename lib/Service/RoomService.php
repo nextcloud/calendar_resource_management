@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Service;
 
+use OCA\CalendarResourceManagement\Constants;
+use OCA\CalendarResourceManagement\Db\DefaultShareMapper;
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Db\RoomMapper;
 use OCA\CalendarResourceManagement\Db\RoomModel;
@@ -28,6 +30,7 @@ class RoomService {
 		private RestrictionMapper $restrictionMapper,
 		private StoryMapper $storyMapper,
 		private ISecureRandom $secureRandom,
+		private DefaultShareMapper $defaultShareMapper,
 	) {
 	}
 
@@ -97,5 +100,6 @@ class RoomService {
 	public function deleteRoom(int $id): void {
 		$room = $this->roomMapper->find($id);
 		$this->roomMapper->delete($room);
+		$this->defaultShareMapper->deleteAllByEntityTypeAndId(Constants::ROOM, $id);
 	}
 }

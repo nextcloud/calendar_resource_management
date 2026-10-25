@@ -5,6 +5,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+### Added
+- Read-only booking calendars of rooms, resources and vehicles that users pick in their personal settings and that show up in every CalDAV app
+- Viewer groups and default groups for booking calendars in the admin settings and as OCC commands
+
 ## 1.0.0 - 2026-08-24
 ### Changes
 - Added support for Nextcloud 35

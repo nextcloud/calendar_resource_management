@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Tests\Unit\Service;
 
+use OCA\CalendarResourceManagement\Db\DefaultShareMapper;
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Db\RoomMapper;
 use OCA\CalendarResourceManagement\Db\RoomModel;
@@ -22,6 +23,7 @@ use Test\TestCase;
 class RoomServiceTest extends TestCase {
 	private RoomMapper&MockObject $roomMapper;
 	private StoryMapper&MockObject $storyMapper;
+	private DefaultShareMapper&MockObject $defaultShareMapper;
 	private RoomService $service;
 
 	protected function setUp(): void {
@@ -29,6 +31,7 @@ class RoomServiceTest extends TestCase {
 
 		$this->roomMapper = $this->createMock(RoomMapper::class);
 		$this->storyMapper = $this->createMock(StoryMapper::class);
+		$this->defaultShareMapper = $this->createMock(DefaultShareMapper::class);
 
 		$secureRandom = $this->createMock(ISecureRandom::class);
 		$secureRandom->method('generate')->willReturn('deadbeef');
@@ -38,6 +41,7 @@ class RoomServiceTest extends TestCase {
 			$this->createMock(RestrictionMapper::class),
 			$this->storyMapper,
 			$secureRandom,
+			$this->defaultShareMapper,
 		);
 	}
 
@@ -123,6 +127,7 @@ class RoomServiceTest extends TestCase {
 		$room->setId(9);
 		$this->roomMapper->expects(self::once())->method('find')->with(9)->willReturn($room);
 		$this->roomMapper->expects(self::once())->method('delete')->with($room);
+		$this->defaultShareMapper->expects(self::once())->method('deleteAllByEntityTypeAndId')->with('room', 9);
 
 		$this->service->deleteRoom(9);
 	}

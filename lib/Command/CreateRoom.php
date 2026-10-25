@@ -9,9 +9,11 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Command;
 
+use OCA\CalendarResourceManagement\Constants;
 use OCA\CalendarResourceManagement\Db\RoomMapper;
 use OCA\CalendarResourceManagement\Db\RoomModel;
 use OCA\CalendarResourceManagement\Db\StoryMapper;
+use OCA\CalendarResourceManagement\Service\BookingCalendarShareService;
 use OCA\CalendarResourceManagement\Service\UidValidationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Calendar\Room\IManager as IRoomManager;
@@ -45,6 +47,7 @@ class CreateRoom extends Command {
 		private IRoomManager $roomManager,
 		private UidValidationService $uidValidationService,
 		private StoryMapper $storyMapper,
+		private BookingCalendarShareService $shareService,
 	) {
 		parent::__construct();
 	}
@@ -197,6 +200,11 @@ class CreateRoom extends Command {
 		}
 
 		$this->roomManager->update();
+		try {
+			$this->shareService->handleCreated(Constants::ROOM, $inserted);
+		} catch (\Throwable $e) {
+			$output->writeln('<comment>The booking calendar shares could not be updated, the background job retries: ' . $e->getMessage() . '</comment>');
+		}
 
 		return 0;
 	}

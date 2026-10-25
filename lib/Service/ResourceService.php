@@ -8,7 +8,9 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Service;
 
+use OCA\CalendarResourceManagement\Constants;
 use OCA\CalendarResourceManagement\Db\BuildingMapper;
+use OCA\CalendarResourceManagement\Db\DefaultShareMapper;
 use OCA\CalendarResourceManagement\Db\ResourceMapper;
 use OCA\CalendarResourceManagement\Db\ResourceModel;
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
@@ -28,6 +30,7 @@ class ResourceService {
 		private RestrictionMapper $restrictionMapper,
 		private BuildingMapper $buildingMapper,
 		private ISecureRandom $secureRandom,
+		private DefaultShareMapper $defaultShareMapper,
 	) {
 	}
 
@@ -72,5 +75,6 @@ class ResourceService {
 	public function deleteResource(int $id): void {
 		$resource = $this->resourceMapper->find($id);
 		$this->resourceMapper->delete($resource);
+		$this->defaultShareMapper->deleteAllByEntityTypeAndId(Constants::RESOURCE, $id);
 	}
 }

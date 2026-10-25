@@ -15,6 +15,7 @@ use OCA\CalendarResourceManagement\Db\RoomModel;
 use OCA\CalendarResourceManagement\Db\StoryModel;
 use OCA\CalendarResourceManagement\Exception\EmailAlreadyUsedException;
 use OCA\CalendarResourceManagement\Exception\ServiceException;
+use OCA\CalendarResourceManagement\Service\BookingCalendarShareService;
 use OCA\CalendarResourceManagement\Service\BuildingService;
 use OCA\CalendarResourceManagement\Service\ResourceService;
 use OCA\CalendarResourceManagement\Service\RoomService;
@@ -40,6 +41,7 @@ class AdminControllerTest extends TestCase {
 	private IResourceManager&MockObject $resourceManager;
 	private IUserManager&MockObject $userManager;
 	private LoggerInterface&MockObject $logger;
+	private BookingCalendarShareService&MockObject $shareService;
 	private AdminController $controller;
 
 	protected function setUp(): void {
@@ -53,6 +55,7 @@ class AdminControllerTest extends TestCase {
 		$this->resourceManager = $this->createMock(IResourceManager::class);
 		$this->userManager = $this->createMock(IUserManager::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->shareService = $this->createMock(BookingCalendarShareService::class);
 
 		$this->controller = new AdminController(
 			'calendar_resource_management',
@@ -65,6 +68,7 @@ class AdminControllerTest extends TestCase {
 			$this->resourceManager,
 			$this->userManager,
 			$this->logger,
+			$this->shareService,
 		);
 	}
 
@@ -282,6 +286,39 @@ class AdminControllerTest extends TestCase {
 
 		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
 		self::assertSame($room, $response->getData());
+	}
+
+	public function testCreateRoomSharesTheBookingCalendarAfterUpdatingTheBackend(): void {
+		$room = new RoomModel();
+		$room->setId(9);
+		$this->roomService->method('createRoom')->willReturn($room);
+		$calls = [];
+		$this->roomManager->method('update')->willReturnCallback(static function () use (&$calls): void {
+			$calls[] = 'update';
+		});
+		$this->shareService->expects(self::once())
+			->method('handleCreated')
+			->with('room', $room)
+			->willReturnCallback(static function () use (&$calls): void {
+				$calls[] = 'share';
+			});
+
+		$this->controller->createRoom('Meeting room', 2, 'room@example.com');
+
+		// The server creates the booking calendar while updating
+		self::assertSame(['update', 'share'], $calls);
+	}
+
+	public function testCreateResourceStillSucceedsWhenSharingFails(): void {
+		$resource = new ResourceModel();
+		$resource->setId(4);
+		$this->resourceService->method('createResource')->willReturn($resource);
+		$this->shareService->method('handleCreated')->willThrowException(new RuntimeException('dav down'));
+		$this->logger->expects(self::once())->method('error');
+
+		$response = $this->controller->createResource('Beamer', 1, 'beamer@example.com');
+
+		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
 	}
 
 	public function testCreateResourceReturnsCreatedEntity(): void {

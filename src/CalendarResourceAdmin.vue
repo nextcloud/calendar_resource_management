@@ -12,6 +12,7 @@ import { translate as t } from '@nextcloud/l10n'
 import { getLoggerBuilder } from '@nextcloud/logger'
 import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
+import BookingCalendarsSection from './components/BookingCalendarsSection.vue'
 import BuildingsSection from './components/BuildingsSection.vue'
 import ResourcesSection from './components/ResourcesSection.vue'
 import RoomsSection from './components/RoomsSection.vue'
@@ -376,6 +377,10 @@ function onDeleteDialogToggle(open: boolean): void {
 			:resources="resources"
 			@create="createResource"
 			@delete="confirmDeleteResource" />
+
+		<BookingCalendarsSection
+			:resources="resources"
+			:rooms="rooms" />
 
 		<NcDialog
 			:buttons="deleteDialogButtons"

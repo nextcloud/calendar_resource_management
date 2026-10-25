@@ -8,7 +8,11 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Controller;
 
+use OCA\CalendarResourceManagement\Constants;
+use OCA\CalendarResourceManagement\Db\ResourceModel;
+use OCA\CalendarResourceManagement\Db\RoomModel;
 use OCA\CalendarResourceManagement\Exception\ServiceException;
+use OCA\CalendarResourceManagement\Service\BookingCalendarShareService;
 use OCA\CalendarResourceManagement\Service\BuildingService;
 use OCA\CalendarResourceManagement\Service\ResourceService;
 use OCA\CalendarResourceManagement\Service\RoomService;
@@ -40,6 +44,7 @@ class AdminController extends Controller {
 		private IResourceManager $resourceManager,
 		private IUserManager $userManager,
 		private LoggerInterface $logger,
+		private BookingCalendarShareService $shareService,
 	) {
 		parent::__construct($appName, $request);
 	}
@@ -196,6 +201,7 @@ class AdminController extends Controller {
 		}
 
 		$this->roomManager->update();
+		$this->shareCreated(Constants::ROOM, $room);
 
 		return new JSONResponse($room, Http::STATUS_CREATED);
 	}
@@ -246,6 +252,7 @@ class AdminController extends Controller {
 		}
 
 		$this->resourceManager->update();
+		$this->shareCreated(Constants::RESOURCE, $resource);
 
 		return new JSONResponse($resource, Http::STATUS_CREATED);
 	}
@@ -264,6 +271,18 @@ class AdminController extends Controller {
 		$this->resourceManager->update();
 
 		return new JSONResponse([], Http::STATUS_NO_CONTENT);
+	}
+
+	/**
+	 * Share the booking calendar of a new entity, the entity exists even if this fails and the
+	 * background job shares it later
+	 */
+	private function shareCreated(string $type, RoomModel|ResourceModel $entity): void {
+		try {
+			$this->shareService->handleCreated($type, $entity);
+		} catch (Throwable $e) {
+			$this->logger->error('Could not share the booking calendar of ' . $type . ' ' . $entity->getId(), ['exception' => $e]);
+		}
 	}
 
 	private function error(string $message, int $status): JSONResponse {

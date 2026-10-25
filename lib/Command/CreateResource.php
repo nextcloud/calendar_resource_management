@@ -9,8 +9,10 @@ declare(strict_types=1);
 
 namespace OCA\CalendarResourceManagement\Command;
 
+use OCA\CalendarResourceManagement\Constants;
 use OCA\CalendarResourceManagement\Db\ResourceMapper;
 use OCA\CalendarResourceManagement\Db\ResourceModel;
+use OCA\CalendarResourceManagement\Service\BookingCalendarShareService;
 use OCA\CalendarResourceManagement\Service\UidValidationService;
 use OCP\Calendar\Resource\IManager as IResourceManager;
 use OCP\DB\Exception;
@@ -34,6 +36,7 @@ class CreateResource extends Command {
 		private ResourceMapper $resourceMapper,
 		private IResourceManager $resourceManager,
 		private UidValidationService $uidValidationService,
+		private BookingCalendarShareService $shareService,
 	) {
 		parent::__construct();
 	}
@@ -84,6 +87,11 @@ class CreateResource extends Command {
 		}
 
 		$this->resourceManager->update();
+		try {
+			$this->shareService->handleCreated(Constants::RESOURCE, $inserted);
+		} catch (\Throwable $e) {
+			$output->writeln('<comment>The booking calendar shares could not be updated, the background job retries: ' . $e->getMessage() . '</comment>');
+		}
 
 		return 0;
 	}
