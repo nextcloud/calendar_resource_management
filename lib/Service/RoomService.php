@@ -163,6 +163,7 @@ class RoomService {
 	public function deleteRoom(int $id): void {
 		$room = $this->roomMapper->find($id);
 		$this->roomMapper->delete($room);
+		$this->restrictionMapper->deleteAllByEntityTypeAndId(Constants::ROOM, $id);
 		$this->defaultShareMapper->deleteAllByEntityTypeAndId(Constants::ROOM, $id);
 	}
 }

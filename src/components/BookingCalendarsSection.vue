@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <script setup lang="ts">
-import type { BookableEntity, BookableType, DefaultGroup, Group, GroupOption, Resource, Room } from '../types/types.ts'
+import type { BookableEntity, BookableType, DefaultGroup, Group, GroupOption, Resource, Room, Vehicle } from '../types/types.ts'
 
 import { showError } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
@@ -17,6 +17,7 @@ import { fetchBookingCalendarSettings, fetchGroups, saveDefaultGroups, saveViewe
 const props = defineProps<{
 	rooms: Room[]
 	resources: Resource[]
+	vehicles: Vehicle[]
 }>()
 
 const viewerGroups = ref<GroupOption[]>([])
@@ -80,8 +81,8 @@ onMounted(async () => {
 	await Promise.all([searchGroups(), loadSettings()])
 })
 
-// Rooms and resources created or deleted in the other sections
-watch(() => [props.rooms, props.resources], loadSettings)
+// Rooms, resources and vehicles changed in the other sections
+watch(() => [props.rooms, props.resources, props.vehicles], loadSettings)
 
 /**
  * Save the viewer groups. They decide which default groups are possible,

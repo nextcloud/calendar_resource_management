@@ -62,4 +62,27 @@ class StoryServiceTest extends TestCase {
 
 		$this->service->deleteStory(11);
 	}
+
+	public function testUpdateStoryRejectsUnknownBuilding(): void {
+		$this->storyMapper->method('find')->willReturn(new StoryModel());
+		$this->buildingMapper->method('find')->willThrowException(new DoesNotExistException('nope'));
+		$this->storyMapper->expects(self::never())->method('update');
+
+		$this->expectException(DoesNotExistException::class);
+
+		$this->service->updateStory(2, 'Floor', 404);
+	}
+
+	public function testUpdateStoryMovesItToAnotherBuilding(): void {
+		$story = new StoryModel();
+		$story->setId(2);
+		$story->setBuildingId(1);
+		$this->storyMapper->method('find')->with(2)->willReturn($story);
+		$this->storyMapper->expects(self::once())->method('update')->willReturnArgument(0);
+
+		$updated = $this->service->updateStory(2, 'Top floor', 3);
+
+		self::assertSame('Top floor', $updated->getDisplayName());
+		self::assertSame(3, $updated->getBuildingId());
+	}
 }

@@ -68,9 +68,32 @@ export interface Resource {
 	restrictionGroups: Group[]
 }
 
+export interface Vehicle {
+	id: number
+	uid: string
+	name: string
+	email: string
+	buildingId: number
+	contactPersonUserId: string
+	vehicleType: string
+	vehicleMake: string
+	vehicleModel: string
+	isElectric: boolean
+	range: number | null
+	seatingCapacity: number | null
+	restricted: boolean
+	/** Only members of these groups can book the vehicle if it is restricted */
+	restrictionGroups: Group[]
+}
+
 export interface NewBuilding {
 	name: string
 	address: string
+}
+
+export interface UpdateBuilding extends NewBuilding {
+	description: string
+	wheelchairAccessible: boolean
 }
 
 export interface NewStory {
@@ -107,6 +130,23 @@ export interface RestrictionInput {
 export type UpdateRoom = NewRoom & RestrictionInput
 
 export type UpdateResource = NewResource & RestrictionInput
+
+export type UpdateStory = NewStory
+
+export interface NewVehicle {
+	name: string
+	email: string
+	buildingId: number | null
+	vehicleType: string
+	vehicleMake: string
+	vehicleModel: string
+	isElectric: boolean
+	range: number | null
+	seatingCapacity: number | null
+	contactPersonUserId: string
+}
+
+export type UpdateVehicle = NewVehicle & RestrictionInput
 
 /** Rooms, resources and vehicles have a booking calendar */
 export type BookableType = 'room' | 'resource' | 'vehicle'

@@ -18,14 +18,10 @@ parameters:
 		-
 			identifier: property.onlyWritten
 			paths:
-			- lib/Service/VehicleService.php
-			- lib/Service/RoomService.php
-			- lib/Service/ResourceService.php
 			- lib/Service/BuildingService.php
 		-
 			identifier: classConstant.unused
 			paths:
-			- lib/Service/VehicleService.php
 			- lib/Service/RoomService.php
 			- lib/Service/ResourceService.php
 			- lib/Service/BuildingService.php

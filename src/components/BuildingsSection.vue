@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <script setup lang="ts">
 import type { Building, NewBuilding } from '../types/types.ts'
 
-import { mdiDelete, mdiPlus } from '@mdi/js'
+import { mdiDelete, mdiPencil, mdiPlus } from '@mdi/js'
 import { translate as t } from '@nextcloud/l10n'
 import { computed, ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -22,6 +22,7 @@ defineProps<{
 
 const emit = defineEmits<{
 	create: [building: NewBuilding]
+	edit: [building: Building]
 	delete: [id: number]
 }>()
 
@@ -68,7 +69,15 @@ function submit(): void {
 					<tr v-for="building in buildings" :key="building.id">
 						<td>{{ building.name }}</td>
 						<td>{{ building.address || '-' }}</td>
-						<td>
+						<td class="crm-actions">
+							<NcButton
+								:aria-label="t('calendar_resource_management', 'Edit building {name}', { name: building.name })"
+								variant="tertiary"
+								@click="emit('edit', building)">
+								<template #icon>
+									<NcIconSvgWrapper :path="mdiPencil" />
+								</template>
+							</NcButton>
 							<NcButton
 								:aria-label="t('calendar_resource_management', 'Delete building {name}', { name: building.name })"
 								variant="tertiary"

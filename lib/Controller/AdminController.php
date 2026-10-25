@@ -17,6 +17,7 @@ use OCA\CalendarResourceManagement\Service\BuildingService;
 use OCA\CalendarResourceManagement\Service\ResourceService;
 use OCA\CalendarResourceManagement\Service\RoomService;
 use OCA\CalendarResourceManagement\Service\StoryService;
+use OCA\CalendarResourceManagement\Service\VehicleService;
 use OCA\CalendarResourceManagement\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -48,6 +49,7 @@ class AdminController extends Controller {
 		private LoggerInterface $logger,
 		private BookingCalendarShareService $shareService,
 		private IGroupManager $groupManager,
+		private VehicleService $vehicleService,
 	) {
 		parent::__construct($appName, $request);
 	}
@@ -92,6 +94,28 @@ class AdminController extends Controller {
 	}
 
 	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'PUT', url: '/admin/buildings/{id}')]
+	public function updateBuilding(int $id, string $name = '', string $address = '', string $description = '', bool $wheelchairAccessible = false): JSONResponse {
+		if (trim($name) === '') {
+			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$building = $this->buildingService->updateBuilding($id, $name, $address, $description, $wheelchairAccessible);
+		} catch (DoesNotExistException) {
+			return $this->error('The building does not exist', Http::STATUS_NOT_FOUND);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not update building', $e);
+		}
+
+		// Rooms and resources carry the name and address of their building
+		$this->roomManager->update();
+		$this->resourceManager->update();
+
+		return new JSONResponse($building);
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
 	#[FrontpageRoute(verb: 'DELETE', url: '/admin/buildings/{id}')]
 	public function deleteBuilding(int $id): JSONResponse {
 		try {
@@ -130,6 +154,30 @@ class AdminController extends Controller {
 		}
 
 		return new JSONResponse($story, Http::STATUS_CREATED);
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'PUT', url: '/admin/stories/{id}')]
+	public function updateStory(int $id, string $name = '', ?int $buildingId = null): JSONResponse {
+		if (trim($name) === '') {
+			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+		}
+		if ($buildingId === null) {
+			return $this->error('A building has to be selected', Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$story = $this->storyService->updateStory($id, $name, $buildingId);
+		} catch (DoesNotExistException) {
+			return $this->error('The story or the selected building does not exist', Http::STATUS_NOT_FOUND);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not update story', $e);
+		}
+
+		// Rooms carry the name of their story and building
+		$this->roomManager->update();
+
+		return new JSONResponse($story);
 	}
 
 	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
@@ -407,6 +455,128 @@ class AdminController extends Controller {
 		} catch (Throwable $e) {
 			$this->logger->error('Could not share the booking calendar of ' . $type . ' ' . $entity->getId(), ['exception' => $e]);
 		}
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'GET', url: '/admin/vehicles')]
+	public function getVehicles(): JSONResponse {
+		return new JSONResponse($this->withRestrictionGroups(
+			$this->vehicleService->listVehicles(),
+			$this->vehicleService->listRestrictionGroupIds(),
+		));
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'POST', url: '/admin/vehicles')]
+	public function createVehicle(
+		string $name = '',
+		?int $buildingId = null,
+		string $email = '',
+		string $vehicleType = '',
+		string $vehicleMake = '',
+		string $vehicleModel = '',
+		bool $isElectric = false,
+		?int $range = null,
+		?int $seatingCapacity = null,
+		string $contactPersonUserId = '',
+	): JSONResponse {
+		$invalid = $this->validateVehicle($name, $buildingId, $email);
+		if ($invalid !== null) {
+			return $invalid;
+		}
+
+		try {
+			$vehicle = $this->vehicleService->createVehicle($name, (int)$buildingId, $email, $vehicleType, $vehicleMake, $vehicleModel, $isElectric, $range, $seatingCapacity, $contactPersonUserId);
+		} catch (DoesNotExistException) {
+			return $this->error('The selected building does not exist', Http::STATUS_BAD_REQUEST);
+		} catch (ServiceException $e) {
+			return $this->serviceError('Could not create vehicle', $e);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not create vehicle', $e);
+		}
+
+		$this->resourceManager->update();
+		$this->shareCreated(Constants::VEHICLE, $vehicle);
+
+		return new JSONResponse($this->withRestrictionGroups([$vehicle], [])[0], Http::STATUS_CREATED);
+	}
+
+	/**
+	 * @param string[] $restrictionGroupIds
+	 */
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'PUT', url: '/admin/vehicles/{id}')]
+	public function updateVehicle(
+		int $id,
+		string $name = '',
+		?int $buildingId = null,
+		string $email = '',
+		string $vehicleType = '',
+		string $vehicleMake = '',
+		string $vehicleModel = '',
+		bool $isElectric = false,
+		?int $range = null,
+		?int $seatingCapacity = null,
+		string $contactPersonUserId = '',
+		bool $restricted = false,
+		array $restrictionGroupIds = [],
+	): JSONResponse {
+		$invalid = $this->validateVehicle($name, $buildingId, $email);
+		if ($invalid !== null) {
+			return $invalid;
+		}
+		$restrictionGroupIds = $this->validGroupIds($restrictionGroupIds);
+		if ($restrictionGroupIds === null) {
+			return $this->error('A selected group does not exist', Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$vehicle = $this->vehicleService->updateVehicle($id, $name, (int)$buildingId, $email, $vehicleType, $vehicleMake, $vehicleModel, $isElectric, $range, $seatingCapacity, $contactPersonUserId, $restricted, $restrictionGroupIds);
+		} catch (DoesNotExistException) {
+			return $this->error('The vehicle or the selected building does not exist', Http::STATUS_NOT_FOUND);
+		} catch (ServiceException $e) {
+			return $this->serviceError('Could not update vehicle', $e);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not update vehicle', $e);
+		}
+
+		$this->resourceManager->update();
+		$this->syncShares(Constants::VEHICLE, $id);
+
+		return new JSONResponse($this->withRestrictionGroups([$vehicle], [$id => $vehicle->isRestricted() ? $restrictionGroupIds : []])[0]);
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'DELETE', url: '/admin/vehicles/{id}')]
+	public function deleteVehicle(int $id): JSONResponse {
+		try {
+			$this->vehicleService->deleteVehicle($id);
+		} catch (DoesNotExistException) {
+			return $this->error('The vehicle does not exist', Http::STATUS_NOT_FOUND);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not delete vehicle', $e);
+		}
+
+		$this->resourceManager->update();
+
+		return new JSONResponse([], Http::STATUS_NO_CONTENT);
+	}
+
+	/**
+	 * @return JSONResponse|null The error, null if the vehicle is valid
+	 */
+	private function validateVehicle(string $name, ?int $buildingId, string $email): ?JSONResponse {
+		if (trim($name) === '') {
+			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+		}
+		if ($buildingId === null) {
+			return $this->error('A building has to be selected', Http::STATUS_BAD_REQUEST);
+		}
+		if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+			return $this->error('A valid email address is required', Http::STATUS_BAD_REQUEST);
+		}
+
+		return null;
 	}
 
 	/**

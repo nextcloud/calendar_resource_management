@@ -120,6 +120,7 @@ class ResourceService {
 	public function deleteResource(int $id): void {
 		$resource = $this->resourceMapper->find($id);
 		$this->resourceMapper->delete($resource);
+		$this->restrictionMapper->deleteAllByEntityTypeAndId(Constants::RESOURCE, $id);
 		$this->defaultShareMapper->deleteAllByEntityTypeAndId(Constants::RESOURCE, $id);
 	}
 }

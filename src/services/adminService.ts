@@ -10,12 +10,17 @@ import type {
 	Group,
 	NewResource,
 	NewRoom,
+	NewVehicle,
 	Resource,
 	Room,
 	Story,
+	UpdateBuilding,
 	UpdateResource,
 	UpdateRoom,
+	UpdateStory,
+	UpdateVehicle,
 	User,
+	Vehicle,
 } from '../types/types.ts'
 
 import axios from '@nextcloud/axios'
@@ -62,6 +67,18 @@ export async function createBuilding(name: string, address: string): Promise<Bui
 }
 
 /**
+ * Change a building
+ *
+ * @param id Building ID
+ * @param data Building data
+ * @return Updated building
+ */
+export async function updateBuilding(id: number, data: UpdateBuilding): Promise<Building> {
+	const response = await axios.put(generateUrl(`${baseUrl}/buildings/${id}`), data)
+	return response.data
+}
+
+/**
  * Delete a building
  *
  * @param id Building ID
@@ -92,6 +109,18 @@ export async function createStory(name: string, buildingId: number | null): Prom
 		name,
 		buildingId,
 	})
+	return response.data
+}
+
+/**
+ * Change a story
+ *
+ * @param id Story ID
+ * @param data Story data
+ * @return Updated story
+ */
+export async function updateStory(id: number, data: UpdateStory): Promise<Story> {
+	const response = await axios.put(generateUrl(`${baseUrl}/stories/${id}`), data)
 	return response.data
 }
 
@@ -235,4 +264,46 @@ export async function saveDefaultGroups(entityType: BookableType, entityId: numb
 	await axios.put(generateUrl(`${baseUrl}/booking-calendars/${entityType}/${entityId}/default-groups`), {
 		groupIds,
 	})
+}
+
+/**
+ * Fetch all vehicles
+ *
+ * @return List of vehicles
+ */
+export async function fetchVehicles(): Promise<Vehicle[]> {
+	const response = await axios.get<Vehicle[]>(generateUrl(`${baseUrl}/vehicles`))
+	return response.data
+}
+
+/**
+ * Create a new vehicle
+ *
+ * @param data Vehicle data
+ * @return Created vehicle
+ */
+export async function createVehicle(data: NewVehicle): Promise<Vehicle> {
+	const response = await axios.post(generateUrl(`${baseUrl}/vehicles`), data)
+	return response.data
+}
+
+/**
+ * Change a vehicle and its restrictions
+ *
+ * @param id Vehicle ID
+ * @param data Vehicle data
+ * @return Updated vehicle
+ */
+export async function updateVehicle(id: number, data: UpdateVehicle): Promise<Vehicle> {
+	const response = await axios.put(generateUrl(`${baseUrl}/vehicles/${id}`), data)
+	return response.data
+}
+
+/**
+ * Delete a vehicle
+ *
+ * @param id Vehicle ID
+ */
+export async function deleteVehicle(id: number): Promise<void> {
+	await axios.delete(generateUrl(`${baseUrl}/vehicles/${id}`))
 }

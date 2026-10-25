@@ -67,14 +67,14 @@ Changes are made available to Nextcloud Calendar through the app’s Calendar in
 
 ### Editing in the admin settings
 
-Rooms and resources can be edited in the admin settings, and the tables show who can book them. A room or resource can be restricted to groups there. The admin settings do not hide an entity by restricting it without groups, because the server then deletes its booking calendar with all bookings. `calendar-resource:restrict` still can.
+Buildings, floors, rooms, resources and vehicles can be created, edited and deleted in the admin settings, and the tables show who can book each room, resource and vehicle. They can be restricted to groups there. The admin settings do not hide an entity by restricting it without groups, because the server then deletes its booking calendar with all bookings. `calendar-resource:restrict` still can.
 
 ### Booking calendars
 
 Every room, general resource and vehicle has a booking calendar on the server that holds its accepted bookings. Users can add these calendars read-only to their own calendars. The calendars then show up in Nextcloud Calendar and in every CalDAV app connected to the account. Private events are hidden, and confidential events only show as busy.
 
 1. An admin picks the **viewer groups**, either in the admin settings under *Booking calendars* or with `calendar-resource:booking-calendars:viewer-groups`. Only members of these groups can add booking calendars. Without viewer groups the feature is off.
-2. Users pick the calendars they want in their personal settings under *Calendar → Resource booking calendars*. A switch there, off by default, adds every new room, resource and vehicle automatically.
+2. Users pick the calendars they want in their personal settings under *Calendar → Resource booking calendars*. A switch there, off by default, adds every new room, resource and vehicle automatically. Users outside the viewer groups get a note there instead, and admins a link to the settings.
 3. An admin can also set **default groups** for each room, resource or vehicle. Members of these groups get the calendar without picking it, but they can still remove it. Default groups have to be viewer groups, and for a restricted item they also have to be one of its restriction groups.
 
 Restricted rooms, resources and vehicles are only offered to members of their restriction groups. Users lose their calendars right away when they leave a group or a group is deleted. Changes to the viewer groups in the admin settings are applied by a background job, and an hourly job catches anything else.

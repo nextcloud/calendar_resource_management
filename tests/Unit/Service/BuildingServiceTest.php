@@ -47,4 +47,18 @@ class BuildingServiceTest extends TestCase {
 
 		$this->service->deleteBuilding(3);
 	}
+
+	public function testUpdateBuildingChangesAllFields(): void {
+		$building = new BuildingModel();
+		$building->setId(1);
+		$this->buildingMapper->method('find')->with(1)->willReturn($building);
+		$this->buildingMapper->expects(self::once())->method('update')->willReturnArgument(0);
+
+		$updated = $this->service->updateBuilding(1, 'Head office', 'Main Street 1', 'Since 2020', true);
+
+		self::assertSame('Head office', $updated->getDisplayName());
+		self::assertSame('Main Street 1', $updated->getAddress());
+		self::assertSame('Since 2020', $updated->getDescription());
+		self::assertTrue((bool)$updated->getIsWheelchairAccessible());
+	}
 }

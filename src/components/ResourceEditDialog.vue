@@ -8,9 +8,9 @@ import type { Building, GroupOption, Resource, SelectOption, UpdateResource } fr
 
 import { translate as t } from '@nextcloud/l10n'
 import { computed, ref, watch } from 'vue'
-import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
+import EditDialog from './EditDialog.vue'
 import RestrictionFields from './RestrictionFields.vue'
 import { optionId, selectOptions } from '../utils/entities.ts'
 
@@ -41,23 +41,6 @@ const hidden = computed(() => props.resource !== null && props.resource.restrict
 const canSubmit = computed(() => name.value.trim() !== '' && email.value.trim() !== '' && optionId(building.value) !== null
 	// Hiding deletes the booking calendar, only the occ command may do that
 	&& (!restricted.value || restrictionGroups.value.length > 0 || hidden.value))
-
-const buttons = computed(() => [
-	{
-		label: t('calendar_resource_management', 'Cancel'),
-		callback: (): void => emit('close'),
-	},
-	{
-		label: t('calendar_resource_management', 'Save'),
-		variant: 'primary' as const,
-		disabled: !canSubmit.value || props.loading,
-		callback: (): false => {
-			submit()
-			// The parent closes the dialog once the resource was saved
-			return false
-		},
-	},
-])
 
 watch(() => props.resource, (resource) => {
 	if (!resource) {
@@ -91,64 +74,46 @@ function submit(): void {
 	})
 }
 
-/**
- * Tell the parent when the dialog is dismissed.
- *
- * @param open Whether the dialog is open
- */
-function onToggle(open: boolean): void {
-	if (!open) {
-		emit('close')
-	}
-}
 </script>
 
 <template>
-	<NcDialog
-		:buttons="buttons"
+	<EditDialog
+		:canSave="canSubmit"
+		:loading="loading"
 		:name="t('calendar_resource_management', 'Edit resource {name}', { name: resource?.name ?? '' })"
 		:open="resource !== null"
-		size="normal"
-		@update:open="onToggle">
-		<div class="crm-edit">
-			<NcTextField
-				v-model="name"
-				class="crm-field"
-				:label="t('calendar_resource_management', 'Resource name')"
-				:placeholder="t('calendar_resource_management', 'Required')" />
+		@close="emit('close')"
+		@save="submit">
+		<NcTextField
+			v-model="name"
+			class="crm-field"
+			:label="t('calendar_resource_management', 'Resource name')"
+			:placeholder="t('calendar_resource_management', 'Required')" />
 
-			<NcTextField
-				v-model="email"
-				class="crm-field"
-				:label="t('calendar_resource_management', 'Email')"
-				:placeholder="t('calendar_resource_management', 'Required')"
-				type="email" />
+		<NcTextField
+			v-model="email"
+			class="crm-field"
+			:label="t('calendar_resource_management', 'Email')"
+			:placeholder="t('calendar_resource_management', 'Required')"
+			type="email" />
 
-			<NcTextField
-				v-model="resourceType"
-				class="crm-field"
-				:label="t('calendar_resource_management', 'Resource type')"
-				:placeholder="t('calendar_resource_management', 'e.g. projector')" />
+		<NcTextField
+			v-model="resourceType"
+			class="crm-field"
+			:label="t('calendar_resource_management', 'Resource type')"
+			:placeholder="t('calendar_resource_management', 'e.g. projector')" />
 
-			<NcSelect
-				v-model="building"
-				class="crm-field"
-				:clearable="false"
-				:inputLabel="t('calendar_resource_management', 'Building')"
-				:options="buildingOptions"
-				:placeholder="t('calendar_resource_management', 'Please select a building')" />
+		<NcSelect
+			v-model="building"
+			class="crm-field"
+			:clearable="false"
+			:inputLabel="t('calendar_resource_management', 'Building')"
+			:options="buildingOptions"
+			:placeholder="t('calendar_resource_management', 'Please select a building')" />
 
-			<RestrictionFields
-				v-model:groups="restrictionGroups"
-				v-model:restricted="restricted"
-				:hidden="hidden" />
-		</div>
-	</NcDialog>
+		<RestrictionFields
+			v-model:groups="restrictionGroups"
+			v-model:restricted="restricted"
+			:hidden="hidden" />
+	</EditDialog>
 </template>
-
-<style lang="scss" scoped>
-.crm-edit :deep(.crm-field) {
-	margin-block-end: calc(2 * var(--default-grid-baseline));
-	width: 100%;
-}
-</style>

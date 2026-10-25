@@ -13,6 +13,7 @@ use OCA\CalendarResourceManagement\Db\BuildingModel;
 use OCA\CalendarResourceManagement\Db\ResourceModel;
 use OCA\CalendarResourceManagement\Db\RoomModel;
 use OCA\CalendarResourceManagement\Db\StoryModel;
+use OCA\CalendarResourceManagement\Db\VehicleModel;
 use OCA\CalendarResourceManagement\Exception\EmailAlreadyUsedException;
 use OCA\CalendarResourceManagement\Exception\ServiceException;
 use OCA\CalendarResourceManagement\Service\BookingCalendarShareService;
@@ -20,6 +21,7 @@ use OCA\CalendarResourceManagement\Service\BuildingService;
 use OCA\CalendarResourceManagement\Service\ResourceService;
 use OCA\CalendarResourceManagement\Service\RoomService;
 use OCA\CalendarResourceManagement\Service\StoryService;
+use OCA\CalendarResourceManagement\Service\VehicleService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\Calendar\Resource\IManager as IResourceManager;
@@ -45,6 +47,7 @@ class AdminControllerTest extends TestCase {
 	private LoggerInterface&MockObject $logger;
 	private BookingCalendarShareService&MockObject $shareService;
 	private IGroupManager&MockObject $groupManager;
+	private VehicleService&MockObject $vehicleService;
 	private AdminController $controller;
 
 	protected function setUp(): void {
@@ -60,6 +63,7 @@ class AdminControllerTest extends TestCase {
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->shareService = $this->createMock(BookingCalendarShareService::class);
 		$this->groupManager = $this->createMock(IGroupManager::class);
+		$this->vehicleService = $this->createMock(VehicleService::class);
 
 		$this->controller = new AdminController(
 			'calendar_resource_management',
@@ -74,6 +78,7 @@ class AdminControllerTest extends TestCase {
 			$this->logger,
 			$this->shareService,
 			$this->groupManager,
+			$this->vehicleService,
 		);
 	}
 
@@ -204,6 +209,79 @@ class AdminControllerTest extends TestCase {
 		$response = $this->controller->updateResource(4, 'Beamer', 1, 'taken@example.com');
 
 		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+	}
+
+	public function testUpdateBuildingUpdatesRoomsAndResources(): void {
+		$building = new BuildingModel();
+		$building->setId(1);
+		$this->buildingService->expects(self::once())
+			->method('updateBuilding')
+			->with(1, 'Head office', 'Main Street 1', 'New', true)
+			->willReturn($building);
+		// Rooms and resources carry the building name and address
+		$this->roomManager->expects(self::once())->method('update');
+		$this->resourceManager->expects(self::once())->method('update');
+
+		$response = $this->controller->updateBuilding(1, 'Head office', 'Main Street 1', 'New', true);
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+	}
+
+	public function testUpdateBuildingRejectsBlankName(): void {
+		$this->buildingService->expects(self::never())->method('updateBuilding');
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $this->controller->updateBuilding(1, ' ')->getStatus());
+	}
+
+	public function testUpdateStoryReportsUnknownStory(): void {
+		$this->storyService->method('updateStory')->willThrowException(new DoesNotExistException('nope'));
+		$this->roomManager->expects(self::never())->method('update');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $this->controller->updateStory(404, 'Floor', 1)->getStatus());
+	}
+
+	public function testUpdateStoryRequiresABuilding(): void {
+		self::assertSame(Http::STATUS_BAD_REQUEST, $this->controller->updateStory(2, 'Floor')->getStatus());
+	}
+
+	public function testCreateVehicleSharesItsBookingCalendar(): void {
+		$vehicle = new VehicleModel();
+		$vehicle->setId(3);
+		$this->vehicleService->expects(self::once())
+			->method('createVehicle')
+			->with('Pool car', 1, 'car@example.com', 'car', 'VW', 'ID.3', true, 400, 5, '')
+			->willReturn($vehicle);
+		$this->resourceManager->expects(self::once())->method('update');
+		$this->shareService->expects(self::once())->method('handleCreated')->with('vehicle', $vehicle);
+
+		$response = $this->controller->createVehicle('Pool car', 1, 'car@example.com', 'car', 'VW', 'ID.3', true, 400, 5);
+
+		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
+		self::assertSame([], $response->getData()['restrictionGroups']);
+	}
+
+	public function testCreateVehicleRequiresAValidEmail(): void {
+		$this->vehicleService->expects(self::never())->method('createVehicle');
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $this->controller->createVehicle('Pool car', 1, 'no-email')->getStatus());
+	}
+
+	public function testUpdateVehicleSyncsTheBookingCalendar(): void {
+		$vehicle = new VehicleModel();
+		$vehicle->setId(3);
+		$this->groupManager->method('groupExists')->willReturn(true);
+		$this->vehicleService->method('updateVehicle')->willReturn($vehicle);
+		$this->shareService->expects(self::once())->method('syncEntityById')->with('vehicle', 3);
+
+		$response = $this->controller->updateVehicle(3, 'Pool car', 1, 'car@example.com', restricted: true, restrictionGroupIds: ['drivers']);
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+	}
+
+	public function testDeleteVehicleReportsUnknownVehicle(): void {
+		$this->vehicleService->method('deleteVehicle')->willThrowException(new DoesNotExistException('nope'));
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $this->controller->deleteVehicle(404)->getStatus());
 	}
 
 	public function testCreateBuildingRejectsBlankName(): void {

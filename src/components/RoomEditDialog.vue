@@ -9,10 +9,10 @@ import type { Building, GroupOption, Room, SelectOption, Story, UpdateRoom, User
 import { translate as t } from '@nextcloud/l10n'
 import { computed, ref, watch } from 'vue'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
-import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcSelectUsers from '@nextcloud/vue/components/NcSelectUsers'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
+import EditDialog from './EditDialog.vue'
 import RestrictionFields from './RestrictionFields.vue'
 import { fetchUsers } from '../services/adminService.ts'
 import { optionId, selectOptions } from '../utils/entities.ts'
@@ -63,23 +63,6 @@ const hidden = computed(() => props.room !== null && props.room.restricted && pr
 const canSubmit = computed(() => name.value.trim() !== '' && email.value.trim() !== '' && optionId(story.value) !== null
 	// Hiding deletes the booking calendar, only the occ command may do that
 	&& (!restricted.value || restrictionGroups.value.length > 0 || hidden.value))
-
-const buttons = computed(() => [
-	{
-		label: t('calendar_resource_management', 'Cancel'),
-		callback: (): void => emit('close'),
-	},
-	{
-		label: t('calendar_resource_management', 'Save'),
-		variant: 'primary' as const,
-		disabled: !canSubmit.value || props.loading,
-		callback: (): false => {
-			submit()
-			// The parent closes the dialog once the room was saved
-			return false
-		},
-	},
-])
 
 /**
  * Fill the form with the room to edit.
@@ -158,112 +141,88 @@ function submit(): void {
 	})
 }
 
-/**
- * Tell the parent when the dialog is dismissed.
- *
- * @param open Whether the dialog is open
- */
-function onToggle(open: boolean): void {
-	if (!open) {
-		emit('close')
-	}
-}
 </script>
 
 <template>
-	<NcDialog
-		:buttons="buttons"
+	<EditDialog
+		:canSave="canSubmit"
+		:loading="loading"
 		:name="t('calendar_resource_management', 'Edit room {name}', { name: room?.name ?? '' })"
 		:open="room !== null"
-		size="normal"
-		@update:open="onToggle">
-		<div class="crm-edit">
-			<NcTextField
-				v-model="name"
-				class="crm-field"
-				:label="t('calendar_resource_management', 'Room name')"
-				:placeholder="t('calendar_resource_management', 'Required')" />
+		@close="emit('close')"
+		@save="submit">
+		<NcTextField
+			v-model="name"
+			class="crm-field"
+			:label="t('calendar_resource_management', 'Room name')"
+			:placeholder="t('calendar_resource_management', 'Required')" />
 
-			<NcTextField
-				v-model="email"
-				class="crm-field"
-				:label="t('calendar_resource_management', 'Email')"
-				:placeholder="t('calendar_resource_management', 'Required')"
-				type="email" />
+		<NcTextField
+			v-model="email"
+			class="crm-field"
+			:label="t('calendar_resource_management', 'Email')"
+			:placeholder="t('calendar_resource_management', 'Required')"
+			type="email" />
 
-			<NcTextField
-				v-model="roomType"
-				class="crm-field"
-				:label="t('calendar_resource_management', 'Room type')"
-				:placeholder="t('calendar_resource_management', 'e.g. meeting-room')" />
+		<NcTextField
+			v-model="roomType"
+			class="crm-field"
+			:label="t('calendar_resource_management', 'Room type')"
+			:placeholder="t('calendar_resource_management', 'e.g. meeting-room')" />
 
-			<NcTextField
-				v-model="roomNumber"
-				class="crm-field"
-				:label="t('calendar_resource_management', 'Room number')"
-				:placeholder="t('calendar_resource_management', 'e.g. 1.23')" />
+		<NcTextField
+			v-model="roomNumber"
+			class="crm-field"
+			:label="t('calendar_resource_management', 'Room number')"
+			:placeholder="t('calendar_resource_management', 'e.g. 1.23')" />
 
-			<NcSelectUsers
-				v-model="contactPerson"
-				class="crm-field"
-				:inputLabel="t('calendar_resource_management', 'Contact person')"
-				:loading="loadingUsers"
-				:options="users"
-				:placeholder="t('calendar_resource_management', 'Search for an account')"
-				@search="searchUsers" />
+		<NcSelectUsers
+			v-model="contactPerson"
+			class="crm-field"
+			:inputLabel="t('calendar_resource_management', 'Contact person')"
+			:loading="loadingUsers"
+			:options="users"
+			:placeholder="t('calendar_resource_management', 'Search for an account')"
+			@search="searchUsers" />
 
-			<NcTextField
-				v-model="capacity"
-				class="crm-field"
-				:label="t('calendar_resource_management', 'Capacity')"
-				min="0"
-				:placeholder="t('calendar_resource_management', 'e.g. 10')"
-				type="number" />
+		<NcTextField
+			v-model="capacity"
+			class="crm-field"
+			:label="t('calendar_resource_management', 'Capacity')"
+			min="0"
+			:placeholder="t('calendar_resource_management', 'e.g. 10')"
+			type="number" />
 
-			<NcSelect
-				v-model="building"
-				class="crm-field"
-				:clearable="false"
-				:inputLabel="t('calendar_resource_management', 'Building')"
-				:options="buildingOptions"
-				:placeholder="t('calendar_resource_management', 'Please select a building')" />
+		<NcSelect
+			v-model="building"
+			class="crm-field"
+			:clearable="false"
+			:inputLabel="t('calendar_resource_management', 'Building')"
+			:options="buildingOptions"
+			:placeholder="t('calendar_resource_management', 'Please select a building')" />
 
-			<NcSelect
-				v-model="story"
-				class="crm-field"
-				:disabled="storyOptions.length === 0"
-				:inputLabel="t('calendar_resource_management', 'Floor')"
-				:options="storyOptions"
-				:placeholder="t('calendar_resource_management', 'Please select a floor')" />
+		<NcSelect
+			v-model="story"
+			class="crm-field"
+			:disabled="storyOptions.length === 0"
+			:inputLabel="t('calendar_resource_management', 'Floor')"
+			:options="storyOptions"
+			:placeholder="t('calendar_resource_management', 'Please select a floor')" />
 
-			<fieldset class="crm-equipment">
-				<legend>{{ t('calendar_resource_management', 'Equipment') }}</legend>
-				<NcCheckboxRadioSwitch
-					v-for="item in EQUIPMENT_TYPES"
-					:key="item.payloadKey"
-					v-model="equipment[item.payloadKey]"
-					type="switch">
-					{{ item.label() }}
-				</NcCheckboxRadioSwitch>
-			</fieldset>
+		<fieldset class="crm-equipment">
+			<legend>{{ t('calendar_resource_management', 'Equipment') }}</legend>
+			<NcCheckboxRadioSwitch
+				v-for="item in EQUIPMENT_TYPES"
+				:key="item.payloadKey"
+				v-model="equipment[item.payloadKey]"
+				type="switch">
+				{{ item.label() }}
+			</NcCheckboxRadioSwitch>
+		</fieldset>
 
-			<RestrictionFields
-				v-model:groups="restrictionGroups"
-				v-model:restricted="restricted"
-				:hidden="hidden" />
-		</div>
-	</NcDialog>
+		<RestrictionFields
+			v-model:groups="restrictionGroups"
+			v-model:restricted="restricted"
+			:hidden="hidden" />
+	</EditDialog>
 </template>
-
-<style lang="scss" scoped>
-.crm-edit {
-	:deep(.crm-field) {
-		margin-block-end: calc(2 * var(--default-grid-baseline));
-		width: 100%;
-	}
-
-	.crm-equipment legend {
-		font-weight: bold;
-	}
-}
-</style>
