@@ -18,6 +18,8 @@ import RoomsSection from './components/RoomsSection.vue'
 import StoriesSection from './components/StoriesSection.vue'
 import * as api from './services/adminService.ts'
 
+type TabId = 'buildings' | 'stories' | 'rooms' | 'resources'
+
 interface PendingDelete {
 	message: string
 	action: () => Promise<void>
@@ -42,6 +44,16 @@ const creating = ref({
 })
 
 const pendingDelete = ref<PendingDelete | null>(null)
+
+const tabs: { id: TabId, label: string }[] = [
+	{ id: 'buildings', label: t('calendar_resource_management', 'Buildings') },
+	{ id: 'stories', label: t('calendar_resource_management', 'Floors') },
+	{ id: 'rooms', label: t('calendar_resource_management', 'Rooms') },
+	{ id: 'resources', label: t('calendar_resource_management', 'Resources') },
+]
+
+const activeTab = ref<TabId>('buildings')
+const tabButtons = useTemplateRef<HTMLButtonElement[]>('tabButtons')
 
 const buildingsSection = useTemplateRef<InstanceType<typeof BuildingsSection>>('buildings')
 const storiesSection = useTemplateRef<InstanceType<typeof StoriesSection>>('stories')
@@ -332,6 +344,35 @@ function confirmDeleteResource(id: number): void {
 }
 
 /**
+ * Move between tabs with the arrow, Home and End keys.
+ *
+ * @param event The keyboard event on the tab list
+ */
+function onTabKeydown(event: KeyboardEvent): void {
+	const current = tabs.findIndex((tab) => tab.id === activeTab.value)
+	let next: number
+	switch (event.key) {
+		case 'ArrowRight':
+			next = (current + 1) % tabs.length
+			break
+		case 'ArrowLeft':
+			next = (current - 1 + tabs.length) % tabs.length
+			break
+		case 'Home':
+			next = 0
+			break
+		case 'End':
+			next = tabs.length - 1
+			break
+		default:
+			return
+	}
+	event.preventDefault()
+	activeTab.value = tabs[next].id
+	tabButtons.value?.[next]?.focus()
+}
+
+/**
  * Forget the pending deletion when the dialog is dismissed.
  *
  * @param open Whether the dialog is open
@@ -345,37 +386,83 @@ function onDeleteDialogToggle(open: boolean): void {
 
 <template>
 	<div class="crm-admin">
-		<BuildingsSection
-			ref="buildings"
-			:buildings="buildings"
-			:loading="creating.building"
-			@create="createBuilding"
-			@delete="confirmDeleteBuilding" />
+		<div
+			class="crm-tabs"
+			role="tablist"
+			:aria-label="t('calendar_resource_management', 'Calendar resources')"
+			@keydown="onTabKeydown">
+			<button
+				v-for="tab in tabs"
+				:id="`crm-tab-${tab.id}`"
+				ref="tabButtons"
+				:key="tab.id"
+				:aria-controls="`crm-panel-${tab.id}`"
+				:aria-selected="activeTab === tab.id"
+				class="crm-tabs__tab"
+				:class="{ 'crm-tabs__tab--active': activeTab === tab.id }"
+				role="tab"
+				:tabindex="activeTab === tab.id ? 0 : -1"
+				type="button"
+				@click="activeTab = tab.id">
+				{{ tab.label }}
+			</button>
+		</div>
 
-		<StoriesSection
-			ref="stories"
-			:buildings="buildings"
-			:loading="creating.story"
-			:stories="stories"
-			@create="createStory"
-			@delete="confirmDeleteStory" />
+		<div
+			v-show="activeTab === 'buildings'"
+			id="crm-panel-buildings"
+			aria-labelledby="crm-tab-buildings"
+			role="tabpanel">
+			<BuildingsSection
+				ref="buildings"
+				:buildings="buildings"
+				:loading="creating.building"
+				@create="createBuilding"
+				@delete="confirmDeleteBuilding" />
+		</div>
 
-		<RoomsSection
-			ref="rooms"
-			:buildings="buildings"
-			:loading="creating.room"
-			:rooms="rooms"
-			:stories="stories"
-			@create="createRoom"
-			@delete="confirmDeleteRoom" />
+		<div
+			v-show="activeTab === 'stories'"
+			id="crm-panel-stories"
+			aria-labelledby="crm-tab-stories"
+			role="tabpanel">
+			<StoriesSection
+				ref="stories"
+				:buildings="buildings"
+				:loading="creating.story"
+				:stories="stories"
+				@create="createStory"
+				@delete="confirmDeleteStory" />
+		</div>
 
-		<ResourcesSection
-			ref="resources"
-			:buildings="buildings"
-			:loading="creating.resource"
-			:resources="resources"
-			@create="createResource"
-			@delete="confirmDeleteResource" />
+		<div
+			v-show="activeTab === 'rooms'"
+			id="crm-panel-rooms"
+			aria-labelledby="crm-tab-rooms"
+			role="tabpanel">
+			<RoomsSection
+				ref="rooms"
+				:buildings="buildings"
+				:loading="creating.room"
+				:rooms="rooms"
+				:stories="stories"
+				@create="createRoom"
+				@delete="confirmDeleteRoom" />
+		</div>
+
+		<div
+			v-show="activeTab === 'resources'"
+			id="crm-panel-resources"
+			aria-labelledby="crm-tab-resources"
+			role="tabpanel">
+			<ResourcesSection
+				ref="resources"
+				:buildings="buildings"
+				:loading="creating.resource"
+				:resources="resources"
+				@create="createResource"
+				@delete="confirmDeleteResource" />
+		</div>
 
 		<NcDialog
 			:buttons="deleteDialogButtons"
@@ -390,6 +477,46 @@ function onDeleteDialogToggle(open: boolean): void {
 .crm-admin {
 	// Every form field and table of all sections shares this width
 	--crm-content-max-width: 700px;
+
+	.crm-tabs {
+		border-block-end: 1px solid var(--color-border);
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--default-grid-baseline);
+		// Lines the tabs up with the settings sections below
+		margin-inline: calc(7 * var(--default-grid-baseline));
+		margin-block-start: calc(4 * var(--default-grid-baseline));
+
+		&__tab {
+			background: none;
+			border: none;
+			border-block-end: 2px solid transparent;
+			border-radius: var(--border-radius-element) var(--border-radius-element) 0 0;
+			color: var(--color-text-maxcontrast);
+			cursor: pointer;
+			margin: 0;
+			// Overlaps the list border so the active underline replaces it
+			margin-block-end: -1px;
+			min-height: var(--default-clickable-area);
+			padding: 0 calc(4 * var(--default-grid-baseline));
+
+			&:hover {
+				background-color: var(--color-background-hover);
+				color: var(--color-main-text);
+			}
+
+			&:focus-visible {
+				outline: 2px solid var(--color-main-text);
+				outline-offset: -2px;
+			}
+
+			&--active {
+				border-block-end-color: var(--color-primary-element);
+				color: var(--color-main-text);
+				font-weight: bold;
+			}
+		}
+	}
 
 	// Text fields, selects and the submit button all line up on the same edges
 	:deep(.crm-field) {
