@@ -21,6 +21,8 @@ use OCP\IDBConnection;
  * @template-extends QBMapper<StoryModel>
  */
 class StoryMapper extends QBMapper {
+	use FilterableTrait;
+
 	/**
 	 * StoryMapper constructor.
 	 *

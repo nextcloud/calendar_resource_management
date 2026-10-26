@@ -18,6 +18,8 @@ use OCP\IDBConnection;
  * @template-extends AMapper<ResourceModel>
  */
 class ResourceMapper extends AMapper {
+	use FilterableTrait;
+
 	/**
 	 * ResourceMapper constructor.
 	 *
