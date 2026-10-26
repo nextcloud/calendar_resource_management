@@ -12,6 +12,7 @@ use OCA\CalendarResourceManagement\Db\BuildingMapper;
 use OCA\CalendarResourceManagement\Db\BuildingModel;
 use OCA\CalendarResourceManagement\Db\StoryMapper;
 use OCA\CalendarResourceManagement\Service\BuildingService;
+use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\MockObject\MockObject;
 use Test\TestCase;
 
@@ -46,5 +47,31 @@ class BuildingServiceTest extends TestCase {
 		$this->buildingMapper->expects(self::once())->method('delete')->with($building);
 
 		$this->service->deleteBuilding(3);
+	}
+
+	public function testUpdateBuildingPersistsNameAndAddress(): void {
+		$building = new BuildingModel();
+		$building->setId(3);
+		$this->buildingMapper->expects(self::once())->method('find')->with(3)->willReturn($building);
+		$this->buildingMapper->expects(self::once())
+			->method('update')
+			->willReturnCallback(static function (BuildingModel $updated) use ($building): BuildingModel {
+				self::assertSame($building, $updated);
+				self::assertSame('Headquarters', $updated->getDisplayName());
+				self::assertSame('Somewhere 2', $updated->getAddress());
+
+				return $updated;
+			});
+
+		$this->service->updateBuilding(3, 'Headquarters', 'Somewhere 2');
+	}
+
+	public function testUpdateBuildingRejectsUnknownBuilding(): void {
+		$this->buildingMapper->method('find')->willThrowException(new DoesNotExistException('nope'));
+		$this->buildingMapper->expects(self::never())->method('update');
+
+		$this->expectException(DoesNotExistException::class);
+
+		$this->service->updateBuilding(404, 'Headquarters');
 	}
 }

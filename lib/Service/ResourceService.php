@@ -13,7 +13,9 @@ use OCA\CalendarResourceManagement\Db\ResourceMapper;
 use OCA\CalendarResourceManagement\Db\ResourceModel;
 use OCA\CalendarResourceManagement\Db\RestrictionMapper;
 use OCA\CalendarResourceManagement\Exception\EmailAlreadyUsedException;
+use OCA\CalendarResourceManagement\Exception\ServiceException;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Http;
 use OCP\Security\ISecureRandom;
 
 class ResourceService {
@@ -62,6 +64,37 @@ class ResourceService {
 		$resource->setResourceType($resourceType);
 		$resource->setBuildingId($buildingId);
 		return $this->resourceMapper->insert($resource);
+	}
+
+	/**
+	 * Update a resource
+	 *
+	 * @throws DoesNotExistException If the resource does not exist.
+	 * @throws ServiceException If the building does not exist.
+	 * @throws EmailAlreadyUsedException If another resource already uses the email address.
+	 */
+	public function updateResource(int $id, string $name, int $buildingId, string $email = '', string $resourceType = 'default'): ResourceModel {
+		$resource = $this->resourceMapper->find($id);
+		try {
+			$this->buildingMapper->find($buildingId);
+		} catch (DoesNotExistException $e) {
+			throw new ServiceException('The selected building does not exist', previous: $e, httpCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$existing = $this->resourceMapper->findByEmail($email);
+			if ($existing->getId() !== $id) {
+				throw new EmailAlreadyUsedException('A resource with this email address already exists');
+			}
+		} catch (DoesNotExistException) {
+			// The email address is still free
+		}
+
+		$resource->setDisplayName($name);
+		$resource->setEmail($email);
+		$resource->setResourceType($resourceType);
+		$resource->setBuildingId($buildingId);
+		return $this->resourceMapper->update($resource);
 	}
 
 	/**
