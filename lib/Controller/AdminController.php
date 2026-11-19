@@ -79,7 +79,7 @@ class AdminController extends Controller {
 		try {
 			$building = $this->buildingService->createBuilding($name, $address);
 		} catch (Throwable $e) {
-			return $this->unexpectedError($this->l10n->t('Could not create building'), $e);
+			return $this->unexpectedError($e);
 		}
 
 		return new JSONResponse($building, Http::STATUS_CREATED);
@@ -97,7 +97,7 @@ class AdminController extends Controller {
 		} catch (DoesNotExistException) {
 			return $this->error($this->l10n->t('The building does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (Throwable $e) {
-			return $this->unexpectedError($this->l10n->t('Could not update building'), $e);
+			return $this->unexpectedError($e);
 		}
 
 		// Rooms expose the building name and address in their metadata
@@ -114,7 +114,7 @@ class AdminController extends Controller {
 		} catch (DoesNotExistException) {
 			return $this->error($this->l10n->t('The building does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (Throwable $e) {
-			return $this->unexpectedError($this->l10n->t('Could not delete building'), $e);
+			return $this->unexpectedError($e);
 		}
 
 		return new JSONResponse([], Http::STATUS_NO_CONTENT);
@@ -139,9 +139,9 @@ class AdminController extends Controller {
 		try {
 			$story = $this->storyService->createStory($name, $buildingId);
 		} catch (ServiceException $e) {
-			return $this->serviceError($this->l10n->t('Could not create floor'), $e);
+			return $this->serviceError($e);
 		} catch (Throwable $e) {
-			return $this->unexpectedError($this->l10n->t('Could not create floor'), $e);
+			return $this->unexpectedError($e);
 		}
 
 		return new JSONResponse($story, Http::STATUS_CREATED);
@@ -162,9 +162,9 @@ class AdminController extends Controller {
 		} catch (DoesNotExistException) {
 			return $this->error($this->l10n->t('The floor does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (ServiceException $e) {
-			return $this->serviceError($this->l10n->t('Could not update floor'), $e);
+			return $this->serviceError($e);
 		} catch (Throwable $e) {
-			return $this->unexpectedError($this->l10n->t('Could not update floor'), $e);
+			return $this->unexpectedError($e);
 		}
 
 		// Rooms expose the story name and their building in their metadata
@@ -181,7 +181,7 @@ class AdminController extends Controller {
 		} catch (DoesNotExistException) {
 			return $this->error($this->l10n->t('The floor does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (Throwable $e) {
-			return $this->unexpectedError($this->l10n->t('Could not delete floor'), $e);
+			return $this->unexpectedError($e);
 		}
 
 		return new JSONResponse([], Http::STATUS_NO_CONTENT);
@@ -237,9 +237,9 @@ class AdminController extends Controller {
 				$wheelchairAccessible,
 			);
 		} catch (ServiceException $e) {
-			return $this->serviceError($this->l10n->t('Could not create room'), $e);
+			return $this->serviceError($e);
 		} catch (Throwable $e) {
-			return $this->unexpectedError($this->l10n->t('Could not create room'), $e);
+			return $this->unexpectedError($e);
 		}
 
 		$this->roomManager->update();
@@ -295,9 +295,9 @@ class AdminController extends Controller {
 		} catch (DoesNotExistException) {
 			return $this->error($this->l10n->t('The room does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (ServiceException $e) {
-			return $this->serviceError($this->l10n->t('Could not update room'), $e);
+			return $this->serviceError($e);
 		} catch (Throwable $e) {
-			return $this->unexpectedError($this->l10n->t('Could not update room'), $e);
+			return $this->unexpectedError($e);
 		}
 
 		$this->roomManager->update();
@@ -313,7 +313,7 @@ class AdminController extends Controller {
 		} catch (DoesNotExistException) {
 			return $this->error($this->l10n->t('The room does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (Throwable $e) {
-			return $this->unexpectedError($this->l10n->t('Could not delete room'), $e);
+			return $this->unexpectedError($e);
 		}
 
 		$this->roomManager->update();
@@ -343,9 +343,9 @@ class AdminController extends Controller {
 		try {
 			$resource = $this->resourceService->createResource($name, $buildingId, $email, $resourceType);
 		} catch (ServiceException $e) {
-			return $this->serviceError($this->l10n->t('Could not create resource'), $e);
+			return $this->serviceError($e);
 		} catch (Throwable $e) {
-			return $this->unexpectedError($this->l10n->t('Could not create resource'), $e);
+			return $this->unexpectedError($e);
 		}
 
 		$this->resourceManager->update();
@@ -371,9 +371,9 @@ class AdminController extends Controller {
 		} catch (DoesNotExistException) {
 			return $this->error($this->l10n->t('The resource does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (ServiceException $e) {
-			return $this->serviceError($this->l10n->t('Could not update resource'), $e);
+			return $this->serviceError($e);
 		} catch (Throwable $e) {
-			return $this->unexpectedError($this->l10n->t('Could not update resource'), $e);
+			return $this->unexpectedError($e);
 		}
 
 		$this->resourceManager->update();
@@ -389,7 +389,7 @@ class AdminController extends Controller {
 		} catch (DoesNotExistException) {
 			return $this->error($this->l10n->t('The resource does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (Throwable $e) {
-			return $this->unexpectedError($this->l10n->t('Could not delete resource'), $e);
+			return $this->unexpectedError($e);
 		}
 
 		$this->resourceManager->update();
@@ -405,10 +405,10 @@ class AdminController extends Controller {
 	 * Answer with the message of a service failure that names an http code, treat the rest
 	 * as unexpected.
 	 */
-	private function serviceError(string $message, ServiceException $e): JSONResponse {
+	private function serviceError(ServiceException $e): JSONResponse {
 		$httpCode = $e->getHttpCode();
 		if ($httpCode === null) {
-			return $this->unexpectedError($message, $e);
+			return $this->unexpectedError($e);
 		}
 
 		return $this->error($e->getMessage(), $httpCode);
@@ -417,9 +417,9 @@ class AdminController extends Controller {
 	/**
 	 * Log an unexpected failure and report it without leaking internals to the client.
 	 */
-	private function unexpectedError(string $message, Throwable $e): JSONResponse {
+	private function unexpectedError(Throwable $e): JSONResponse {
 		$this->logger->error('Unexpected failure in the admin interface', ['exception' => $e]);
 
-		return $this->error($message, Http::STATUS_INTERNAL_SERVER_ERROR);
+		return new JSONResponse([], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
 }

@@ -12,8 +12,8 @@ use Exception;
 use Throwable;
 
 /**
- * A failure of a service operation. Subclasses that carry an http code also carry a
- * message that is safe to show to the client.
+ * A failure of a service operation. Exceptions that carry an http code also carry a
+ * translated message that is safe to show to the client.
  */
 class ServiceException extends Exception {
 	public function __construct(

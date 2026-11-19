@@ -241,7 +241,7 @@ class AdminControllerTest extends TestCase {
 		$response = $this->controller->createRoom('Meeting room', 2, 'room@example.com');
 
 		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-		self::assertSame(['error' => 'Could not create room'], $response->getData());
+		self::assertSame([], $response->getData());
 	}
 
 	public function testCreateRoomPassesAllPropertiesAndUpdatesTheBackend(): void {
@@ -335,7 +335,7 @@ class AdminControllerTest extends TestCase {
 		$response = $this->controller->createBuilding('Headquarters');
 
 		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-		self::assertSame(['error' => 'Could not create building'], $response->getData());
+		self::assertSame([], $response->getData());
 	}
 
 	public function testUpdateBuildingRejectsBlankName(): void {
