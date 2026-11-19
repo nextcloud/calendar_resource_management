@@ -17,6 +17,7 @@ use OCA\CalendarResourceManagement\Exception\ServiceException;
 use OCA\CalendarResourceManagement\Service\ResourceService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
+use OCP\IL10N;
 use OCP\Security\ISecureRandom;
 use PHPUnit\Framework\MockObject\MockObject;
 use Test\TestCase;
@@ -34,12 +35,15 @@ class ResourceServiceTest extends TestCase {
 
 		$secureRandom = $this->createMock(ISecureRandom::class);
 		$secureRandom->method('generate')->willReturn('deadbeef');
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnArgument(0);
 
 		$this->service = new ResourceService(
 			$this->resourceMapper,
 			$this->createMock(RestrictionMapper::class),
 			$this->buildingMapper,
 			$secureRandom,
+			$l10n,
 		);
 	}
 
@@ -50,9 +54,13 @@ class ResourceServiceTest extends TestCase {
 			->willThrowException(new DoesNotExistException('nope'));
 		$this->resourceMapper->expects(self::never())->method('insert');
 
-		$this->expectException(DoesNotExistException::class);
-
-		$this->service->createResource('Beamer', 404);
+		try {
+			$this->service->createResource('Beamer', 404);
+			self::fail('Expected a service exception');
+		} catch (ServiceException $e) {
+			self::assertSame('The selected building does not exist', $e->getMessage());
+			self::assertSame(Http::STATUS_BAD_REQUEST, $e->getHttpCode());
+		}
 	}
 
 	public function testCreateResourceRejectsAnEmailUsedByAnotherResource(): void {

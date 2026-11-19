@@ -90,7 +90,7 @@ function submit(story: NewStory): void {
 						<td>
 							<div class="crm-table__actions">
 								<NcButton
-									:aria-label="t('calendar_resource_management', 'Edit floor {name}', { name: story.name })"
+									:aria-label="t('calendar_resource_management', 'Edit floor {name}', { name: story.name }, { escape: false, sanitize: false })"
 									variant="tertiary"
 									@click="openDialog(story)">
 									<template #icon>
@@ -98,7 +98,7 @@ function submit(story: NewStory): void {
 									</template>
 								</NcButton>
 								<NcButton
-									:aria-label="t('calendar_resource_management', 'Delete floor {name}', { name: story.name })"
+									:aria-label="t('calendar_resource_management', 'Delete floor {name}', { name: story.name }, { escape: false, sanitize: false })"
 									variant="tertiary"
 									@click="emit('delete', story.id)">
 									<template #icon>
