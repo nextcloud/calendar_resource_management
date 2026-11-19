@@ -23,6 +23,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\Calendar\Resource\IManager as IResourceManager;
 use OCP\Calendar\Room\IManager as IRoomManager;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserManager;
@@ -53,6 +54,8 @@ class AdminControllerTest extends TestCase {
 		$this->resourceManager = $this->createMock(IResourceManager::class);
 		$this->userManager = $this->createMock(IUserManager::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnArgument(0);
 
 		$this->controller = new AdminController(
 			'calendar_resource_management',
@@ -65,6 +68,7 @@ class AdminControllerTest extends TestCase {
 			$this->resourceManager,
 			$this->userManager,
 			$this->logger,
+			$l10n,
 		);
 	}
 
@@ -152,7 +156,7 @@ class AdminControllerTest extends TestCase {
 
 	public function testCreateStoryReportsUnknownBuilding(): void {
 		$this->storyService->method('createStory')
-			->willThrowException(new DoesNotExistException('nope'));
+			->willThrowException(new ServiceException('The selected building does not exist', httpCode: Http::STATUS_BAD_REQUEST));
 
 		$response = $this->controller->createStory('First floor', 404);
 
@@ -182,18 +186,18 @@ class AdminControllerTest extends TestCase {
 		$response = $this->controller->createRoom('Meeting room', null);
 
 		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		self::assertSame(['error' => 'A story has to be selected'], $response->getData());
+		self::assertSame(['error' => 'A floor has to be selected'], $response->getData());
 	}
 
 	public function testCreateRoomReportsUnknownStory(): void {
 		$this->roomService->method('createRoom')
-			->willThrowException(new DoesNotExistException('nope'));
+			->willThrowException(new ServiceException('The selected floor does not exist', httpCode: Http::STATUS_BAD_REQUEST));
 		$this->roomManager->expects(self::never())->method('update');
 
 		$response = $this->controller->createRoom('Meeting room', 404, 'room@example.com');
 
 		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		self::assertSame(['error' => 'The selected story does not exist'], $response->getData());
+		self::assertSame(['error' => 'The selected floor does not exist'], $response->getData());
 	}
 
 	public function testCreateRoomRejectsMissingEmail(): void {
@@ -232,7 +236,7 @@ class AdminControllerTest extends TestCase {
 		$this->roomService->method('createRoom')->willThrowException($exception);
 		$this->logger->expects(self::once())
 			->method('error')
-			->with('Could not create room', ['exception' => $exception]);
+			->with('Unexpected failure in the admin interface', ['exception' => $exception]);
 
 		$response = $this->controller->createRoom('Meeting room', 2, 'room@example.com');
 
@@ -326,7 +330,7 @@ class AdminControllerTest extends TestCase {
 		$this->buildingService->method('createBuilding')->willThrowException($exception);
 		$this->logger->expects(self::once())
 			->method('error')
-			->with('Could not create building', ['exception' => $exception]);
+			->with('Unexpected failure in the admin interface', ['exception' => $exception]);
 
 		$response = $this->controller->createBuilding('Headquarters');
 

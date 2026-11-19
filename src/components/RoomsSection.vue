@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import type { Building, EquipmentKey, NewRoom, Room, SelectOption, Story, User } from '../types/types.ts'
 
 import { mdiDelete, mdiPlus } from '@mdi/js'
-import { translate as t } from '@nextcloud/l10n'
+import { getLanguage, translate as t } from '@nextcloud/l10n'
 import { computed, onMounted, ref, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
@@ -18,7 +18,7 @@ import NcSelectUsers from '@nextcloud/vue/components/NcSelectUsers'
 import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import { fetchUsers } from '../services/adminService.ts'
-import { nameById, optionId, selectOptions } from '../utils/entities.ts'
+import { DEFAULT_TYPE, nameById, optionId, selectOptions } from '../utils/entities.ts'
 
 const props = defineProps<{
 	buildings: Building[]
@@ -84,7 +84,7 @@ function noEquipment(): Record<EquipmentKey, boolean> {
 
 const name = ref('')
 const email = ref('')
-const roomType = ref('default')
+const roomType = ref(DEFAULT_TYPE)
 const roomNumber = ref('')
 // NcSelectUsers clears to undefined, it does not accept null
 const contactPerson = ref<User | undefined>()
@@ -146,17 +146,35 @@ function buildingName(storyId: number): string {
 }
 
 /**
+ * Create a formatter that lists items the way the user's language does.
+ * Themes can add languages whose codes are no valid BCP 47 tags, those fall
+ * back to the browser language.
+ *
+ * @return The list formatter
+ */
+function createListFormat(): Intl.ListFormat {
+	const options: Intl.ListFormatOptions = { type: 'conjunction', style: 'narrow' }
+	try {
+		return new Intl.ListFormat(getLanguage(), options)
+	} catch {
+		return new Intl.ListFormat(undefined, options)
+	}
+}
+
+const listFormat = createListFormat()
+
+/**
  * Translated list of the equipment a room provides.
  *
  * @param room The room
- * @return Comma separated equipment names
+ * @return Equipment names, listed as the user's language lists items
  */
 function equipmentSummary(room: Room): string {
 	const available = EQUIPMENT_TYPES
 		.filter((item) => room[item.responseKey])
 		.map((item) => item.label())
 
-	return available.length ? available.join(', ') : '-'
+	return available.length ? listFormat.format(available) : '-'
 }
 
 /**
@@ -165,7 +183,7 @@ function equipmentSummary(room: Room): string {
 function reset(): void {
 	name.value = ''
 	email.value = ''
-	roomType.value = 'default'
+	roomType.value = DEFAULT_TYPE
 	roomNumber.value = ''
 	contactPerson.value = undefined
 	capacity.value = ''
@@ -207,7 +225,9 @@ function submit(): void {
 						<th>{{ t('calendar_resource_management', 'Room number') }}</th>
 						<th>{{ t('calendar_resource_management', 'Capacity') }}</th>
 						<th>{{ t('calendar_resource_management', 'Equipment') }}</th>
+						<!-- TRANSLATORS A building such as an office building, not the act of constructing -->
 						<th>{{ t('calendar_resource_management', 'Building') }}</th>
+						<!-- TRANSLATORS A storey of a building -->
 						<th>{{ t('calendar_resource_management', 'Floor') }}</th>
 						<th>{{ t('calendar_resource_management', 'Actions') }}</th>
 					</tr>
@@ -224,7 +244,7 @@ function submit(): void {
 						<td>{{ nameById(stories, room.storyId) }}</td>
 						<td>
 							<NcButton
-								:aria-label="t('calendar_resource_management', 'Delete room {name}', { name: room.name })"
+								:aria-label="t('calendar_resource_management', 'Delete room {name}', { name: room.name }, { escape: false, sanitize: false })"
 								variant="tertiary"
 								@click="emit('delete', room.id)">
 								<template #icon>
@@ -254,7 +274,7 @@ function submit(): void {
 			v-model="roomType"
 			class="crm-field"
 			:label="t('calendar_resource_management', 'Room type')"
-			:placeholder="t('calendar_resource_management', 'e.g. meeting-room')" />
+			:placeholder="t('calendar_resource_management', 'e.g. {type}', { type: 'meeting-room' })" />
 
 		<NcTextField
 			v-model="roomNumber"

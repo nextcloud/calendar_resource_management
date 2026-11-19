@@ -13,7 +13,10 @@ use OCA\CalendarResourceManagement\Db\RoomMapper;
 use OCA\CalendarResourceManagement\Db\RoomModel;
 use OCA\CalendarResourceManagement\Db\StoryMapper;
 use OCA\CalendarResourceManagement\Exception\EmailAlreadyUsedException;
+use OCA\CalendarResourceManagement\Exception\ServiceException;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Http;
+use OCP\IL10N;
 use OCP\Security\ISecureRandom;
 
 class RoomService {
@@ -28,6 +31,7 @@ class RoomService {
 		private RestrictionMapper $restrictionMapper,
 		private StoryMapper $storyMapper,
 		private ISecureRandom $secureRandom,
+		private IL10N $l10n,
 	) {
 	}
 
@@ -41,7 +45,7 @@ class RoomService {
 	/**
 	 * Create a room
 	 *
-	 * @throws DoesNotExistException If the story does not exist.
+	 * @throws ServiceException If the story does not exist.
 	 * @throws EmailAlreadyUsedException If another room already uses the email address.
 	 */
 	public function createRoom(
@@ -60,11 +64,11 @@ class RoomService {
 		bool $wheelchairAccessible = false,
 	): RoomModel {
 		// A room without an existing story cannot be resolved by the calendar backend
-		$this->storyMapper->find($storyId);
+		$this->assertStoryExists($storyId);
 
 		try {
 			$this->roomMapper->findByEmail($email);
-			throw new EmailAlreadyUsedException('A room with this email address already exists');
+			throw new EmailAlreadyUsedException($this->l10n->t('A room with this email address already exists'));
 		} catch (DoesNotExistException) {
 			// The email address is still free
 		}
@@ -97,5 +101,16 @@ class RoomService {
 	public function deleteRoom(int $id): void {
 		$room = $this->roomMapper->find($id);
 		$this->roomMapper->delete($room);
+	}
+
+	/**
+	 * @throws ServiceException If the story does not exist.
+	 */
+	private function assertStoryExists(int $storyId): void {
+		try {
+			$this->storyMapper->find($storyId);
+		} catch (DoesNotExistException $e) {
+			throw new ServiceException($this->l10n->t('The selected floor does not exist'), previous: $e, httpCode: Http::STATUS_BAD_REQUEST);
+		}
 	}
 }

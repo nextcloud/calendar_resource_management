@@ -11,8 +11,11 @@ namespace OCA\CalendarResourceManagement\Tests\Unit\Service;
 use OCA\CalendarResourceManagement\Db\BuildingMapper;
 use OCA\CalendarResourceManagement\Db\StoryMapper;
 use OCA\CalendarResourceManagement\Db\StoryModel;
+use OCA\CalendarResourceManagement\Exception\ServiceException;
 use OCA\CalendarResourceManagement\Service\StoryService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Http;
+use OCP\IL10N;
 use PHPUnit\Framework\MockObject\MockObject;
 use Test\TestCase;
 
@@ -26,7 +29,9 @@ class StoryServiceTest extends TestCase {
 
 		$this->storyMapper = $this->createMock(StoryMapper::class);
 		$this->buildingMapper = $this->createMock(BuildingMapper::class);
-		$this->service = new StoryService($this->storyMapper, $this->buildingMapper);
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnArgument(0);
+		$this->service = new StoryService($this->storyMapper, $this->buildingMapper, $l10n);
 	}
 
 	public function testCreateStoryRejectsUnknownBuilding(): void {
@@ -36,9 +41,13 @@ class StoryServiceTest extends TestCase {
 			->willThrowException(new DoesNotExistException('nope'));
 		$this->storyMapper->expects(self::never())->method('insert');
 
-		$this->expectException(DoesNotExistException::class);
-
-		$this->service->createStory('First floor', 404);
+		try {
+			$this->service->createStory('First floor', 404);
+			self::fail('Expected a service exception');
+		} catch (ServiceException $e) {
+			self::assertSame('The selected building does not exist', $e->getMessage());
+			self::assertSame(Http::STATUS_BAD_REQUEST, $e->getHttpCode());
+		}
 	}
 
 	public function testCreateStoryPersistsTheStory(): void {
