@@ -16,6 +16,7 @@ use OCA\CalendarResourceManagement\Exception\EmailAlreadyUsedException;
 use OCA\CalendarResourceManagement\Exception\ServiceException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
+use OCP\IL10N;
 use OCP\Security\ISecureRandom;
 
 class ResourceService {
@@ -30,6 +31,7 @@ class ResourceService {
 		private RestrictionMapper $restrictionMapper,
 		private BuildingMapper $buildingMapper,
 		private ISecureRandom $secureRandom,
+		private IL10N $l10n,
 	) {
 	}
 
@@ -43,16 +45,16 @@ class ResourceService {
 	/**
 	 * Create a resource
 	 *
-	 * @throws DoesNotExistException If the building does not exist.
+	 * @throws ServiceException If the building does not exist.
 	 * @throws EmailAlreadyUsedException If another resource already uses the email address.
 	 */
 	public function createResource(string $name, int $buildingId, string $email = '', string $resourceType = 'default'): ResourceModel {
 		// A resource without an existing building cannot be resolved by the calendar backend
-		$this->buildingMapper->find($buildingId);
+		$this->assertBuildingExists($buildingId);
 
 		try {
 			$this->resourceMapper->findByEmail($email);
-			throw new EmailAlreadyUsedException('A resource with this email address already exists');
+			throw new EmailAlreadyUsedException($this->l10n->t('A resource with this email address already exists'));
 		} catch (DoesNotExistException) {
 			// The email address is still free
 		}
@@ -75,16 +77,12 @@ class ResourceService {
 	 */
 	public function updateResource(int $id, string $name, int $buildingId, string $email = '', string $resourceType = 'default'): ResourceModel {
 		$resource = $this->resourceMapper->find($id);
-		try {
-			$this->buildingMapper->find($buildingId);
-		} catch (DoesNotExistException $e) {
-			throw new ServiceException('The selected building does not exist', previous: $e, httpCode: Http::STATUS_BAD_REQUEST);
-		}
+		$this->assertBuildingExists($buildingId);
 
 		try {
 			$existing = $this->resourceMapper->findByEmail($email);
 			if ($existing->getId() !== $id) {
-				throw new EmailAlreadyUsedException('A resource with this email address already exists');
+				throw new EmailAlreadyUsedException($this->l10n->t('A resource with this email address already exists'));
 			}
 		} catch (DoesNotExistException) {
 			// The email address is still free
@@ -105,5 +103,16 @@ class ResourceService {
 	public function deleteResource(int $id): void {
 		$resource = $this->resourceMapper->find($id);
 		$this->resourceMapper->delete($resource);
+	}
+
+	/**
+	 * @throws ServiceException If the building does not exist.
+	 */
+	private function assertBuildingExists(int $buildingId): void {
+		try {
+			$this->buildingMapper->find($buildingId);
+		} catch (DoesNotExistException $e) {
+			throw new ServiceException($this->l10n->t('The selected building does not exist'), previous: $e, httpCode: Http::STATUS_BAD_REQUEST);
+		}
 	}
 }

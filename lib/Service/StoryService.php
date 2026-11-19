@@ -14,6 +14,7 @@ use OCA\CalendarResourceManagement\Db\StoryModel;
 use OCA\CalendarResourceManagement\Exception\ServiceException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
+use OCP\IL10N;
 
 /**
  * A story is a floor of a building.
@@ -28,6 +29,7 @@ class StoryService {
 	public function __construct(
 		private StoryMapper $storyMapper,
 		private BuildingMapper $buildingMapper,
+		private IL10N $l10n,
 	) {
 	}
 
@@ -41,11 +43,11 @@ class StoryService {
 	/**
 	 * Create a story
 	 *
-	 * @throws DoesNotExistException If the building does not exist.
+	 * @throws ServiceException If the building does not exist.
 	 */
 	public function createStory(string $name, int $buildingId): StoryModel {
 		// A story without an existing building cannot be resolved by the calendar backend
-		$this->buildingMapper->find($buildingId);
+		$this->assertBuildingExists($buildingId);
 
 		$story = new StoryModel();
 		$story->setDisplayName($name);
@@ -61,11 +63,7 @@ class StoryService {
 	 */
 	public function updateStory(int $id, string $name, int $buildingId): StoryModel {
 		$story = $this->storyMapper->find($id);
-		try {
-			$this->buildingMapper->find($buildingId);
-		} catch (DoesNotExistException $e) {
-			throw new ServiceException('The selected building does not exist', previous: $e, httpCode: Http::STATUS_BAD_REQUEST);
-		}
+		$this->assertBuildingExists($buildingId);
 
 		$story->setDisplayName($name);
 		$story->setBuildingId($buildingId);
@@ -80,5 +78,16 @@ class StoryService {
 	public function deleteStory(int $id): void {
 		$story = $this->storyMapper->find($id);
 		$this->storyMapper->delete($story);
+	}
+
+	/**
+	 * @throws ServiceException If the building does not exist.
+	 */
+	private function assertBuildingExists(int $buildingId): void {
+		try {
+			$this->buildingMapper->find($buildingId);
+		} catch (DoesNotExistException $e) {
+			throw new ServiceException($this->l10n->t('The selected building does not exist'), previous: $e, httpCode: Http::STATUS_BAD_REQUEST);
+		}
 	}
 }

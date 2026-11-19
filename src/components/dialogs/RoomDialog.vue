@@ -14,7 +14,7 @@ import NcSelectUsers from '@nextcloud/vue/components/NcSelectUsers'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import EntityDialog from './EntityDialog.vue'
 import { fetchUsers } from '../../services/adminService.ts'
-import { optionId, selectOptions } from '../../utils/entities.ts'
+import { DEFAULT_TYPE, optionId, selectOptions } from '../../utils/entities.ts'
 import { EQUIPMENT_TYPES, roomEquipment } from '../../utils/equipment.ts'
 
 const open = defineModel<boolean>('open', { required: true })
@@ -33,7 +33,7 @@ const emit = defineEmits<{
 
 const name = ref('')
 const email = ref('')
-const roomType = ref('default')
+const roomType = ref(DEFAULT_TYPE)
 const roomNumber = ref('')
 // NcSelectUsers clears to undefined, it does not accept null
 const contactPerson = ref<User | undefined>()
@@ -95,7 +95,7 @@ async function fillForm(): Promise<void> {
 
 	name.value = room?.name ?? ''
 	email.value = room?.email ?? ''
-	roomType.value = room?.roomType ?? 'default'
+	roomType.value = room?.roomType ?? DEFAULT_TYPE
 	roomNumber.value = room?.roomNumber ?? ''
 	capacity.value = room?.capacity?.toString() ?? ''
 	building.value = buildingOptions.value.find((option) => option.id === roomStory?.buildingId) ?? null
@@ -163,7 +163,7 @@ function submit(): void {
 		<NcTextField
 			v-model="roomType"
 			:label="t('calendar_resource_management', 'Room type')"
-			:placeholder="t('calendar_resource_management', 'e.g. meeting-room')" />
+			:placeholder="t('calendar_resource_management', 'e.g. {type}', { type: 'meeting-room' })" />
 
 		<NcTextField
 			v-model="roomNumber"

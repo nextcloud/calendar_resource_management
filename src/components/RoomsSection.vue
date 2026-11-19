@@ -98,7 +98,9 @@ function submit(room: NewRoom): void {
 						<th>{{ t('calendar_resource_management', 'Room number') }}</th>
 						<th>{{ t('calendar_resource_management', 'Capacity') }}</th>
 						<th>{{ t('calendar_resource_management', 'Equipment') }}</th>
+						<!-- TRANSLATORS A building such as an office building, not the act of constructing -->
 						<th>{{ t('calendar_resource_management', 'Building') }}</th>
+						<!-- TRANSLATORS A storey of a building -->
 						<th>{{ t('calendar_resource_management', 'Floor') }}</th>
 						<th>{{ t('calendar_resource_management', 'Actions') }}</th>
 					</tr>
@@ -116,7 +118,7 @@ function submit(room: NewRoom): void {
 						<td>
 							<div class="crm-table__actions">
 								<NcButton
-									:aria-label="t('calendar_resource_management', 'Edit room {name}', { name: room.name })"
+									:aria-label="t('calendar_resource_management', 'Edit room {name}', { name: room.name }, { escape: false, sanitize: false })"
 									variant="tertiary"
 									@click="openDialog(room)">
 									<template #icon>
@@ -124,7 +126,7 @@ function submit(room: NewRoom): void {
 									</template>
 								</NcButton>
 								<NcButton
-									:aria-label="t('calendar_resource_management', 'Delete room {name}', { name: room.name })"
+									:aria-label="t('calendar_resource_management', 'Delete room {name}', { name: room.name }, { escape: false, sanitize: false })"
 									variant="tertiary"
 									@click="emit('delete', room.id)">
 									<template #icon>
