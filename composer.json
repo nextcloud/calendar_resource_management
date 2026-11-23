@@ -16,7 +16,7 @@
 		}
 	},
 	"require": {
-		"php": ">=8.0 <=8.5",
+		"php": ">=8.0 <8.7",
 		"bamarni/composer-bin-plugin": "^1.9.1"
 	},
 	"require-dev": {
