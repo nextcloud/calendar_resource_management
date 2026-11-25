@@ -93,3 +93,25 @@ export interface NewResource {
 	resourceType: string
 	buildingId: number | null
 }
+
+export interface Vehicle extends Resource {
+	vehicleType: string
+	vehicleMake: string
+	vehicleModel: string
+	isElectric: boolean
+	range: number | null
+	seatingCapacity: number | null
+}
+
+export interface NewVehicle {
+	name: string
+	email: string
+	buildingId: number | null
+	vehicleType: string
+	vehicleMake: string
+	vehicleModel: string
+	contactPersonUserId: string
+	isElectric: boolean
+	range: number | null
+	seatingCapacity: number | null
+}

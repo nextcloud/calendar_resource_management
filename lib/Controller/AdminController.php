@@ -13,6 +13,7 @@ use OCA\CalendarResourceManagement\Service\BuildingService;
 use OCA\CalendarResourceManagement\Service\ResourceService;
 use OCA\CalendarResourceManagement\Service\RoomService;
 use OCA\CalendarResourceManagement\Service\StoryService;
+use OCA\CalendarResourceManagement\Service\VehicleService;
 use OCA\CalendarResourceManagement\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -36,6 +37,7 @@ class AdminController extends Controller {
 		private StoryService $storyService,
 		private RoomService $roomService,
 		private ResourceService $resourceService,
+		private VehicleService $vehicleService,
 		private IRoomManager $roomManager,
 		private IResourceManager $resourceManager,
 		private IUserManager $userManager,
@@ -114,6 +116,9 @@ class AdminController extends Controller {
 		} catch (Throwable $e) {
 			return $this->unexpectedError('Could not delete building', $e);
 		}
+
+		$this->roomManager->update();
+		$this->resourceManager->update();
 
 		return new JSONResponse([], Http::STATUS_NO_CONTENT);
 	}
@@ -397,6 +402,101 @@ class AdminController extends Controller {
 		$this->resourceManager->update();
 
 		return new JSONResponse([], Http::STATUS_NO_CONTENT);
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'GET', url: '/admin/vehicles')]
+	public function getVehicles(): JSONResponse {
+		return new JSONResponse($this->vehicleService->listVehicles());
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'POST', url: '/admin/vehicles')]
+	public function createVehicle(string $name = '', ?int $buildingId = null, string $email = '', string $vehicleType = 'car', string $vehicleMake = '', string $vehicleModel = '', string $contactPersonUserId = '', bool $isElectric = false, ?int $range = null, ?int $seatingCapacity = null): JSONResponse {
+		$error = $this->validateVehicle($name, $buildingId, $email, $vehicleType, $vehicleMake, $vehicleModel, $contactPersonUserId, $range, $seatingCapacity);
+		if ($error !== null) {
+			return $error;
+		}
+
+		try {
+			$vehicle = $this->vehicleService->createVehicle($name, $buildingId, $email, $vehicleType, $vehicleMake, $vehicleModel, $contactPersonUserId, $isElectric, $range, $seatingCapacity);
+		} catch (DoesNotExistException) {
+			return $this->error('The selected building does not exist', Http::STATUS_BAD_REQUEST);
+		} catch (ServiceException $e) {
+			return $this->serviceError('Could not create vehicle', $e);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not create vehicle', $e);
+		}
+
+		$this->resourceManager->update();
+
+		return new JSONResponse($vehicle, Http::STATUS_CREATED);
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'PUT', url: '/admin/vehicles/{id}')]
+	public function updateVehicle(int $id, string $name = '', ?int $buildingId = null, string $email = '', string $vehicleType = 'car', string $vehicleMake = '', string $vehicleModel = '', string $contactPersonUserId = '', bool $isElectric = false, ?int $range = null, ?int $seatingCapacity = null): JSONResponse {
+		$error = $this->validateVehicle($name, $buildingId, $email, $vehicleType, $vehicleMake, $vehicleModel, $contactPersonUserId, $range, $seatingCapacity);
+		if ($error !== null) {
+			return $error;
+		}
+
+		try {
+			$vehicle = $this->vehicleService->updateVehicle($id, $name, $buildingId, $email, $vehicleType, $vehicleMake, $vehicleModel, $contactPersonUserId, $isElectric, $range, $seatingCapacity);
+		} catch (DoesNotExistException) {
+			return $this->error('The vehicle does not exist', Http::STATUS_NOT_FOUND);
+		} catch (ServiceException $e) {
+			return $this->serviceError('Could not update vehicle', $e);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not update vehicle', $e);
+		}
+
+		$this->resourceManager->update();
+
+		return new JSONResponse($vehicle);
+	}
+
+	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[FrontpageRoute(verb: 'DELETE', url: '/admin/vehicles/{id}')]
+	public function deleteVehicle(int $id): JSONResponse {
+		try {
+			$this->vehicleService->deleteVehicle($id);
+		} catch (DoesNotExistException) {
+			return $this->error('The vehicle does not exist', Http::STATUS_NOT_FOUND);
+		} catch (Throwable $e) {
+			return $this->unexpectedError('Could not delete vehicle', $e);
+		}
+
+		$this->resourceManager->update();
+
+		return new JSONResponse([], Http::STATUS_NO_CONTENT);
+	}
+
+	private function validateVehicle(string $name, ?int $buildingId, string $email, string $vehicleType, string $vehicleMake, string $vehicleModel, string $contactPersonUserId, ?int $range, ?int $seatingCapacity): ?JSONResponse {
+		if (trim($name) === '') {
+			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+		}
+		if ($buildingId === null) {
+			return $this->error('A building has to be selected', Http::STATUS_BAD_REQUEST);
+		}
+		if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+			return $this->error('A valid email address is required', Http::STATUS_BAD_REQUEST);
+		}
+
+		if (!in_array($vehicleType, ['bicycle', 'scooter', 'motorbike', 'car', 'plane', 'helicopter', 'other'], true)) {
+			return $this->error('A valid vehicle type is required', Http::STATUS_BAD_REQUEST);
+		}
+		if (trim($vehicleMake) === '' || trim($vehicleModel) === '') {
+			return $this->error('Vehicle make and model are required', Http::STATUS_BAD_REQUEST);
+		}
+		if (($range !== null && ($range < 0 || $range > 2147483647)) || ($seatingCapacity !== null && ($seatingCapacity < 0 || $seatingCapacity > 2147483647))) {
+			return $this->error('Range and seating capacity must be between 0 and 2147483647', Http::STATUS_BAD_REQUEST);
+		}
+		if ($contactPersonUserId !== '' && !$this->userManager->userExists($contactPersonUserId)) {
+			return $this->error('The selected contact person does not exist', Http::STATUS_BAD_REQUEST);
+		}
+
+		return null;
 	}
 
 	private function error(string $message, int $status): JSONResponse {

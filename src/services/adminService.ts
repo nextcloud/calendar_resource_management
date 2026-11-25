@@ -7,10 +7,12 @@ import type {
 	Building,
 	NewResource,
 	NewRoom,
+	NewVehicle,
 	Resource,
 	Room,
 	Story,
 	User,
+	Vehicle,
 } from '../types/types.ts'
 
 import axios from '@nextcloud/axios'
@@ -213,4 +215,46 @@ export async function updateResource(id: number, data: NewResource): Promise<Res
  */
 export async function deleteResource(id: number): Promise<void> {
 	await axios.delete(generateUrl(`${baseUrl}/resources/${id}`))
+}
+
+/**
+ * Fetch all vehicles
+ *
+ * @return List of vehicles
+ */
+export async function fetchVehicles(): Promise<Vehicle[]> {
+	const response = await axios.get<Vehicle[]>(generateUrl(`${baseUrl}/vehicles`))
+	return response.data
+}
+
+/**
+ * Create a new vehicle
+ *
+ * @param data Vehicle data
+ * @return Created vehicle
+ */
+export async function createVehicle(data: NewVehicle): Promise<Vehicle> {
+	const response = await axios.post(generateUrl(`${baseUrl}/vehicles`), data)
+	return response.data
+}
+
+/**
+ * Update a vehicle
+ *
+ * @param id Vehicle ID
+ * @param data Vehicle data
+ * @return Updated vehicle
+ */
+export async function updateVehicle(id: number, data: NewVehicle): Promise<Vehicle> {
+	const response = await axios.put(generateUrl(`${baseUrl}/vehicles/${id}`), data)
+	return response.data
+}
+
+/**
+ * Delete a vehicle
+ *
+ * @param id Vehicle ID
+ */
+export async function deleteVehicle(id: number): Promise<void> {
+	await axios.delete(generateUrl(`${baseUrl}/vehicles/${id}`))
 }

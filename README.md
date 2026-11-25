@@ -20,6 +20,8 @@ Release tarballs are also hosted at [https://github.com/nextcloud-releases/calen
 
 ## Configuration
 
+Administrators can manage buildings, floors, rooms, resources, and vehicles under **Administration settings → Calendar Resource Management**. The Vehicles tab supports adding, editing, and deleting vehicles, including their building, type, make, model, contact person, electric status, range, and seating capacity. Group restrictions are configured through the CLI.
+
 Use `php occ` from the Nextcloud installation directory to manage resources. Create parent entities before dependent ones:
 
 1. Create a building.
