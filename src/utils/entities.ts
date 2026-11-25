@@ -8,6 +8,12 @@ import type { NamedEntity, SelectOption } from '../types/types.ts'
 import { translate as t } from '@nextcloud/l10n'
 
 /**
+ * Type of a room or resource that has no specific one. It is stored as is and
+ * published to calendar clients, so it is a value and not a translatable label.
+ */
+export const DEFAULT_TYPE = 'default'
+
+/**
  * Resolve the id of an NcSelect value, which is either an option object or a raw id.
  *
  * @param value The current NcSelect value
@@ -44,5 +50,6 @@ export function selectOptions(entities: NamedEntity[]): SelectOption[] {
 export function nameById(entities: NamedEntity[], id: number | undefined): string {
 	const entity = entities.find((candidate) => candidate.id === id)
 
+	// TRANSLATORS Shown in place of the name of a building or floor that cannot be found
 	return entity ? entity.name : t('calendar_resource_management', 'Unknown')
 }

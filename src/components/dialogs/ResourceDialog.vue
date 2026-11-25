@@ -11,7 +11,7 @@ import { computed, ref, watch } from 'vue'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import EntityDialog from './EntityDialog.vue'
-import { optionId, selectOptions } from '../../utils/entities.ts'
+import { DEFAULT_TYPE, optionId, selectOptions } from '../../utils/entities.ts'
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -28,7 +28,7 @@ const emit = defineEmits<{
 
 const name = ref('')
 const email = ref('')
-const resourceType = ref('default')
+const resourceType = ref(DEFAULT_TYPE)
 const building = ref<SelectOption | null>(null)
 
 const buildingOptions = computed(() => selectOptions(props.buildings))
@@ -39,7 +39,7 @@ watch(open, (isOpen) => {
 	if (isOpen) {
 		name.value = props.resource?.name ?? ''
 		email.value = props.resource?.email ?? ''
-		resourceType.value = props.resource?.resourceType ?? 'default'
+		resourceType.value = props.resource?.resourceType ?? DEFAULT_TYPE
 		building.value = buildingOptions.value.find((option) => option.id === props.resource?.buildingId) ?? null
 	}
 }, { immediate: true })
@@ -80,7 +80,7 @@ function submit(): void {
 		<NcTextField
 			v-model="resourceType"
 			:label="t('calendar_resource_management', 'Resource type')"
-			:placeholder="t('calendar_resource_management', 'e.g. projector')" />
+			:placeholder="t('calendar_resource_management', 'e.g. {type}', { type: 'projector' })" />
 
 		<NcSelect
 			v-model="building"

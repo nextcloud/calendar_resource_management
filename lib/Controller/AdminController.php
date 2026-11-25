@@ -22,6 +22,7 @@ use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\Calendar\Resource\IManager as IResourceManager;
 use OCP\Calendar\Room\IManager as IRoomManager;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserManager;
@@ -40,6 +41,7 @@ class AdminController extends Controller {
 		private IResourceManager $resourceManager,
 		private IUserManager $userManager,
 		private LoggerInterface $logger,
+		private IL10N $l10n,
 	) {
 		parent::__construct($appName, $request);
 	}
@@ -71,13 +73,13 @@ class AdminController extends Controller {
 	#[FrontpageRoute(verb: 'POST', url: '/admin/buildings')]
 	public function createBuilding(string $name = '', string $address = ''): JSONResponse {
 		if (trim($name) === '') {
-			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A name is required'), Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
 			$building = $this->buildingService->createBuilding($name, $address);
 		} catch (Throwable $e) {
-			return $this->unexpectedError('Could not create building', $e);
+			return $this->unexpectedError($e);
 		}
 
 		return new JSONResponse($building, Http::STATUS_CREATED);
@@ -87,15 +89,15 @@ class AdminController extends Controller {
 	#[FrontpageRoute(verb: 'PUT', url: '/admin/buildings/{id}')]
 	public function updateBuilding(int $id, string $name = '', string $address = ''): JSONResponse {
 		if (trim($name) === '') {
-			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A name is required'), Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
 			$building = $this->buildingService->updateBuilding($id, $name, $address);
 		} catch (DoesNotExistException) {
-			return $this->error('The building does not exist', Http::STATUS_NOT_FOUND);
+			return $this->error($this->l10n->t('The building does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (Throwable $e) {
-			return $this->unexpectedError('Could not update building', $e);
+			return $this->unexpectedError($e);
 		}
 
 		// Rooms expose the building name and address in their metadata
@@ -110,9 +112,9 @@ class AdminController extends Controller {
 		try {
 			$this->buildingService->deleteBuilding($id);
 		} catch (DoesNotExistException) {
-			return $this->error('The building does not exist', Http::STATUS_NOT_FOUND);
+			return $this->error($this->l10n->t('The building does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (Throwable $e) {
-			return $this->unexpectedError('Could not delete building', $e);
+			return $this->unexpectedError($e);
 		}
 
 		return new JSONResponse([], Http::STATUS_NO_CONTENT);
@@ -128,18 +130,18 @@ class AdminController extends Controller {
 	#[FrontpageRoute(verb: 'POST', url: '/admin/stories')]
 	public function createStory(string $name = '', ?int $buildingId = null): JSONResponse {
 		if (trim($name) === '') {
-			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A name is required'), Http::STATUS_BAD_REQUEST);
 		}
 		if ($buildingId === null) {
-			return $this->error('A building has to be selected', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A building has to be selected'), Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
 			$story = $this->storyService->createStory($name, $buildingId);
-		} catch (DoesNotExistException) {
-			return $this->error('The selected building does not exist', Http::STATUS_BAD_REQUEST);
+		} catch (ServiceException $e) {
+			return $this->serviceError($e);
 		} catch (Throwable $e) {
-			return $this->unexpectedError('Could not create story', $e);
+			return $this->unexpectedError($e);
 		}
 
 		return new JSONResponse($story, Http::STATUS_CREATED);
@@ -149,20 +151,20 @@ class AdminController extends Controller {
 	#[FrontpageRoute(verb: 'PUT', url: '/admin/stories/{id}')]
 	public function updateStory(int $id, string $name = '', ?int $buildingId = null): JSONResponse {
 		if (trim($name) === '') {
-			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A name is required'), Http::STATUS_BAD_REQUEST);
 		}
 		if ($buildingId === null) {
-			return $this->error('A building has to be selected', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A building has to be selected'), Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
 			$story = $this->storyService->updateStory($id, $name, $buildingId);
 		} catch (DoesNotExistException) {
-			return $this->error('The story does not exist', Http::STATUS_NOT_FOUND);
+			return $this->error($this->l10n->t('The floor does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (ServiceException $e) {
-			return $this->serviceError('Could not update story', $e);
+			return $this->serviceError($e);
 		} catch (Throwable $e) {
-			return $this->unexpectedError('Could not update story', $e);
+			return $this->unexpectedError($e);
 		}
 
 		// Rooms expose the story name and their building in their metadata
@@ -177,9 +179,9 @@ class AdminController extends Controller {
 		try {
 			$this->storyService->deleteStory($id);
 		} catch (DoesNotExistException) {
-			return $this->error('The story does not exist', Http::STATUS_NOT_FOUND);
+			return $this->error($this->l10n->t('The floor does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (Throwable $e) {
-			return $this->unexpectedError('Could not delete story', $e);
+			return $this->unexpectedError($e);
 		}
 
 		return new JSONResponse([], Http::STATUS_NO_CONTENT);
@@ -209,13 +211,13 @@ class AdminController extends Controller {
 		bool $wheelchairAccessible = false,
 	): JSONResponse {
 		if (trim($name) === '') {
-			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A name is required'), Http::STATUS_BAD_REQUEST);
 		}
 		if ($storyId === null) {
-			return $this->error('A story has to be selected', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A floor has to be selected'), Http::STATUS_BAD_REQUEST);
 		}
 		if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-			return $this->error('A valid email address is required', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A valid email address is required'), Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
@@ -234,12 +236,10 @@ class AdminController extends Controller {
 				$hasWhiteboard,
 				$wheelchairAccessible,
 			);
-		} catch (DoesNotExistException) {
-			return $this->error('The selected story does not exist', Http::STATUS_BAD_REQUEST);
 		} catch (ServiceException $e) {
-			return $this->serviceError('Could not create room', $e);
+			return $this->serviceError($e);
 		} catch (Throwable $e) {
-			return $this->unexpectedError('Could not create room', $e);
+			return $this->unexpectedError($e);
 		}
 
 		$this->roomManager->update();
@@ -266,13 +266,13 @@ class AdminController extends Controller {
 		bool $wheelchairAccessible = false,
 	): JSONResponse {
 		if (trim($name) === '') {
-			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A name is required'), Http::STATUS_BAD_REQUEST);
 		}
 		if ($storyId === null) {
-			return $this->error('A story has to be selected', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A floor has to be selected'), Http::STATUS_BAD_REQUEST);
 		}
 		if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-			return $this->error('A valid email address is required', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A valid email address is required'), Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
@@ -293,11 +293,11 @@ class AdminController extends Controller {
 				$wheelchairAccessible,
 			);
 		} catch (DoesNotExistException) {
-			return $this->error('The room does not exist', Http::STATUS_NOT_FOUND);
+			return $this->error($this->l10n->t('The room does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (ServiceException $e) {
-			return $this->serviceError('Could not update room', $e);
+			return $this->serviceError($e);
 		} catch (Throwable $e) {
-			return $this->unexpectedError('Could not update room', $e);
+			return $this->unexpectedError($e);
 		}
 
 		$this->roomManager->update();
@@ -311,9 +311,9 @@ class AdminController extends Controller {
 		try {
 			$this->roomService->deleteRoom($id);
 		} catch (DoesNotExistException) {
-			return $this->error('The room does not exist', Http::STATUS_NOT_FOUND);
+			return $this->error($this->l10n->t('The room does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (Throwable $e) {
-			return $this->unexpectedError('Could not delete room', $e);
+			return $this->unexpectedError($e);
 		}
 
 		$this->roomManager->update();
@@ -331,23 +331,21 @@ class AdminController extends Controller {
 	#[FrontpageRoute(verb: 'POST', url: '/admin/resources')]
 	public function createResource(string $name = '', ?int $buildingId = null, string $email = '', string $resourceType = 'default'): JSONResponse {
 		if (trim($name) === '') {
-			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A name is required'), Http::STATUS_BAD_REQUEST);
 		}
 		if ($buildingId === null) {
-			return $this->error('A building has to be selected', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A building has to be selected'), Http::STATUS_BAD_REQUEST);
 		}
 		if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-			return $this->error('A valid email address is required', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A valid email address is required'), Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
 			$resource = $this->resourceService->createResource($name, $buildingId, $email, $resourceType);
-		} catch (DoesNotExistException) {
-			return $this->error('The selected building does not exist', Http::STATUS_BAD_REQUEST);
 		} catch (ServiceException $e) {
-			return $this->serviceError('Could not create resource', $e);
+			return $this->serviceError($e);
 		} catch (Throwable $e) {
-			return $this->unexpectedError('Could not create resource', $e);
+			return $this->unexpectedError($e);
 		}
 
 		$this->resourceManager->update();
@@ -359,23 +357,23 @@ class AdminController extends Controller {
 	#[FrontpageRoute(verb: 'PUT', url: '/admin/resources/{id}')]
 	public function updateResource(int $id, string $name = '', ?int $buildingId = null, string $email = '', string $resourceType = 'default'): JSONResponse {
 		if (trim($name) === '') {
-			return $this->error('A name is required', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A name is required'), Http::STATUS_BAD_REQUEST);
 		}
 		if ($buildingId === null) {
-			return $this->error('A building has to be selected', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A building has to be selected'), Http::STATUS_BAD_REQUEST);
 		}
 		if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-			return $this->error('A valid email address is required', Http::STATUS_BAD_REQUEST);
+			return $this->error($this->l10n->t('A valid email address is required'), Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
 			$resource = $this->resourceService->updateResource($id, $name, $buildingId, $email, $resourceType);
 		} catch (DoesNotExistException) {
-			return $this->error('The resource does not exist', Http::STATUS_NOT_FOUND);
+			return $this->error($this->l10n->t('The resource does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (ServiceException $e) {
-			return $this->serviceError('Could not update resource', $e);
+			return $this->serviceError($e);
 		} catch (Throwable $e) {
-			return $this->unexpectedError('Could not update resource', $e);
+			return $this->unexpectedError($e);
 		}
 
 		$this->resourceManager->update();
@@ -389,9 +387,9 @@ class AdminController extends Controller {
 		try {
 			$this->resourceService->deleteResource($id);
 		} catch (DoesNotExistException) {
-			return $this->error('The resource does not exist', Http::STATUS_NOT_FOUND);
+			return $this->error($this->l10n->t('The resource does not exist'), Http::STATUS_NOT_FOUND);
 		} catch (Throwable $e) {
-			return $this->unexpectedError('Could not delete resource', $e);
+			return $this->unexpectedError($e);
 		}
 
 		$this->resourceManager->update();
@@ -407,10 +405,10 @@ class AdminController extends Controller {
 	 * Answer with the message of a service failure that names an http code, treat the rest
 	 * as unexpected.
 	 */
-	private function serviceError(string $message, ServiceException $e): JSONResponse {
+	private function serviceError(ServiceException $e): JSONResponse {
 		$httpCode = $e->getHttpCode();
 		if ($httpCode === null) {
-			return $this->unexpectedError($message, $e);
+			return $this->unexpectedError($e);
 		}
 
 		return $this->error($e->getMessage(), $httpCode);
@@ -419,9 +417,9 @@ class AdminController extends Controller {
 	/**
 	 * Log an unexpected failure and report it without leaking internals to the client.
 	 */
-	private function unexpectedError(string $message, Throwable $e): JSONResponse {
-		$this->logger->error($message, ['exception' => $e]);
+	private function unexpectedError(Throwable $e): JSONResponse {
+		$this->logger->error('Unexpected failure in the admin interface', ['exception' => $e]);
 
-		return $this->error($message, Http::STATUS_INTERNAL_SERVER_ERROR);
+		return new JSONResponse([], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
 }

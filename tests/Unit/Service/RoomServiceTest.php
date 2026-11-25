@@ -17,6 +17,7 @@ use OCA\CalendarResourceManagement\Exception\ServiceException;
 use OCA\CalendarResourceManagement\Service\RoomService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
+use OCP\IL10N;
 use OCP\Security\ISecureRandom;
 use PHPUnit\Framework\MockObject\MockObject;
 use Test\TestCase;
@@ -34,12 +35,15 @@ class RoomServiceTest extends TestCase {
 
 		$secureRandom = $this->createMock(ISecureRandom::class);
 		$secureRandom->method('generate')->willReturn('deadbeef');
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnArgument(0);
 
 		$this->service = new RoomService(
 			$this->roomMapper,
 			$this->createMock(RestrictionMapper::class),
 			$this->storyMapper,
 			$secureRandom,
+			$l10n,
 		);
 	}
 
@@ -50,9 +54,13 @@ class RoomServiceTest extends TestCase {
 			->willThrowException(new DoesNotExistException('nope'));
 		$this->roomMapper->expects(self::never())->method('insert');
 
-		$this->expectException(DoesNotExistException::class);
-
-		$this->service->createRoom('Meeting room', 404);
+		try {
+			$this->service->createRoom('Meeting room', 404);
+			self::fail('Expected a service exception');
+		} catch (ServiceException $e) {
+			self::assertSame('The selected floor does not exist', $e->getMessage());
+			self::assertSame(Http::STATUS_BAD_REQUEST, $e->getHttpCode());
+		}
 	}
 
 	public function testCreateRoomRejectsAnEmailUsedByAnotherRoom(): void {
@@ -138,7 +146,7 @@ class RoomServiceTest extends TestCase {
 			$this->service->updateRoom(9, 'Meeting room', 404);
 			self::fail('Expected a service exception');
 		} catch (ServiceException $e) {
-			self::assertSame('The selected story does not exist', $e->getMessage());
+			self::assertSame('The selected floor does not exist', $e->getMessage());
 			self::assertSame(Http::STATUS_BAD_REQUEST, $e->getHttpCode());
 		}
 	}

@@ -5,7 +5,7 @@
 
 import type { EquipmentKey, Room } from '../types/types.ts'
 
-import { translate as t } from '@nextcloud/l10n'
+import { getLanguage, translate as t } from '@nextcloud/l10n'
 
 /**
  * Equipment flags of a room. `payloadKey` is what the create and update
@@ -59,15 +59,33 @@ export function roomEquipment(room: Room | null): Record<EquipmentKey, boolean> 
 }
 
 /**
+ * Create a formatter that lists items the way the user's language does.
+ * Themes can add languages whose codes are no valid BCP 47 tags, those fall
+ * back to the browser language.
+ *
+ * @return The list formatter
+ */
+function createListFormat(): Intl.ListFormat {
+	const options: Intl.ListFormatOptions = { type: 'conjunction', style: 'narrow' }
+	try {
+		return new Intl.ListFormat(getLanguage(), options)
+	} catch {
+		return new Intl.ListFormat(undefined, options)
+	}
+}
+
+const listFormat = createListFormat()
+
+/**
  * Translated list of the equipment a room provides.
  *
  * @param room The room
- * @return Comma separated equipment names
+ * @return Equipment names, listed as the user's language lists items
  */
 export function equipmentSummary(room: Room): string {
 	const available = EQUIPMENT_TYPES
 		.filter((item) => room[item.responseKey])
 		.map((item) => item.label())
 
-	return available.length ? available.join(', ') : '-'
+	return available.length ? listFormat.format(available) : '-'
 }
