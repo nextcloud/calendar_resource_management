@@ -13,12 +13,14 @@ use OCA\CalendarResourceManagement\Db\BuildingModel;
 use OCA\CalendarResourceManagement\Db\ResourceModel;
 use OCA\CalendarResourceManagement\Db\RoomModel;
 use OCA\CalendarResourceManagement\Db\StoryModel;
+use OCA\CalendarResourceManagement\Db\VehicleModel;
 use OCA\CalendarResourceManagement\Exception\EmailAlreadyUsedException;
 use OCA\CalendarResourceManagement\Exception\ServiceException;
 use OCA\CalendarResourceManagement\Service\BuildingService;
 use OCA\CalendarResourceManagement\Service\ResourceService;
 use OCA\CalendarResourceManagement\Service\RoomService;
 use OCA\CalendarResourceManagement\Service\StoryService;
+use OCA\CalendarResourceManagement\Service\VehicleService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\Calendar\Resource\IManager as IResourceManager;
@@ -41,11 +43,13 @@ class AdminControllerTest extends TestCase {
 	private IResourceManager&MockObject $resourceManager;
 	private IUserManager&MockObject $userManager;
 	private LoggerInterface&MockObject $logger;
+	private VehicleService&MockObject $vehicleService;
 	private AdminController $controller;
 
 	protected function setUp(): void {
 		parent::setUp();
 
+		$this->vehicleService = $this->createMock(VehicleService::class);
 		$this->buildingService = $this->createMock(BuildingService::class);
 		$this->storyService = $this->createMock(StoryService::class);
 		$this->roomService = $this->createMock(RoomService::class);
@@ -64,6 +68,7 @@ class AdminControllerTest extends TestCase {
 			$this->storyService,
 			$this->roomService,
 			$this->resourceService,
+			$this->vehicleService,
 			$this->roomManager,
 			$this->resourceManager,
 			$this->userManager,
@@ -498,5 +503,110 @@ class AdminControllerTest extends TestCase {
 
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
 		self::assertSame($resource, $response->getData());
+	}
+
+	public function testVehicleCrudRefreshesCalendar(): void {
+		$vehicle = new VehicleModel();
+		$vehicle->setId(4);
+		$this->userManager->method('userExists')->with('alice')->willReturn(true);
+		$args = ['Pool car', 1, 'car@example.com', 'car', 'Example', 'City', 'alice', true, 300, 5];
+		$this->vehicleService->expects(self::once())->method('createVehicle')->with(...$args)->willReturn($vehicle);
+		$this->vehicleService->expects(self::once())->method('updateVehicle')->with(4, ...$args)->willReturn($vehicle);
+		$this->vehicleService->expects(self::once())->method('deleteVehicle')->with(4);
+		$this->vehicleService->method('listVehicles')->willReturn([$vehicle]);
+		$this->resourceManager->expects(self::exactly(3))->method('update');
+		self::assertSame([$vehicle], $this->controller->getVehicles()->getData());
+		$created = $this->controller->createVehicle(...$args);
+		self::assertSame(Http::STATUS_CREATED, $created->getStatus());
+		self::assertSame($vehicle, $created->getData());
+		self::assertSame($vehicle, $this->controller->updateVehicle(4, ...$args)->getData());
+		self::assertSame(Http::STATUS_NO_CONTENT, $this->controller->deleteVehicle(4)->getStatus());
+	}
+
+	public function testVehicleValidationRejectsInvalidInputBeforeWriting(): void {
+		$this->vehicleService->expects(self::never())->method('createVehicle');
+		$this->vehicleService->expects(self::never())->method('updateVehicle');
+		$this->resourceManager->expects(self::never())->method('update');
+		$valid = ['name' => 'Pool car', 'buildingId' => 1, 'email' => 'car@example.com', 'vehicleType' => 'car', 'vehicleMake' => 'Example', 'vehicleModel' => 'City'];
+		foreach ([
+			['name' => ' '], ['buildingId' => null], ['email' => 'invalid'],
+			['vehicleType' => 'invalid'], ['vehicleMake' => ' '], ['vehicleModel' => ' '],
+			['range' => -1], ['seatingCapacity' => -1], ['range' => 2147483648],
+			['seatingCapacity' => 2147483648], ['contactPersonUserId' => 'missing'],
+		] as $invalid) {
+			$args = array_replace($valid, $invalid);
+			self::assertSame(Http::STATUS_BAD_REQUEST, $this->controller->createVehicle(...$args)->getStatus());
+			self::assertSame(Http::STATUS_BAD_REQUEST, $this->controller->updateVehicle(4, ...$args)->getStatus());
+		}
+	}
+
+	public function testVehicleFailuresDoNotRefreshCalendar(): void {
+		$this->resourceManager->expects(self::never())->method('update');
+		$args = ['Pool car', 1, 'car@example.com', 'car', 'Example', 'City'];
+		$this->vehicleService->method('createVehicle')->willThrowException(new DoesNotExistException('missing'));
+		$this->vehicleService->method('updateVehicle')->willThrowException(new DoesNotExistException('missing'));
+		$this->vehicleService->method('deleteVehicle')->willThrowException(new DoesNotExistException('missing'));
+		self::assertSame(Http::STATUS_BAD_REQUEST, $this->controller->createVehicle(...$args)->getStatus());
+		self::assertSame(Http::STATUS_NOT_FOUND, $this->controller->updateVehicle(4, ...$args)->getStatus());
+		self::assertSame(Http::STATUS_NOT_FOUND, $this->controller->deleteVehicle(4)->getStatus());
+	}
+
+	public function testVehicleDuplicateEmailIsAConflict(): void {
+		$this->vehicleService->method('createVehicle')->willThrowException(new EmailAlreadyUsedException('Duplicate email'));
+		$this->vehicleService->method('updateVehicle')->willThrowException(new EmailAlreadyUsedException('Duplicate email'));
+		$this->resourceManager->expects(self::never())->method('update');
+		$args = ['Pool car', 1, 'car@example.com', 'car', 'Example', 'City'];
+		self::assertSame(Http::STATUS_CONFLICT, $this->controller->createVehicle(...$args)->getStatus());
+		self::assertSame(Http::STATUS_CONFLICT, $this->controller->updateVehicle(4, ...$args)->getStatus());
+	}
+
+	public function testVehicleUnexpectedFailuresAreNotLeaked(): void {
+		$this->vehicleService->method('createVehicle')->willThrowException(new RuntimeException('Database details'));
+		$this->vehicleService->method('updateVehicle')->willThrowException(new RuntimeException('Database details'));
+		$this->vehicleService->method('deleteVehicle')->willThrowException(new RuntimeException('Database details'));
+		$this->logger->expects(self::exactly(3))->method('error');
+		$this->resourceManager->expects(self::never())->method('update');
+		$args = ['Pool car', 1, 'car@example.com', 'car', 'Example', 'City'];
+		foreach ([$this->controller->createVehicle(...$args), $this->controller->updateVehicle(4, ...$args), $this->controller->deleteVehicle(4)] as $response) {
+			self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+			self::assertStringNotContainsString('Database details', json_encode($response->getData()));
+		}
+	}
+
+	public function testVehicleRoutesRequireAuthorizedAdminSettings(): void {
+		foreach (['getVehicles', 'createVehicle', 'updateVehicle', 'deleteVehicle'] as $method) {
+			$reflection = new \ReflectionMethod(AdminController::class, $method);
+			$attributes = $reflection->getAttributes(\OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting::class);
+			self::assertCount(1, $attributes);
+			self::assertSame(['settings' => \OCA\CalendarResourceManagement\Settings\AdminSettings::class], $attributes[0]->getArguments());
+		}
+	}
+
+	public function testDeleteBuildingRefreshesBothCalendarBackends(): void {
+		$this->buildingService->expects(self::once())->method('deleteBuilding')->with(3);
+		$this->roomManager->expects(self::once())->method('update');
+		$this->resourceManager->expects(self::once())->method('update');
+		self::assertSame(Http::STATUS_NO_CONTENT, $this->controller->deleteBuilding(3)->getStatus());
+	}
+
+	public function testVehicleSerializesMetadataAndNullableNumbers(): void {
+		$vehicle = new VehicleModel();
+		$vehicle->setVehicleType('car');
+		$vehicle->setVehicleMake('Example');
+		$vehicle->setVehicleModel('City');
+		$vehicle->setIsElectric(true);
+		$vehicle->setRange(300);
+		$vehicle->setSeatingCapacity(5);
+		$data = $vehicle->jsonSerialize();
+		self::assertSame('car', $data['vehicleType']);
+		self::assertSame('Example', $data['vehicleMake']);
+		self::assertSame('City', $data['vehicleModel']);
+		self::assertTrue($data['isElectric']);
+		self::assertSame(300, $data['range']);
+		self::assertSame(5, $data['seatingCapacity']);
+		$empty = (new VehicleModel())->jsonSerialize();
+		self::assertFalse($empty['isElectric']);
+		self::assertNull($empty['range']);
+		self::assertNull($empty['seatingCapacity']);
 	}
 }

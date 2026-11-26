@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <script setup lang="ts">
 import type { Ref } from 'vue'
-import type { Building, NamedEntity, NewBuilding, NewResource, NewRoom, NewStory, Resource, Room, Story } from './types/types.ts'
+import type { Building, NamedEntity, NewBuilding, NewResource, NewRoom, NewStory, NewVehicle, Resource, Room, Story, Vehicle } from './types/types.ts'
 
 import { showMessage, ToastType } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
@@ -16,9 +16,10 @@ import BuildingsSection from './components/BuildingsSection.vue'
 import ResourcesSection from './components/ResourcesSection.vue'
 import RoomsSection from './components/RoomsSection.vue'
 import StoriesSection from './components/StoriesSection.vue'
+import VehiclesSection from './components/VehiclesSection.vue'
 import * as api from './services/adminService.ts'
 
-type TabId = 'buildings' | 'stories' | 'rooms' | 'resources'
+type TabId = 'buildings' | 'stories' | 'rooms' | 'resources' | 'vehicles'
 
 interface PendingDelete {
 	message: string
@@ -34,6 +35,7 @@ const buildings = ref<Building[]>([])
 const stories = ref<Story[]>([])
 const rooms = ref<Room[]>([])
 const resources = ref<Resource[]>([])
+const vehicles = ref<Vehicle[]>([])
 
 // Blocks the dialog submit buttons while a create or update request is running
 const saving = ref({
@@ -41,6 +43,7 @@ const saving = ref({
 	story: false,
 	room: false,
 	resource: false,
+	vehicle: false,
 })
 
 const pendingDelete = ref<PendingDelete | null>(null)
@@ -51,6 +54,7 @@ const tabs: { id: TabId, label: string }[] = [
 	{ id: 'stories', label: t('calendar_resource_management', 'Floors') },
 	{ id: 'rooms', label: t('calendar_resource_management', 'Rooms') },
 	{ id: 'resources', label: t('calendar_resource_management', 'Resources') },
+	{ id: 'vehicles', label: t('calendar_resource_management', 'Vehicles') },
 ]
 
 const activeTab = ref<TabId>('buildings')
@@ -60,6 +64,7 @@ const buildingsSection = useTemplateRef<InstanceType<typeof BuildingsSection>>('
 const storiesSection = useTemplateRef<InstanceType<typeof StoriesSection>>('stories')
 const roomsSection = useTemplateRef<InstanceType<typeof RoomsSection>>('rooms')
 const resourcesSection = useTemplateRef<InstanceType<typeof ResourcesSection>>('resources')
+const vehiclesSection = useTemplateRef<InstanceType<typeof VehiclesSection>>('vehicles')
 
 const deleteDialogButtons = computed(() => [
 	{
@@ -174,12 +179,26 @@ async function loadResources(): Promise<void> {
 	}
 }
 
+/**
+ * Reload the vehicles.
+ */
+async function loadVehicles(): Promise<void> {
+	const loaded = await request(
+		api.fetchVehicles,
+		t('calendar_resource_management', 'Could not load vehicles'),
+	)
+	if (loaded !== null) {
+		vehicles.value = loaded
+	}
+}
+
 onMounted(async () => {
 	await Promise.all([
 		loadBuildings(),
 		loadStories(),
 		loadRooms(),
 		loadResources(),
+		loadVehicles(),
 	])
 })
 
@@ -268,6 +287,27 @@ async function createResource(resource: NewResource): Promise<void> {
 }
 
 /**
+ * Create the vehicle entered in the vehicles section.
+ *
+ * @param vehicle The vehicle to create
+ */
+async function createVehicle(vehicle: NewVehicle): Promise<void> {
+	saving.value.vehicle = true
+	try {
+		const created = await request(
+			() => api.createVehicle(vehicle),
+			t('calendar_resource_management', 'Could not create vehicle'),
+		)
+		if (created !== null) {
+			vehiclesSection.value?.close()
+			addSorted(vehicles, created)
+		}
+	} finally {
+		saving.value.vehicle = false
+	}
+}
+
+/**
  * Save the changes to a building edited in the buildings section.
  *
  * @param id The building to update
@@ -303,12 +343,13 @@ function confirmDeleteBuilding(id: number): void {
 				t('calendar_resource_management', 'Could not delete building'),
 			)
 			if (deleted !== null) {
-				// Stories, rooms and resources reference the building
+				// Stories, rooms, resources and vehicles reference the building
 				await Promise.all([
 					loadBuildings(),
 					loadStories(),
 					loadRooms(),
 					loadResources(),
+					loadVehicles(),
 				])
 			}
 		},
@@ -448,6 +489,49 @@ function confirmDeleteResource(id: number): void {
 }
 
 /**
+ * Save the changes to a vehicle edited in the vehicles section.
+ *
+ * @param id The vehicle to update
+ * @param vehicle The entered vehicle
+ */
+async function updateVehicle(id: number, vehicle: NewVehicle): Promise<void> {
+	saving.value.vehicle = true
+	try {
+		const updated = await request(
+			() => api.updateVehicle(id, vehicle),
+			t('calendar_resource_management', 'Could not update vehicle'),
+		)
+		if (updated !== null) {
+			vehiclesSection.value?.close()
+			replaceSorted(vehicles, updated)
+		}
+	} finally {
+		saving.value.vehicle = false
+	}
+}
+
+/**
+ * Ask for confirmation before deleting a vehicle.
+ *
+ * @param id The vehicle to delete
+ */
+function confirmDeleteVehicle(id: number): void {
+	pendingDelete.value = {
+		message: t('calendar_resource_management', 'Do you really want to delete this vehicle?'),
+		action: async () => {
+			const deleted = await request(
+				() => api.deleteVehicle(id),
+				t('calendar_resource_management', 'Could not delete vehicle'),
+			)
+			if (deleted !== null) {
+				// Nothing references a vehicle, so drop it locally instead of reloading
+				vehicles.value = vehicles.value.filter((vehicle) => vehicle.id !== id)
+			}
+		},
+	}
+}
+
+/**
  * Move between tabs with the arrow, Home and End keys.
  *
  * @param event The keyboard event on the tab list
@@ -570,6 +654,21 @@ function onDeleteDialogToggle(open: boolean): void {
 				@create="createResource"
 				@update="updateResource"
 				@delete="confirmDeleteResource" />
+		</div>
+
+		<div
+			v-show="activeTab === 'vehicles'"
+			id="crm-panel-vehicles"
+			aria-labelledby="crm-tab-vehicles"
+			role="tabpanel">
+			<VehiclesSection
+				ref="vehicles"
+				:buildings="buildings"
+				:loading="saving.vehicle"
+				:vehicles="vehicles"
+				@create="createVehicle"
+				@update="updateVehicle"
+				@delete="confirmDeleteVehicle" />
 		</div>
 
 		<NcDialog
