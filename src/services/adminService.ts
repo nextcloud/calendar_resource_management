@@ -13,10 +13,25 @@ import type {
 	User,
 } from '../types/types.ts'
 
-import axios from '@nextcloud/axios'
+import axios, { isAxiosError } from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 
 const baseUrl = '/apps/calendar_resource_management/admin'
+
+/**
+ * Read the translated message an endpoint answered a failed request with
+ *
+ * @param error The error the request failed with
+ * @return The message, or null if the request failed without one
+ */
+export function responseErrorMessage(error: unknown): string | null {
+	if (!isAxiosError<{ error?: unknown }>(error)) {
+		return null
+	}
+
+	const message = error.response?.data?.error
+	return typeof message === 'string' && message !== '' ? message : null
+}
 
 /**
  * Fetch the accounts that can be picked as the contact person of a room

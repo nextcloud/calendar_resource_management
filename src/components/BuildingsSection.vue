@@ -70,7 +70,7 @@ function submit(): void {
 						<td>{{ building.address || '-' }}</td>
 						<td>
 							<NcButton
-								:aria-label="t('calendar_resource_management', 'Delete building {name}', { name: building.name })"
+								:aria-label="t('calendar_resource_management', 'Delete building {name}', { name: building.name }, { escape: false, sanitize: false })"
 								variant="tertiary"
 								@click="emit('delete', building.id)">
 								<template #icon>

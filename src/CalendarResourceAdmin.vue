@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import type { Ref } from 'vue'
 import type { Building, NamedEntity, NewBuilding, NewResource, NewRoom, NewStory, Resource, Room, Story } from './types/types.ts'
 
-import { showError } from '@nextcloud/dialogs'
+import { showMessage, ToastType } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
 import { getLoggerBuilder } from '@nextcloud/logger'
 import { computed, onMounted, ref, useTemplateRef } from 'vue'
@@ -70,16 +70,19 @@ const deleteDialogButtons = computed(() => [
  * Run an API call and report failures to the user instead of throwing.
  *
  * @param call The API call to run
- * @param errorMessage Message shown to the user if the call fails
+ * @param errorMessage Message shown to the user if the endpoint does not name the cause
  * @return The response data, or null if the call failed
  */
 async function request<T>(call: () => Promise<T>, errorMessage: string): Promise<T | null> {
 	try {
 		return await call()
 	} catch (error) {
-		// The endpoints answer with an untranslated message, so only log it
-		logger.error(errorMessage, { error })
-		showError(errorMessage)
+		const message = api.responseErrorMessage(error) ?? errorMessage
+		logger.error(message, { error })
+		// Toasts parse strings as HTML, and server translations are not sanitized like t() output
+		const content = document.createElement('span')
+		content.textContent = message
+		showMessage(content, { type: ToastType.ERROR })
 		return null
 	}
 }

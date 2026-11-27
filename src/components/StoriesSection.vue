@@ -75,7 +75,7 @@ function submit(): void {
 						<td>{{ nameById(buildings, story.buildingId) }}</td>
 						<td>
 							<NcButton
-								:aria-label="t('calendar_resource_management', 'Delete floor {name}', { name: story.name })"
+								:aria-label="t('calendar_resource_management', 'Delete floor {name}', { name: story.name }, { escape: false, sanitize: false })"
 								variant="tertiary"
 								@click="emit('delete', story.id)">
 								<template #icon>

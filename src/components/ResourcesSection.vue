@@ -15,7 +15,7 @@ import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
-import { nameById, optionId, selectOptions } from '../utils/entities.ts'
+import { DEFAULT_TYPE, nameById, optionId, selectOptions } from '../utils/entities.ts'
 
 const props = defineProps<{
 	buildings: Building[]
@@ -30,7 +30,7 @@ const emit = defineEmits<{
 
 const name = ref('')
 const email = ref('')
-const resourceType = ref('default')
+const resourceType = ref(DEFAULT_TYPE)
 const building = ref<SelectOption | null>(null)
 
 const buildingOptions = computed(() => selectOptions(props.buildings))
@@ -43,7 +43,7 @@ const canSubmit = computed(() => name.value.trim() !== '' && email.value.trim() 
 function reset(): void {
 	name.value = ''
 	email.value = ''
-	resourceType.value = 'default'
+	resourceType.value = DEFAULT_TYPE
 	building.value = null
 }
 
@@ -85,7 +85,7 @@ function submit(): void {
 						<td>{{ nameById(buildings, resource.buildingId) }}</td>
 						<td>
 							<NcButton
-								:aria-label="t('calendar_resource_management', 'Delete resource {name}', { name: resource.name })"
+								:aria-label="t('calendar_resource_management', 'Delete resource {name}', { name: resource.name }, { escape: false, sanitize: false })"
 								variant="tertiary"
 								@click="emit('delete', resource.id)">
 								<template #icon>
@@ -115,7 +115,7 @@ function submit(): void {
 			v-model="resourceType"
 			class="crm-field"
 			:label="t('calendar_resource_management', 'Resource type')"
-			:placeholder="t('calendar_resource_management', 'e.g. projector')" />
+			:placeholder="t('calendar_resource_management', 'e.g. {type}', { type: 'projector' })" />
 
 		<NcSelect
 			v-model="building"
